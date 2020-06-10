@@ -6,12 +6,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"image"
+	"image/color"
 	"encoding/json"
 	"log"
 )
 
 var tileset *ebiten.Image
 var p1img []*ebiten.Image
+var dot *ebiten.Image
+var dotX float64
+var dotY float64
 
 const (
 	tileSize = 32
@@ -28,6 +32,23 @@ func init() {
 		log.Fatal(err)
 	}
 	p1img = append(p1img, img)
+
+	dot, err = ebiten.NewImage(32, 32, ebiten.FilterDefault)
+	if err != nil {
+		panic(err)
+	}
+
+	dotClr := color.RGBA{255, 0, 0, 255}
+
+	for p := 0; p < dot.Bounds().Max.X; p++ {
+		dot.Set(p, 0, dotClr)
+		dot.Set(p, dot.Bounds().Max.Y - 1, dotClr)
+	}
+
+	for p := 1; p < dot.Bounds().Max.Y - 1; p++ {
+		dot.Set(0, p, dotClr)
+		dot.Set(dot.Bounds().Max.Y - 1, p, dotClr)
+	}
 }
 
 type Game struct{
@@ -40,7 +61,29 @@ type TileMap struct {
 	Tiles []int
 }
 
+var scroll = 0.
+var selectedTile = 0
+
 func (g *Game) Update(screen *ebiten.Image) error {
+	_, dy := ebiten.Wheel()
+	if dy != 0. && len(g.tileMap.Tiles) > selectedTile {
+		if dy < 0 {
+			g.tileMap.Tiles[selectedTile]--
+		} else {
+			g.tileMap.Tiles[selectedTile]++
+		}
+	}
+
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) {
+		cx, cy := ebiten.CursorPosition();
+		cx -= cx % tileSize
+		cy -= cy % tileSize
+		dotX = float64(cx)
+		dotY = float64(cy)
+		selectedTile =  cx / tileSize + cy / tileSize * g.tileMap.Width
+		fmt.Println("selectedTile:", selectedTile)
+	}
+
 	return nil
 }
 
@@ -49,6 +92,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for _, img := range p1img {
 		screen.DrawImage(img, nil)
 	}
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(dotX, dotY);
+	screen.DrawImage(dot, op)
 }
 
 func (g *Game) Load(str string) {
@@ -60,6 +107,7 @@ func (g *Game) Load(str string) {
 	if err != nil {
 		panic(err)
 	}
+
 }
 
 func (g *Game) DrawTileset(screen *ebiten.Image) {
