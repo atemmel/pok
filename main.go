@@ -63,6 +63,8 @@ type Game struct{
 	tileMap TileMap
 	path string
 	player Player
+	world *ebiten.Image
+	camera Camera
 }
 
 type TileMap struct {
@@ -74,6 +76,8 @@ type TileMap struct {
 const framesPerState = 3
 const playerMaxCycle = 4
 const playerVelocity = (tileSize / 2) / playerMaxCycle
+const playerOffsetX = 7
+const playerOffsetY = 1
 
 type Player struct {
 	gx float64
@@ -137,7 +141,19 @@ func (player *Player) NextAnim() {
 	player.tx += 34
 }
 
-var scroll = 0.
+type Camera struct {
+	x *float64
+	y *float64
+}
+
+func (cam *Camera) TransformThenRender(world *ebiten.Image, target *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+	if cam.x != nil && cam.y != nil {
+		op.GeoM.Translate(-*cam.x, -*cam.y)
+	}
+	target.DrawImage(world, op)
+}
+
 var selectedTile = 0
 
 func (g *Game) Update(screen *ebiten.Image) error {
@@ -181,12 +197,14 @@ func (g *Game) Update(screen *ebiten.Image) error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	g.DrawTileset(screen)
+	//g.DrawTileset(screen)
+	g.DrawTileset(g.world)
 
 	playerOpt := &ebiten.DrawImageOptions{}
-	playerOpt.GeoM.Translate(g.player.gx + 7, g.player.gy + 1)
+	playerOpt.GeoM.Translate(g.player.gx + playerOffsetX, g.player.gy + playerOffsetY)
 	playerOpt.GeoM.Scale(2,2)
-	screen.DrawImage(playerImg.SubImage(image.Rect(g.player.tx, g.player.ty, g.player.tx + tileSize, g.player.ty + tileSize)).(*ebiten.Image), playerOpt)
+	//screen.DrawImage(playerImg.SubImage(image.Rect(g.player.tx, g.player.ty, g.player.tx + tileSize, g.player.ty + tileSize)).(*ebiten.Image), playerOpt)
+	g.world.DrawImage(playerImg.SubImage(image.Rect(g.player.tx, g.player.ty, g.player.tx + tileSize, g.player.ty + tileSize)).(*ebiten.Image), playerOpt)
 
 	/*
 	for _, img := range p1img {
@@ -196,7 +214,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(dotX, dotY);
-	screen.DrawImage(dot, op)
+	g.world.DrawImage(dot, op)
+
+	//screen.DrawImage(g.world, op)
+	g.camera.TransformThenRender(g.world, screen)
 }
 
 func (g *Game) Load(str string) {
@@ -241,6 +262,9 @@ func main() {
 	ebiten.SetWindowResizable(true)
 
 	game := &Game{}
+	game.world, _ = ebiten.NewImage(640, 480, ebiten.FilterDefault)
+	game.camera.x = &game.player.gx
+	game.camera.y = &game.player.gy
 	game.Load("./resources/tilemaps/tilemap.json")
 	fmt.Println(game.tileMap)
 	if err := ebiten.RunGame(game); err != nil {
