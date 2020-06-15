@@ -104,6 +104,7 @@ const(
 func (player *Player) Step(dir Direction) {
 	if player.dir == Static {
 		player.dir = dir
+		player.UpdatePosition()
 	} else {
 		player.frames++
 
@@ -132,6 +133,8 @@ func (player *Player) Step(dir Direction) {
 				player.state = 0
 				if dir == Static || dir != player.dir {
 					player.dir = Static
+				} else {
+					player.UpdatePosition()
 				}
 			}
 		}
@@ -142,6 +145,18 @@ func (player *Player) NextAnim() {
 	player.tx += 34
 	if player.tx >= 34 * 4 {
 		player.tx = 0
+	}
+}
+
+func (player *Player) UpdatePosition() {
+	if player.dir == Up {
+		player.y--
+	} else if player.dir == Down {
+		player.y++
+	} else if player.dir == Left {
+		player.x--
+	} else if player.dir == Right {
+		player.x++
 	}
 }
 
@@ -276,6 +291,8 @@ func main() {
 	game := &Game{}
 	game.world, _ = ebiten.NewImage(640, 480, ebiten.FilterDefault)
 	game.Load("./resources/tilemaps/tilemap.json")
+	game.player.x = 1
+	game.player.y = 1
 	fmt.Println(game.tileMap)
 	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
