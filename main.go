@@ -77,7 +77,7 @@ const framesPerState = 2
 //const playerMaxCycle = 7
 const playerMaxCycle = 8
 //const playerVelocity = float64(tileSize) / float64(playerMaxCycle * framesPerState) // = 2.285714
-const playerVelocity = 16
+const playerVelocity = 2
 const playerOffsetX = 7
 const playerOffsetY = 1
 
