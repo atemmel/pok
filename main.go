@@ -31,7 +31,7 @@ func init() {
 	}
 	p1img = append(p1img, img)
 
-	playerImg, _, err = ebitenutil.NewImageFromFile("./resources/images/lcuas.png", ebiten.FilterDefault)
+	playerImg, _, err = ebitenutil.NewImageFromFile("./resources/images/lucas.png", ebiten.FilterDefault)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,8 +74,10 @@ type TileMap struct {
 }
 
 const framesPerState = 2
-const playerMaxCycle = 7
-const playerVelocity = float64(tileSize) / float64(playerMaxCycle * framesPerState) // = 2.285714
+//const playerMaxCycle = 7
+const playerMaxCycle = 8
+//const playerVelocity = float64(tileSize) / float64(playerMaxCycle * framesPerState) // = 2.285714
+const playerVelocity = 16
 const playerOffsetX = 7
 const playerOffsetY = 1
 
@@ -134,10 +136,8 @@ func (player *Player) Step(dir Direction) {
 					player.dir = Static
 				}
 			}
-
 		}
 	}
-
 }
 
 func (player *Player) NextAnim() {
@@ -201,18 +201,15 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	} else {
 		g.player.Step(Static)
 	}
-
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	//g.DrawTileset(screen)
 	g.DrawTileset(g.world)
 
 	playerOpt := &ebiten.DrawImageOptions{}
 	playerOpt.GeoM.Translate(g.player.gx + playerOffsetX, g.player.gy + playerOffsetY)
 	playerOpt.GeoM.Scale(2,2)
-	//screen.DrawImage(playerImg.SubImage(image.Rect(g.player.tx, g.player.ty, g.player.tx + tileSize, g.player.ty + tileSize)).(*ebiten.Image), playerOpt)
 	g.world.DrawImage(playerImg.SubImage(image.Rect(g.player.tx, g.player.ty, g.player.tx + tileSize, g.player.ty + tileSize)).(*ebiten.Image), playerOpt)
 
 	/*
@@ -225,10 +222,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(selectionX, selectionY);
 	g.world.DrawImage(selection, op)
 
-	//screen.DrawImage(g.world, op)
 	g.camera.LookAt(&g.player)
 	g.camera.TransformThenRender(g.world, screen)
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("camera.x: %f\ncamera.y: %f\nplayer vel: %f", g.camera.x, g.camera.y, playerVelocity) )
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("camera.x: %f\ncamera.y: %f\nplayer vel: %d", g.camera.x, g.camera.y, playerVelocity) )
 }
 
 func (g *Game) Load(str string) {
