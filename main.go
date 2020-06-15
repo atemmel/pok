@@ -15,9 +15,9 @@ import (
 var tileset *ebiten.Image
 var p1img []*ebiten.Image
 var playerImg *ebiten.Image
-var dot *ebiten.Image
-var dotX float64
-var dotY float64
+var selection *ebiten.Image
+var selectionX float64
+var selectionY float64
 
 const (
 	tileSize = 32
@@ -41,21 +41,21 @@ func init() {
 		log.Fatal(err)
 	}
 
-	dot, err = ebiten.NewImage(32, 32, ebiten.FilterDefault)
+	selection, err = ebiten.NewImage(32, 32, ebiten.FilterDefault)
 	if err != nil {
 		panic(err)
 	}
 
-	dotClr := color.RGBA{255, 0, 0, 255}
+	selectionClr := color.RGBA{255, 0, 0, 255}
 
-	for p := 0; p < dot.Bounds().Max.X; p++ {
-		dot.Set(p, 0, dotClr)
-		dot.Set(p, dot.Bounds().Max.Y - 1, dotClr)
+	for p := 0; p < selection.Bounds().Max.X; p++ {
+		selection.Set(p, 0, selectionClr)
+		selection.Set(p, selection.Bounds().Max.Y - 1, selectionClr)
 	}
 
-	for p := 1; p < dot.Bounds().Max.Y - 1; p++ {
-		dot.Set(0, p, dotClr)
-		dot.Set(dot.Bounds().Max.Y - 1, p, dotClr)
+	for p := 1; p < selection.Bounds().Max.Y - 1; p++ {
+		selection.Set(0, p, selectionClr)
+		selection.Set(selection.Bounds().Max.Y - 1, p, selectionClr)
 	}
 }
 
@@ -73,9 +73,9 @@ type TileMap struct {
 	Tiles []int
 }
 
-const framesPerState = 3
-const playerMaxCycle = 4
-const playerVelocity = (tileSize / 2) / playerMaxCycle
+const framesPerState = 2
+const playerMaxCycle = 7
+const playerVelocity = float64(tileSize) / float64(playerMaxCycle * framesPerState) // = 2.285714
 const playerOffsetX = 7
 const playerOffsetY = 1
 
@@ -123,15 +123,18 @@ func (player *Player) Step(dir Direction) {
 				player.gx += playerVelocity
 			}
 
-			if player.state % 2 == 0 {
+			if player.state % 4 == 0 {
 				player.NextAnim()
 			}
+
 			player.state++
 			if player.state == playerMaxCycle {
 				player.state = 0
-				player.dir = Static
-				player.tx = 0
+				if dir == Static || dir != player.dir {
+					player.dir = Static
+				}
 			}
+
 		}
 	}
 
@@ -139,18 +142,24 @@ func (player *Player) Step(dir Direction) {
 
 func (player *Player) NextAnim() {
 	player.tx += 34
+	if player.tx >= 34 * 4 {
+		player.tx = 0
+	}
 }
 
 type Camera struct {
-	x *float64
-	y *float64
+	x float64
+	y float64
+}
+
+func (cam *Camera) LookAt(player *Player) {
+	cam.x = player.gx * 2 - 320 / 2 + tileSize + tileSize / 2
+	cam.y = player.gy * 2 - 240 / 2 + tileSize + tileSize / 2
 }
 
 func (cam *Camera) TransformThenRender(world *ebiten.Image, target *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	if cam.x != nil && cam.y != nil {
-		op.GeoM.Translate(-*cam.x * 2, -*cam.y * 2)
-	}
+	op.GeoM.Translate(-cam.x, -cam.y)
 	target.DrawImage(world, op)
 }
 
@@ -170,8 +179,8 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		cx, cy := ebiten.CursorPosition();
 		cx -= cx % tileSize
 		cy -= cy % tileSize
-		dotX = float64(cx)
-		dotY = float64(cy)
+		selectionX = float64(cx)
+		selectionY = float64(cy)
 		selectedTile =  cx / tileSize + cy / tileSize * g.tileMap.Width
 		fmt.Println("selectedTile:", selectedTile)
 	}
@@ -181,13 +190,13 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		os.Exit(0)
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyUp) {
+	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) {
 		g.player.Step(Up)
-	} else if ebiten.IsKeyPressed(ebiten.KeyDown) {
+	} else if ebiten.IsKeyPressed(ebiten.KeyDown) || ebiten.IsKeyPressed(ebiten.KeyJ) {
 		g.player.Step(Down)
-	} else if ebiten.IsKeyPressed(ebiten.KeyRight) {
+	} else if ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyL) {
 		g.player.Step(Right)
-	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyH) {
 		g.player.Step(Left)
 	} else {
 		g.player.Step(Static)
@@ -213,11 +222,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	*/
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(dotX, dotY);
-	g.world.DrawImage(dot, op)
+	op.GeoM.Translate(selectionX, selectionY);
+	g.world.DrawImage(selection, op)
 
 	//screen.DrawImage(g.world, op)
+	g.camera.LookAt(&g.player)
 	g.camera.TransformThenRender(g.world, screen)
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("camera.x: %f\ncamera.y: %f\nplayer vel: %f", g.camera.x, g.camera.y, playerVelocity) )
 }
 
 func (g *Game) Load(str string) {
@@ -263,8 +274,6 @@ func main() {
 
 	game := &Game{}
 	game.world, _ = ebiten.NewImage(640, 480, ebiten.FilterDefault)
-	game.camera.x = &game.player.gx
-	game.camera.y = &game.player.gy
 	game.Load("./resources/tilemaps/tilemap.json")
 	fmt.Println(game.tileMap)
 	if err := ebiten.RunGame(game); err != nil {
