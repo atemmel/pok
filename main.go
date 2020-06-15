@@ -149,7 +149,7 @@ type Camera struct {
 func (cam *Camera) TransformThenRender(world *ebiten.Image, target *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	if cam.x != nil && cam.y != nil {
-		op.GeoM.Translate(-*cam.x, -*cam.y)
+		op.GeoM.Translate(-*cam.x * 2, -*cam.y * 2)
 	}
 	target.DrawImage(world, op)
 }
