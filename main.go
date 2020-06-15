@@ -74,9 +74,7 @@ type TileMap struct {
 }
 
 const framesPerState = 2
-//const playerMaxCycle = 7
 const playerMaxCycle = 8
-//const playerVelocity = float64(tileSize) / float64(playerMaxCycle * framesPerState) // = 2.285714
 const playerVelocity = 2
 const playerOffsetX = 7
 const playerOffsetY = 1
@@ -177,6 +175,8 @@ func (g *Game) Update(screen *ebiten.Image) error {
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) {
 		cx, cy := ebiten.CursorPosition();
+		cx += int(g.camera.x)
+		cy += int(g.camera.y)
 		cx -= cx % tileSize
 		cy -= cy % tileSize
 		selectionX = float64(cx)
@@ -224,7 +224,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	g.camera.LookAt(&g.player)
 	g.camera.TransformThenRender(g.world, screen)
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("camera.x: %f\ncamera.y: %f\nplayer vel: %d", g.camera.x, g.camera.y, playerVelocity) )
+	ebitenutil.DebugPrint(screen, fmt.Sprintf(
+		`camera.x: %f
+camera.y: %f
+player.x: %d
+player.y: %d`,
+		g.camera.x, g.camera.y, g.player.x, g.player.y) )
 }
 
 func (g *Game) Load(str string) {
