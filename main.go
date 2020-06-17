@@ -16,8 +16,10 @@ var tileset *ebiten.Image
 var p1img []*ebiten.Image
 var playerImg *ebiten.Image
 var selection *ebiten.Image
+var collisionMarker *ebiten.Image
 var selectionX float64
 var selectionY float64
+var m2Pressed = false
 
 const (
 	tileSize = 32
@@ -46,6 +48,11 @@ func init() {
 		panic(err)
 	}
 
+	collisionMarker, err = ebiten.NewImage(32, 32, ebiten.FilterDefault)
+	if err != nil {
+		panic(err)
+	}
+
 	selectionClr := color.RGBA{255, 0, 0, 255}
 
 	for p := 0; p < selection.Bounds().Max.X; p++ {
@@ -56,6 +63,14 @@ func init() {
 	for p := 1; p < selection.Bounds().Max.Y - 1; p++ {
 		selection.Set(0, p, selectionClr)
 		selection.Set(selection.Bounds().Max.Y - 1, p, selectionClr)
+	}
+
+	collisionClr := color.RGBA{255, 0, 255, 255}
+
+	for p := 0; p < 4; p++ {
+		for q := 0; q < 4; q++ {
+			collisionMarker.Set(p, q, collisionClr)
+		}
 	}
 }
 
@@ -71,11 +86,11 @@ type TileMap struct {
 	Width int
 	Height int
 	Tiles []int
+	Collision []bool
 }
 
-const framesPerState = 2
 const playerMaxCycle = 8
-const playerVelocity = 2
+const playerVelocity = 1
 const playerOffsetX = 7
 const playerOffsetY = 1
 
@@ -84,11 +99,12 @@ type Player struct {
 	gy float64
 	x int
 	y int
-	state int
+	animationState int
 	frames int
 	tx int
 	ty int
 	dir Direction
+	isWalking bool
 }
 
 type Direction int
@@ -101,43 +117,62 @@ const(
 	Up Direction = 4
 )
 
-func (player *Player) Step(dir Direction) {
-	if player.dir == Static {
+func (player *Player) TryStep(dir Direction, g *Game) {
+	if !player.isWalking && dir == Static {
+		player.EndAnim()
+		return
+	}
+
+	if !player.isWalking {
 		player.dir = dir
+		ox, oy := player.x, player.y
 		player.UpdatePosition()
-	} else {
-		player.frames++
-
-		if player.frames == framesPerState {
-			player.frames = 0
-			if player.dir == Up {
-				player.ty = 34
-				player.gy += -playerVelocity
-			} else if player.dir == Down {
-				player.ty = 0
-				player.gy += playerVelocity
-			} else if player.dir == Left {
-				player.ty = 34 * 2
-				player.gx += -playerVelocity
-			} else if player.dir == Right {
-				player.ty = 34 * 3
-				player.gx += playerVelocity
-			}
-
-			if player.state % 4 == 0 {
-				player.NextAnim()
-			}
-
-			player.state++
-			if player.state == playerMaxCycle {
-				player.state = 0
-				if dir == Static || dir != player.dir {
-					player.dir = Static
-				} else {
-					player.UpdatePosition()
-				}
-			}
+		index := player.y * g.tileMap.Width + player.x
+		if g.tileMap.Collision[index] {
+			player.x, player.y = ox, oy	// Restore position
+			// Thud noise
+			player.dir = dir
+			player.ChangeAnim()
+			player.Animate()
+			player.isWalking = false
+		} else {
+			player.isWalking = true
 		}
+	} else {
+		player.Animate()
+		player.Step(dir, g)
+	}
+}
+
+func (player *Player) Step(dir Direction, g *Game) {
+	player.frames++
+	if player.dir == Up {
+		player.ty = 34
+		player.gy += -playerVelocity
+	} else if player.dir == Down {
+		player.ty = 0
+		player.gy += playerVelocity
+	} else if player.dir == Left {
+		player.ty = 34 * 2
+		player.gx += -playerVelocity
+	} else if player.dir == Right {
+		player.ty = 34 * 3
+		player.gx += playerVelocity
+	}
+
+	if player.frames == tileSize / 2 {
+		player.isWalking = false
+		player.frames = 0
+	}
+}
+
+func (player *Player) Animate() {
+	if player.animationState % 8 == 0 {
+		player.NextAnim()
+	}
+	player.animationState++
+	if player.animationState == playerMaxCycle {
+		player.animationState = 0
 	}
 }
 
@@ -146,6 +181,23 @@ func (player *Player) NextAnim() {
 	if player.tx >= 34 * 4 {
 		player.tx = 0
 	}
+}
+
+func (player *Player) ChangeAnim() {
+	if player.dir == Up {
+		player.ty = 34
+	} else if player.dir == Down {
+		player.ty = 0
+	} else if player.dir == Left {
+		player.ty = 34 * 2
+	} else if player.dir == Right {
+		player.ty = 34 * 3
+	}
+}
+
+func (player *Player) EndAnim() {
+	player.animationState = 0
+	player.tx = 0
 }
 
 func (player *Player) UpdatePosition() {
@@ -188,6 +240,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		}
 	}
 
+	//TODO Remove code dupe
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) {
 		cx, cy := ebiten.CursorPosition();
 		cx += int(g.camera.x)
@@ -198,6 +251,21 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		selectionY = float64(cy)
 		selectedTile =  cx / tileSize + cy / tileSize * g.tileMap.Width
 		fmt.Println("selectedTile:", selectedTile)
+	} 
+
+	if !m2Pressed && ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
+		m2Pressed = true
+		cx, cy := ebiten.CursorPosition();
+		cx += int(g.camera.x)
+		cy += int(g.camera.y)
+		cx -= cx % tileSize
+		cy -= cy % tileSize
+		selectionX = float64(cx)
+		selectionY = float64(cy)
+		selectedTile =  cx / tileSize + cy / tileSize * g.tileMap.Width
+		g.tileMap.Collision[selectedTile] = !g.tileMap.Collision[selectedTile]
+	} else if !ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
+		m2Pressed = false
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
@@ -206,15 +274,15 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) || ebiten.IsKeyPressed(ebiten.KeyW) {
-		g.player.Step(Up)
+		g.player.TryStep(Up, g)
 	} else if ebiten.IsKeyPressed(ebiten.KeyDown) || ebiten.IsKeyPressed(ebiten.KeyJ) || ebiten.IsKeyPressed(ebiten.KeyS) {
-		g.player.Step(Down)
+		g.player.TryStep(Down, g)
 	} else if ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyL) || ebiten.IsKeyPressed(ebiten.KeyD) {
-		g.player.Step(Right)
+		g.player.TryStep(Right, g)
 	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyH) || ebiten.IsKeyPressed(ebiten.KeyA) {
-		g.player.Step(Left)
+		g.player.TryStep(Left, g)
 	} else {
-		g.player.Step(Static)
+		g.player.TryStep(Static, g)
 	}
 	return nil
 }
@@ -243,14 +311,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		`camera.x: %f
 camera.y: %f
 player.x: %d
-player.y: %d`,
-		g.camera.x, g.camera.y, g.player.x, g.player.y) )
+player.y: %d
+player.isWalking: %t`,
+		g.camera.x, g.camera.y, g.player.x, g.player.y, g.player.isWalking) )
 }
 
 func (g *Game) Load(str string) {
 	data, err := ioutil.ReadFile(str)
 	if err != nil {
-		panic(err)
+		fmt.Println("Web build assumed, dumping default file data...")
+		data = []byte(`
+{"Width":20,"Height":10,"Tiles":[3,0,0,0,5,0,0,0,16,18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,24,26,0,0,0,0,0,0,0,0,0,0,0,0,0,345,0,3,0,4,32,34,0,0,0,0,0,0,0,0,0,0,6,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,630,655,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}`)
+		//panic(err)
 	}
 	err = json.Unmarshal(data, &g.tileMap)
 	if err != nil {
@@ -276,6 +348,9 @@ func (g *Game) DrawTileset(screen *ebiten.Image) {
 		ty := (n / nTilesX) * tileSize
 
 		screen.DrawImage(tileset.SubImage(image.Rect(tx, ty, tx + tileSize, ty + tileSize)).(*ebiten.Image), op)
+		if g.tileMap.Collision[i] {
+			screen.DrawImage(collisionMarker, op)
+		}
 	}
 }
 
@@ -293,7 +368,7 @@ func main() {
 	game.Load("./resources/tilemaps/tilemap.json")
 	game.player.x = 1
 	game.player.y = 1
-	fmt.Println(game.tileMap)
+	game.player.isWalking = false
 	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
 	}
