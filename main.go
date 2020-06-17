@@ -119,7 +119,11 @@ const(
 
 func (player *Player) TryStep(dir Direction, g *Game) {
 	if !player.isWalking && dir == Static {
-		player.EndAnim()
+		if player.animationState != 0 {
+			player.Animate()
+		} else {
+			player.EndAnim()
+		}
 		return
 	}
 
