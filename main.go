@@ -94,7 +94,7 @@ type Game struct{
 	player Player
 	world *ebiten.Image
 	camera Camera
-	client *Client
+	client Client
 }
 
 type TileMap struct {
@@ -286,7 +286,9 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	ticks++
 
 	if ticks % 60 == 0 {
-		go g.client.GetPlayer()
+		if g.client.active {
+			g.client.GetPlayer()
+		}
 	}
 
 	return nil
@@ -367,6 +369,9 @@ func main() {
 	if isServing {
 		return
 	}
+
+	var err error
+
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("Title")
 	ebiten.SetWindowResizable(true)
@@ -376,9 +381,9 @@ func main() {
 	game.Load("./resources/tilemaps/tilemap.json")
 	game.player.X = 1
 	game.player.Y = 1
-	var err error
 	game.client, err = StartClient()
-	defer game.client.conn.Close()
+
+	defer game.client.Close()
 
 	if err = ebiten.RunGame(game); err != nil {
 		panic(err)
