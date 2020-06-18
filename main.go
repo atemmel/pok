@@ -28,16 +28,13 @@ const (
 )
 
 var isServing = false
-var isSending = false
 
 func init() {
 	flag.BoolVar(&isServing, "serve", false, "Run as game server")
-	flag.BoolVar(&isSending, "send", false, "Send dummy message")
 	flag.Parse()
 	if isServing {
-		serve()
-	} else if isSending {
-		sendMsg()
+		server := Server{}
+		server.Serve()
 	} else {
 		initGame()
 	}
@@ -97,6 +94,7 @@ type Game struct{
 	player Player
 	world *ebiten.Image
 	camera Camera
+	client *Client
 }
 
 type TileMap struct {
@@ -112,8 +110,8 @@ const playerOffsetX = 7
 const playerOffsetY = 1
 
 func (player *Player) TryStep(dir Direction, g *Game) {
-	if !player.isWalking && dir == Static {
-		if player.animationState != 0 {
+	if !player.IsWalking && dir == Static {
+		if player.AnimationState != 0 {
 			player.Animate()
 		} else {
 			player.EndAnim()
@@ -121,20 +119,20 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 		return
 	}
 
-	if !player.isWalking {
-		player.dir = dir
-		ox, oy := player.x, player.y
+	if !player.IsWalking {
+		player.Dir = dir
+		ox, oy := player.X, player.Y
 		player.UpdatePosition()
-		index := player.y * g.tileMap.Width + player.x
+		index := player.Y * g.tileMap.Width + player.X
 		if g.tileMap.Collision[index] {
-			player.x, player.y = ox, oy	// Restore position
+			player.X, player.Y = ox, oy	// Restore position
 			// Thud noise
-			player.dir = dir
+			player.Dir = dir
 			player.ChangeAnim()
 			player.Animate()
-			player.isWalking = false
+			player.IsWalking = false
 		} else {
-			player.isWalking = true
+			player.IsWalking = true
 		}
 	} else {
 		player.Animate()
@@ -143,70 +141,70 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 }
 
 func (player *Player) Step(dir Direction, g *Game) {
-	player.frames++
-	if player.dir == Up {
-		player.ty = 34
-		player.gy += -playerVelocity
-	} else if player.dir == Down {
-		player.ty = 0
-		player.gy += playerVelocity
-	} else if player.dir == Left {
-		player.ty = 34 * 2
-		player.gx += -playerVelocity
-	} else if player.dir == Right {
-		player.ty = 34 * 3
-		player.gx += playerVelocity
+	player.Frames++
+	if player.Dir == Up {
+		player.Ty = 34
+		player.Gy += -playerVelocity
+	} else if player.Dir == Down {
+		player.Ty = 0
+		player.Gy += playerVelocity
+	} else if player.Dir == Left {
+		player.Ty = 34 * 2
+		player.Gx += -playerVelocity
+	} else if player.Dir == Right {
+		player.Ty = 34 * 3
+		player.Gx += playerVelocity
 	}
 
-	if player.frames == tileSize / 2 {
-		player.isWalking = false
-		player.frames = 0
+	if player.Frames == tileSize / 2 {
+		player.IsWalking = false
+		player.Frames = 0
 	}
 }
 
 func (player *Player) Animate() {
-	if player.animationState % 8 == 0 {
+	if player.AnimationState % 8 == 0 {
 		player.NextAnim()
 	}
-	player.animationState++
-	if player.animationState == playerMaxCycle {
-		player.animationState = 0
+	player.AnimationState++
+	if player.AnimationState == playerMaxCycle {
+		player.AnimationState = 0
 	}
 }
 
 func (player *Player) NextAnim() {
-	player.tx += 34
-	if player.tx >= 34 * 4 {
-		player.tx = 0
+	player.Tx += 34
+	if player.Tx >= 34 * 4 {
+		player.Tx = 0
 	}
 }
 
 func (player *Player) ChangeAnim() {
-	if player.dir == Up {
-		player.ty = 34
-	} else if player.dir == Down {
-		player.ty = 0
-	} else if player.dir == Left {
-		player.ty = 34 * 2
-	} else if player.dir == Right {
-		player.ty = 34 * 3
+	if player.Dir == Up {
+		player.Ty = 34
+	} else if player.Dir == Down {
+		player.Ty = 0
+	} else if player.Dir == Left {
+		player.Ty = 34 * 2
+	} else if player.Dir == Right {
+		player.Ty = 34 * 3
 	}
 }
 
 func (player *Player) EndAnim() {
-	player.animationState = 0
-	player.tx = 0
+	player.AnimationState = 0
+	player.Tx = 0
 }
 
 func (player *Player) UpdatePosition() {
-	if player.dir == Up {
-		player.y--
-	} else if player.dir == Down {
-		player.y++
-	} else if player.dir == Left {
-		player.x--
-	} else if player.dir == Right {
-		player.x++
+	if player.Dir == Up {
+		player.Y--
+	} else if player.Dir == Down {
+		player.Y++
+	} else if player.Dir == Left {
+		player.X--
+	} else if player.Dir == Right {
+		player.X++
 	}
 }
 
@@ -216,8 +214,8 @@ type Camera struct {
 }
 
 func (cam *Camera) LookAt(player *Player) {
-	cam.x = player.gx * 2 - 320 / 2 + tileSize + tileSize / 2
-	cam.y = player.gy * 2 - 240 / 2 + tileSize + tileSize / 2
+	cam.x = player.Gx * 2 - 320 / 2 + tileSize + tileSize / 2
+	cam.y = player.Gy * 2 - 240 / 2 + tileSize + tileSize / 2
 }
 
 func (cam *Camera) TransformThenRender(world *ebiten.Image, target *ebiten.Image) {
@@ -227,6 +225,8 @@ func (cam *Camera) TransformThenRender(world *ebiten.Image, target *ebiten.Image
 }
 
 var selectedTile = 0
+
+var ticks = 0
 
 func (g *Game) Update(screen *ebiten.Image) error {
 	_, dy := ebiten.Wheel()
@@ -282,6 +282,13 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	} else {
 		g.player.TryStep(Static, g)
 	}
+
+	ticks++
+
+	if ticks % 60 == 0 {
+		go g.client.GetPlayer()
+	}
+
 	return nil
 }
 
@@ -289,9 +296,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.DrawTileset(g.world)
 
 	playerOpt := &ebiten.DrawImageOptions{}
-	playerOpt.GeoM.Translate(g.player.gx + playerOffsetX, g.player.gy + playerOffsetY)
+	playerOpt.GeoM.Translate(g.player.Gx + playerOffsetX, g.player.Gy + playerOffsetY)
 	playerOpt.GeoM.Scale(2,2)
-	g.world.DrawImage(playerImg.SubImage(image.Rect(g.player.tx, g.player.ty, g.player.tx + tileSize, g.player.ty + tileSize)).(*ebiten.Image), playerOpt)
+	g.world.DrawImage(playerImg.SubImage(image.Rect(g.player.Tx, g.player.Ty, g.player.Tx + tileSize, g.player.Ty + tileSize)).(*ebiten.Image), playerOpt)
 
 	/*
 	for _, img := range p1img {
@@ -306,12 +313,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.camera.LookAt(&g.player)
 	g.camera.TransformThenRender(g.world, screen)
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(
-		`camera.x: %f
+`camera.x: %f
 camera.y: %f
 player.x: %d
 player.y: %d
 player.isWalking: %t`,
-		g.camera.x, g.camera.y, g.player.x, g.player.y, g.player.isWalking) )
+		g.camera.x, g.camera.y, g.player.X, g.player.Y, g.player.IsWalking) )
 }
 
 func (g *Game) Load(str string) {
@@ -357,7 +364,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func main() {
-	if isServing || isSending {
+	if isServing {
 		return
 	}
 	ebiten.SetWindowSize(640, 480)
@@ -367,10 +374,13 @@ func main() {
 	game := &Game{}
 	game.world, _ = ebiten.NewImage(640, 480, ebiten.FilterDefault)
 	game.Load("./resources/tilemaps/tilemap.json")
-	game.player.x = 1
-	game.player.y = 1
-	game.player.isWalking = false
-	if err := ebiten.RunGame(game); err != nil {
+	game.player.X = 1
+	game.player.Y = 1
+	var err error
+	game.client, err = StartClient()
+	defer game.client.conn.Close()
+
+	if err = ebiten.RunGame(game); err != nil {
 		panic(err)
 	}
 }

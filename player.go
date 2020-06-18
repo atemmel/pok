@@ -1,16 +1,16 @@
 package main
 
 type Player struct {
-	gx float64
-	gy float64
-	x int
-	y int
-	animationState int
-	frames int
-	tx int
-	ty int
-	dir Direction
-	isWalking bool
+	Gx float64
+	Gy float64
+	X int
+	Y int
+	AnimationState int
+	Frames int
+	Tx int
+	Ty int
+	Dir Direction
+	IsWalking bool
 }
 
 type Direction int

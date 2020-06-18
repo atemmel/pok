@@ -1,56 +1,82 @@
 package main
 
 import (
-	"fmt"
-	"github.com/lonng/nano"
-	"github.com/lonng/nano/component"
-	"github.com/lonng/nano/serialize/json"
-	"github.com/lonng/nano/session"
-	"net/http"
+	"encoding/json"	//TODO Change to protobuf implementation
+	"log"
+	"net"
+	"time"
 )
 
+const MaxConnections = 16
+
 type Server struct {
-	component.Base
-	group *nano.Group
+	listener net.Listener
+	conns []net.Conn
 }
 
-func NewServer() *Server {
-	return &Server{
-		group: nano.NewGroup("server"),
+func (s *Server) Serve() {
+	log.Println("starting tcp server")
+	var err error
+	s.listener, err = net.Listen("tcp", "127.0.0.1:3200")
+	checkError(err)
+
+	go s.distribute()
+
+	for {
+		if conn, err := s.listener.Accept(); err == nil {
+			s.handleConn(conn)
+		}
 	}
 }
 
-func (s *Server) Init() {
-	fmt.Println("Init was run")
+func (s *Server) handleConn(conn net.Conn) {
+	if len(s.conns) >= MaxConnections {
+		log.Println("Maximum number of connections reached")
+		return
+	}
+
+	log.Println("New connection")
+	s.conns = append(s.conns, conn)
 }
 
-func (s *Server) AfterInit() {
-	fmt.Println("AfterInit was run")
+func checkError(err error) {
+	if err != nil {
+		log.Println(err.Error())
+	}
 }
 
-func (s *Server) BeforeShutdown() {
-	fmt.Println("BeforeShutdown was run")
+func (s *Server) distribute() {
+	player := Player{}
+	player.X = 4
+	data, err := json.Marshal(player)
+	checkError(err)
+
+	for {
+		time.Sleep(1000 * time.Millisecond)
+		for i, c := range s.conns {
+			_, err = c.Write(data)
+
+			if err != nil {	// Close connection on error
+				s.conns[i].Close()
+				s.conns = append(s.conns[:i], s.conns[i + 1:]...)
+			}
+		}
+	}
 }
 
-func (s *Server) Shutdown() {
-	fmt.Println("Shutdown was run")
-}
+/*
+func handleConn(conn net.Conn) {
+	log.Println("Client connected!")
+	defer conn.Close()
 
-func (s *Server) JoinHandler(session *session.Session, player *Player) error {
-	fmt.Println("Something joined...")
-	return nil
-}
+	player := Player{}
+	log.Println(player)
+	data, err := json.Marshal(player)
+	checkError(err)
 
-func (s *Server) PlayerHandler(session *session.Session, player *Player) error {
-	fmt.Println("Player did something...")
-	return nil
-}
+	length, err := conn.Write(data)
+	checkError(err)
 
-func serve() {
-	nano.Register(NewServer())
-	nano.SetSerializer(json.NewSerializer())
-	nano.EnableDebug()
-	nano.SetCheckOriginFunc(func(_ *http.Request) bool { return true } )
-	nano.Listen(":3250")
+	log.Println("Sent", length, "bytes of data")
 }
-
+*/
