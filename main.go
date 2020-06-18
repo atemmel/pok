@@ -1,16 +1,15 @@
 package main
 
 import (
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"flag"
 	"fmt"
+	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"io/ioutil"
 	"image"
 	"image/color"
 	"encoding/json"
 	"log"
-	"os"
 )
 
 var tileset *ebiten.Image
@@ -33,7 +32,7 @@ func init() {
 	flag.BoolVar(&isServing, "serve", false, "Run as game server")
 	flag.Parse()
 	if isServing {
-		server := Server{}
+		server := NewServer()
 		server.Serve()
 	} else {
 		initGame()
@@ -267,8 +266,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-		g.Save()
-		os.Exit(0)
+		return nil
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) || ebiten.IsKeyPressed(ebiten.KeyW) {
@@ -287,7 +285,8 @@ func (g *Game) Update(screen *ebiten.Image) error {
 
 	if ticks % 60 == 0 {
 		if g.client.active {
-			g.client.GetPlayer()
+			//g.client.Send(&g.player)
+			//g.client.GetPlayers()
 		}
 	}
 
@@ -381,9 +380,12 @@ func main() {
 	game.Load("./resources/tilemaps/tilemap.json")
 	game.player.X = 1
 	game.player.Y = 1
-	game.client, err = StartClient()
+	game.client = CreateClient()
 
-	defer game.client.Close()
+	game.client.Connect()
+
+	//defer game.client.Close()
+	defer game.Save()
 
 	if err = ebiten.RunGame(game); err != nil {
 		panic(err)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"	//TODO Change to protobuf implementation
 	"log"
 	"net"
 )
@@ -14,33 +13,26 @@ type Client struct {
 	active bool
 }
 
-func StartClient() (Client, error) {
-	log.Println("Attempting to start tcp client")
-	c := Client{}
-	err := error(nil)
-	c.conn, err = net.Dial("tcp", "127.0.0.1:3200")
-	if err != nil {
-		log.Println("tcp client failed to start")
-		c.active = false
-		return c, err
+func CreateClient() Client {
+	return Client{
+		nil,
+		make([]byte, DataLength),
+		false,
 	}
-	c.data = make([]byte, 4096)
-	c.active = true
-	return c, err
 }
 
-func (c *Client) GetPlayer() {
-	length, err := c.conn.Read(c.data)
-	checkError(err)
-
-	player := Player{}
-	err = json.Unmarshal(c.data[:length], &player)
-	checkError(err)
-
-
-	log.Println("player.x was:", player.X)
+func (c *Client) Connect() {
+	log.Println("Attempting to connect to server...")
+	 var err error
+	 c.conn, err = net.Dial("tcp", ":3200")
+	 if err != nil {
+		log.Println("Connection failed")
+	 } else {
+		log.Println("Connection succeeded!")
+		c.active = true
+	 }
 }
 
-func (c *Client) Close() {
-	c.conn.Close()
+func (c *Client) Disconnect() {
+
 }
