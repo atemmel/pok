@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"image"
@@ -26,7 +27,23 @@ const (
 	nTilesX = 8
 )
 
+var isServing = false
+var isSending = false
+
 func init() {
+	flag.BoolVar(&isServing, "serve", false, "Run as game server")
+	flag.BoolVar(&isSending, "send", false, "Send dummy message")
+	flag.Parse()
+	if isServing {
+		serve()
+	} else if isSending {
+		sendMsg()
+	} else {
+		initGame()
+	}
+}
+
+func initGame() {
 	img, _, err := ebitenutil.NewImageFromFile("./resources/images/geng.png", ebiten.FilterDefault)
 	if err != nil {
 		log.Fatal(err)
@@ -93,29 +110,6 @@ const playerMaxCycle = 8
 const playerVelocity = 1
 const playerOffsetX = 7
 const playerOffsetY = 1
-
-type Player struct {
-	gx float64
-	gy float64
-	x int
-	y int
-	animationState int
-	frames int
-	tx int
-	ty int
-	dir Direction
-	isWalking bool
-}
-
-type Direction int
-
-const(
-	Static Direction = 0
-	Down Direction = 1
-	Left Direction = 2
-	Right Direction = 3
-	Up Direction = 4
-)
 
 func (player *Player) TryStep(dir Direction, g *Game) {
 	if !player.isWalking && dir == Static {
@@ -363,6 +357,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func main() {
+	if isServing || isSending {
+		return
+	}
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("Title")
 	ebiten.SetWindowResizable(true)
