@@ -63,7 +63,7 @@ func (c *Client) Connect() int {
 		log.Println("Could not be given an id")
 		return -1
 	}
-	data = data[:len(data) - 1]	// remove newline byte
+	data = data[:len(data) - 1]	// Discard newline byte
 	id, err := strconv.Atoi(string(data))
 	if err != nil {
 		log.Println("Id given (", string(data), ") was not valid")
@@ -86,7 +86,7 @@ func (c *Client) ReadPlayer() {
 		if err != nil {
 			log.Println("Could not read message...")
 		} else {
-			c.rw.Discard(1)
+			c.rw.Discard(1)	// Discard newline byte
 			log.Println("Read:", string(bytes), len(bytes))
 			player := Player{}
 			err := json.Unmarshal(bytes, &player)

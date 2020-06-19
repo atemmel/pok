@@ -284,11 +284,11 @@ func (g *Game) Update(screen *ebiten.Image) error {
 
 	ticks++
 
-	if ticks % 60 == 0 {
-		if g.client.active {
-			g.client.WritePlayer(&g.player)
-		}
+	//if ticks % 1 == 0 {	// Maybe unnecessary?
+	if g.client.active {
+		g.client.WritePlayer(&g.player)
 	}
+	//}
 
 	return nil
 }
