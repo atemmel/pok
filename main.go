@@ -299,6 +299,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if g.client.active {
 		g.client.playerMap.mutex.Lock()
+		fmt.Println(len(g.client.playerMap.players))
 		for _, player := range g.client.playerMap.players {
 			g.DrawPlayer(player)
 		}
@@ -316,8 +317,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 camera.y: %f
 player.x: %d
 player.y: %d
-player.isWalking: %t`,
-		g.camera.x, g.camera.y, g.player.X, g.player.Y, g.player.IsWalking) )
+player.isWalking: %t
+player.id: %d`,
+		g.camera.x, g.camera.y, g.player.X, g.player.Y, g.player.IsWalking, g.player.Id) )
 }
 
 func (g *Game) Load(str string) {
@@ -387,7 +389,7 @@ func main() {
 	game.player.Y = 1
 	game.client = CreateClient()
 
-	game.player.id = game.client.Connect()
+	game.player.Id = game.client.Connect()
 	if game.client.active {
 		go game.client.ReadPlayer()
 	}

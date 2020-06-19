@@ -50,6 +50,7 @@ func (c *Client) Connect() int {
 	c.conn, err = net.Dial("tcp", c.conf.ServerUrl + ":" + c.conf.ServerPort)
 	if err != nil {
 		log.Println("Connection failed")
+		log.Println(err)
 		return -1
 	}
 
@@ -101,7 +102,9 @@ func (c *Client) ReadPlayer() {
 
 func (c *Client) updatePlayer(player Player) {
 	c.playerMap.mutex.Lock()
-	c.playerMap.players[player.id] = player
+	log.Println(len(c.playerMap.players))
+	c.playerMap.players[player.Id] = player
+	log.Println(len(c.playerMap.players))
 	c.playerMap.mutex.Unlock()
 }
 

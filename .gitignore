@@ -1,2 +1,4 @@
 go.sum
 ebiten-test
+*.rar
+*.exe
