@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/hajimehoshi/ebiten"
@@ -266,7 +267,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-		return nil
+		return errors.New("")	//TODO Gotta be a better way to do this
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) || ebiten.IsKeyPressed(ebiten.KeyW) {
@@ -285,7 +286,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 
 	if ticks % 60 == 0 {
 		if g.client.active {
-			//g.client.Send(&g.player)
+			g.client.WritePlayer(&g.player)
 			//g.client.GetPlayers()
 		}
 	}
@@ -383,8 +384,11 @@ func main() {
 	game.client = CreateClient()
 
 	game.client.Connect()
+	if game.client.active {
+		go game.client.ReadPlayer()
+	}
 
-	//defer game.client.Close()
+	defer game.client.Disconnect()
 	defer game.Save()
 
 	if err = ebiten.RunGame(game); err != nil {
