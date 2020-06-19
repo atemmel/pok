@@ -1,12 +1,11 @@
 package main
 
 import (
-	//"encoding/json"	//TODO Change to protobuf implementation
 	"bufio"
-	"encoding/json"
+	"encoding/json"	//TODO Change to protobuf implementation
 	"log"
 	"net"
-	//"time"
+	"strconv"
 )
 
 const MaxConnections = 16
@@ -17,6 +16,7 @@ type Message struct {
 }
 
 type Server struct {
+	conf ServerConfig
 	listener net.Listener
 	conns map[net.Conn] int
 	newConn chan net.Conn
@@ -27,6 +27,7 @@ type Server struct {
 
 func NewServer() Server {
 	return Server {
+		ServerConfig{},
 		nil,
 		make(map[net.Conn]int),
 		make(chan net.Conn),
@@ -39,7 +40,12 @@ func NewServer() Server {
 func (s *Server) Serve() {
 	var err error
 	log.Println("Starting server...")
-	s.listener, err = net.Listen("tcp", ":3200")
+	s.conf, err = ReadServerConfig()
+	if err != nil {
+		log.Println("Could not read server config!")
+		panic(err)
+	}
+	s.listener, err = net.Listen("tcp", s.conf.Url + ":" + s.conf.Port)
 	if err != nil {
 		panic(err)
 	}
@@ -51,8 +57,8 @@ func (s *Server) Serve() {
 	for {
 		select {
 			case conn := <-s.newConn:
-				s.conns[conn] = s.idGen
 				log.Println("New connection with id", s.idGen)
+				s.designate(conn, s.idGen)
 				go s.readClient(conn, s.idGen)
 				s.idGen++
 			case conn := <-s.deadConn:
@@ -95,6 +101,12 @@ func (s *Server) readClient(conn net.Conn, id int) {
 	}
 
 	s.deadConn <- conn
+}
+
+func (s *Server) designate(conn net.Conn, id int) {
+	s.conns[conn] = id
+	msg := strconv.Itoa(id) + "\n"
+	conn.Write([]byte(msg) )
 }
 
 func (s *Server) isValidMessage(bytes []byte) bool {

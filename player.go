@@ -1,6 +1,7 @@
 package main
 
 type Player struct {
+	id int
 	Gx float64
 	Gy float64
 	X int

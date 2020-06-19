@@ -287,7 +287,6 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	if ticks % 60 == 0 {
 		if g.client.active {
 			g.client.WritePlayer(&g.player)
-			//g.client.GetPlayers()
 		}
 	}
 
@@ -296,17 +295,15 @@ func (g *Game) Update(screen *ebiten.Image) error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.DrawTileset(g.world)
+	g.DrawPlayer(g.player)
 
-	playerOpt := &ebiten.DrawImageOptions{}
-	playerOpt.GeoM.Translate(g.player.Gx + playerOffsetX, g.player.Gy + playerOffsetY)
-	playerOpt.GeoM.Scale(2,2)
-	g.world.DrawImage(playerImg.SubImage(image.Rect(g.player.Tx, g.player.Ty, g.player.Tx + tileSize, g.player.Ty + tileSize)).(*ebiten.Image), playerOpt)
-
-	/*
-	for _, img := range p1img {
-		screen.DrawImage(img, nil)
+	if g.client.active {
+		g.client.playerMap.mutex.Lock()
+		for _, player := range g.client.playerMap.players {
+			g.DrawPlayer(player)
+		}
+		g.client.playerMap.mutex.Unlock()
 	}
-	*/
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(selectionX, selectionY);
@@ -346,6 +343,13 @@ func (g *Game) Save() {
 	ioutil.WriteFile(g.path, bytes, 0644)
 }
 
+func (g *Game) DrawPlayer(player Player) {
+	playerOpt := &ebiten.DrawImageOptions{}
+	playerOpt.GeoM.Translate(player.Gx + playerOffsetX, player.Gy + playerOffsetY)
+	playerOpt.GeoM.Scale(2,2)
+	g.world.DrawImage(playerImg.SubImage(image.Rect(player.Tx, player.Ty, player.Tx + tileSize, player.Ty + tileSize)).(*ebiten.Image), playerOpt)
+}
+
 func (g *Game) DrawTileset(screen *ebiten.Image) {
 	for i, n := range g.tileMap.Tiles {
 		op := &ebiten.DrawImageOptions{}
@@ -383,7 +387,7 @@ func main() {
 	game.player.Y = 1
 	game.client = CreateClient()
 
-	game.client.Connect()
+	game.player.id = game.client.Connect()
 	if game.client.active {
 		go game.client.ReadPlayer()
 	}
