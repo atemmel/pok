@@ -86,7 +86,8 @@ func (c *Client) ReadPlayer() {
 		if err != nil {
 			log.Println("Could not read message...")
 		} else {
-			log.Println("Read:", string(bytes))
+			c.rw.Discard(1)
+			log.Println("Read:", string(bytes), len(bytes))
 			player := Player{}
 			err := json.Unmarshal(bytes, &player)
 			if err == nil {
