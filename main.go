@@ -21,12 +21,12 @@ var collisionMarker *ebiten.Image
 var selectionX float64
 var selectionY float64
 var m2Pressed = false
-var keyHeld = 0
+var turnCheck = 0
 
 const (
 	tileSize = 32
 	nTilesX = 8
-	KeyHeldLimit = 5	// Frames
+	TurnCheckLimit = 5	// Frames
 )
 
 var isServing = false
@@ -112,6 +112,11 @@ const playerOffsetY = 0
 
 func (player *Player) TryStep(dir Direction, g *Game) {
 	if !player.isWalking && dir == Static {
+		if turnCheck > 0 && turnCheck < TurnCheckLimit && 
+			player.animationState == 0 {
+			player.Animate()
+		}
+		turnCheck = 0
 		if player.animationState != 0 {
 			player.Animate()
 		} else {
@@ -121,23 +126,34 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 	}
 
 	if !player.isWalking {
-		player.dir = dir
-		ox, oy := player.X, player.Y
-		player.UpdatePosition()
-		if g.TileIsOccupied(player.X, player.Y) {
-			player.X, player.Y = ox, oy	// Restore position
-			// Thud noise
-			player.dir = dir
-			player.ChangeAnim()
-			player.Animate()
-			player.isWalking = false
-		} else {
-			player.isWalking = true
+		if player.dir == dir {
+			turnCheck++
 		}
-	} else {
-		player.Animate()
-		player.Step(dir, g)
+		player.dir = dir
+		player.ChangeAnim()
+		if turnCheck >= TurnCheckLimit {
+			ox, oy := player.X, player.Y
+			player.UpdatePosition()
+			if g.TileIsOccupied(player.X, player.Y) {
+				player.X, player.Y = ox, oy	// Restore position
+				// Thud noise
+				player.dir = dir
+				player.Animate()
+				player.isWalking = false
+			} else {
+				player.isWalking = true
+			}
+		}
 	}
+}
+
+func (player *Player) Update() {
+	if !player.isWalking {
+		return
+	}
+
+	player.Animate()
+	player.Step()
 }
 
 func (g *Game) TileIsOccupied(x int, y int) bool {
@@ -161,7 +177,7 @@ func (g *Game) TileIsOccupied(x int, y int) bool {
 	return false
 }
 
-func (player *Player) Step(dir Direction, g *Game) {
+func (player *Player) Step() {
 	player.frames++
 	if player.dir == Up {
 		player.Ty = 34
@@ -299,6 +315,8 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	} else {
 		g.player.TryStep(Static, g)
 	}
+
+	g.player.Update()
 
 	ticks++
 
