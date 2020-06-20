@@ -108,7 +108,7 @@ type TileMap struct {
 const playerMaxCycle = 8
 const playerVelocity = 2
 const playerOffsetX = 13
-const playerOffsetY = 1
+const playerOffsetY = 0
 
 func (player *Player) TryStep(dir Direction, g *Game) {
 	if !player.isWalking && dir == Static {
