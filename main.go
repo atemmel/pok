@@ -92,9 +92,8 @@ type Game struct{
 	tileMap TileMap
 	path string
 	player Player
-	world *ebiten.Image
-	camera Camera
 	client Client
+	rend Renderer
 }
 
 type TileMap struct {
@@ -105,7 +104,7 @@ type TileMap struct {
 }
 
 const playerMaxCycle = 8
-const playerVelocity = 1
+const playerVelocity = 2
 const playerOffsetX = 7
 const playerOffsetY = 1
 
@@ -228,20 +227,13 @@ func (player *Player) UpdatePosition() {
 	}
 }
 
-type Camera struct {
-	x float64
-	y float64
-}
-
-func (cam *Camera) LookAt(player *Player) {
-	cam.x = player.Gx * 2 - 320 / 2 + tileSize + tileSize / 2
-	cam.y = player.Gy * 2 - 240 / 2 + tileSize + tileSize / 2
-}
-
-func (cam *Camera) TransformThenRender(world *ebiten.Image, target *ebiten.Image) {
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(-cam.x, -cam.y)
-	target.DrawImage(world, op)
+func (g *Game) CenterRendererOnPlayer() {
+	g.rend.LookAt(
+		//g.player.Gx * 2 - 320 / 2 + tileSize + tileSize / 2,
+		//g.player.Gy * 2 - 240 / 2 + tileSize + tileSize / 2,
+		g.player.Gx - 320 / 2 + tileSize + tileSize / 2,
+		g.player.Gy - 240 / 2 + tileSize + tileSize/ 2,
+	)
 }
 
 var selectedTile = 0
@@ -261,8 +253,8 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	//TODO Remove code dupe
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) {
 		cx, cy := ebiten.CursorPosition();
-		cx += int(g.camera.x)
-		cy += int(g.camera.y)
+		cx += int(g.rend.Cam.X)
+		cy += int(g.rend.Cam.Y)
 		cx -= cx % tileSize
 		cy -= cy % tileSize
 		selectionX = float64(cx)
@@ -274,8 +266,8 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	if !m2Pressed && ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
 		m2Pressed = true
 		cx, cy := ebiten.CursorPosition();
-		cx += int(g.camera.x)
-		cy += int(g.camera.y)
+		cx += int(g.rend.Cam.X)
+		cy += int(g.rend.Cam.Y)
 		cx -= cx % tileSize
 		cy -= cy % tileSize
 		selectionX = float64(cx)
@@ -314,32 +306,40 @@ func (g *Game) Update(screen *ebiten.Image) error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	g.DrawTileset(g.world)
-	g.DrawPlayer(g.player)
+	g.DrawTileset()
+	g.DrawPlayer(&g.player)
 
 	if g.client.active {
 		g.client.playerMap.mutex.Lock()
 		fmt.Println(len(g.client.playerMap.players))
 		for _, player := range g.client.playerMap.players {
-			g.DrawPlayer(player)
+			g.DrawPlayer(&player)
 		}
 		g.client.playerMap.mutex.Unlock()
 	}
 
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(selectionX, selectionY);
-	g.world.DrawImage(selection, op)
+	g.rend.Draw(&RenderTarget{
+		&ebiten.DrawImageOptions{},
+		selection,
+		nil,
+		selectionX,
+		selectionY,
+		0,
+	})
 
-	g.camera.LookAt(&g.player)
-	g.camera.TransformThenRender(g.world, screen)
+	g.CenterRendererOnPlayer()
+	g.rend.Display(screen)
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(
 `camera.x: %f
 camera.y: %f
 player.x: %d
 player.y: %d
+player.Gx: %f
+player.Gy: %f
 player.isWalking: %t
 player.id: %d`,
-		g.camera.x, g.camera.y, g.player.X, g.player.Y, g.player.isWalking, g.player.Id) )
+		g.rend.Cam.X, g.rend.Cam.Y, g.player.X, g.player.Y,
+		g.player.Gx, g.player.Gy, g.player.isWalking, g.player.Id) )
 }
 
 func (g *Game) Load(str string) {
@@ -365,24 +365,57 @@ func (g *Game) Save() {
 	ioutil.WriteFile(g.path, bytes, 0644)
 }
 
-func (g *Game) DrawPlayer(player Player) {
+func (g *Game) DrawPlayer(player *Player) {
 	playerOpt := &ebiten.DrawImageOptions{}
-	playerOpt.GeoM.Translate(player.Gx + playerOffsetX, player.Gy + playerOffsetY)
 	playerOpt.GeoM.Scale(2,2)
-	g.world.DrawImage(playerImg.SubImage(image.Rect(player.Tx, player.Ty, player.Tx + tileSize, player.Ty + tileSize)).(*ebiten.Image), playerOpt)
+
+	x := player.Gx + playerOffsetX
+	y := player.Gy + playerOffsetY
+
+	playerRect := image.Rect(
+		player.Tx,
+		player.Ty,
+		player.Tx + tileSize,
+		player.Ty + tileSize,
+	)
+
+	g.rend.Draw(&RenderTarget{
+		playerOpt,
+		playerImg,
+		&playerRect,
+		x,
+		y,
+		1,
+	})
 }
 
-func (g *Game) DrawTileset(screen *ebiten.Image) {
+func (g *Game) DrawTileset() {
 	for i, n := range g.tileMap.Tiles {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(i%g.tileMap.Width)*tileSize, float64(i/g.tileMap.Width)*tileSize)
+		x := float64(i % g.tileMap.Width) * tileSize
+		y := float64(i / g.tileMap.Width) * tileSize
 
 		tx := (n % nTilesX) * tileSize
 		ty := (n / nTilesX) * tileSize
 
-		screen.DrawImage(tileset.SubImage(image.Rect(tx, ty, tx + tileSize, ty + tileSize)).(*ebiten.Image), op)
+		rect := image.Rect(tx, ty, tx + tileSize, ty + tileSize)
+		g.rend.Draw(&RenderTarget{
+			&ebiten.DrawImageOptions{},
+			tileset,
+			&rect,
+			x,
+			y,
+			0,
+		})
+
 		if g.tileMap.Collision[i] {
-			screen.DrawImage(collisionMarker, op)
+			g.rend.Draw(&RenderTarget{
+				&ebiten.DrawImageOptions{},
+				collisionMarker,
+				nil,
+				x,
+				y,
+				100,
+			})
 		}
 	}
 }
@@ -403,7 +436,7 @@ func main() {
 	ebiten.SetWindowResizable(true)
 
 	game := &Game{}
-	game.world, _ = ebiten.NewImage(640, 480, ebiten.FilterDefault)
+	game.rend = NewRenderer(640, 480)
 	game.Load("./resources/tilemaps/tilemap.json")
 	game.player.X = 1
 	game.player.Y = 1
