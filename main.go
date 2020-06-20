@@ -141,6 +141,12 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 
 func (g *Game) TileIsOccupied(x int, y int) bool {
 	index := y * g.tileMap.Width + x
+
+	// Out of bounds check
+	if index >= len(g.tileMap.Tiles) || index < 0 {
+		return true
+	}
+
 	if g.tileMap.Collision[index] {
 		return true
 	}
@@ -244,7 +250,7 @@ var ticks = 0
 
 func (g *Game) Update(screen *ebiten.Image) error {
 	_, dy := ebiten.Wheel()
-	if dy != 0. && len(g.tileMap.Tiles) > selectedTile {
+	if dy != 0. && len(g.tileMap.Tiles) > selectedTile && selectedTile >= 0{
 		if dy < 0 {
 			g.tileMap.Tiles[selectedTile]--
 		} else {
@@ -263,7 +269,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		selectionY = float64(cy)
 		selectedTile =  cx / tileSize + cy / tileSize * g.tileMap.Width
 		fmt.Println("selectedTile:", selectedTile)
-	} 
+	}
 
 	if !m2Pressed && ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
 		m2Pressed = true
