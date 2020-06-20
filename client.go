@@ -85,26 +85,32 @@ func (c *Client) ReadPlayer() {
 	for {
 		bytes, err := c.rw.ReadBytes('\n')
 		if err != nil {
-			log.Println("Could not read message...")
+			//TODO Identify which errors should be ignored and which 
+			//     errors should abort the connection
+			log.Println("Could not read message:", err)
+			c.active = false
+			return
 		} else {
-			c.rw.Discard(1)	// Discard newline byte
-			log.Println("Read:", string(bytes), len(bytes))
 			player := Player{}
 			err := json.Unmarshal(bytes, &player)
 			if err == nil {
-				c.updatePlayer(player)
+				c.updatePlayer(&player)
 			} else {
 				log.Println(err)
+				log.Println("Recieved:", string(bytes))
 			}
 		}
 	}
 }
 
-func (c *Client) updatePlayer(player Player) {
+func (c *Client) updatePlayer(player *Player) {
 	c.playerMap.mutex.Lock()
-	log.Println(len(c.playerMap.players))
-	c.playerMap.players[player.Id] = player
-	log.Println(len(c.playerMap.players))
+	if !player.Connected {	// He disconnected
+		delete(c.playerMap.players, player.Id)
+		log.Println("Player", player.Id, "disconnected")
+	} else {
+		c.playerMap.players[player.Id] = *player
+	}
 	c.playerMap.mutex.Unlock()
 }
 

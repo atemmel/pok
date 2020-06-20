@@ -311,7 +311,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if g.client.active {
 		g.client.playerMap.mutex.Lock()
-		fmt.Println(len(g.client.playerMap.players))
 		for _, player := range g.client.playerMap.players {
 			g.DrawPlayer(&player)
 		}
@@ -444,6 +443,7 @@ func main() {
 
 	game.player.Id = game.client.Connect()
 	if game.client.active {
+		game.player.Connected = true
 		go game.client.ReadPlayer()
 	}
 

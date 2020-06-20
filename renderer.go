@@ -62,7 +62,8 @@ func (r *Renderer) Draw(target *RenderTarget) {
 }
 
 func (r *Renderer) Display(screen *ebiten.Image) {
-	sort.Sort(DrawOrder(r.targets) )
+	r.prepareRenderTargets()
+
 	for _, t := range r.targets {
 		t.Op.GeoM.Translate(t.X, t.Y)
 		if t.SubImage != nil {
@@ -79,5 +80,5 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 }
 
 func (r *Renderer) prepareRenderTargets() {
-	
+	sort.Sort(DrawOrder(r.targets) )
 }

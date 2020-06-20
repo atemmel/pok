@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"sync"
 )
 
 const MaxConnections = 16
@@ -19,6 +20,7 @@ type Server struct {
 	conf ServerConfig
 	listener net.Listener
 	conns map[net.Conn] int
+	connsMutex sync.Mutex
 	newConn chan net.Conn
 	deadConn chan net.Conn
 	messageChan chan Message
@@ -30,6 +32,7 @@ func NewServer() Server {
 		ServerConfig{},
 		nil,
 		make(map[net.Conn]int),
+		sync.Mutex{},
 		make(chan net.Conn),
 		make(chan net.Conn),
 		make(chan Message),
@@ -63,7 +66,7 @@ func (s *Server) Serve() {
 				s.idGen++
 			case conn := <-s.deadConn:
 				log.Println("Connection with id", s.conns[conn], "died")
-				delete(s.conns, conn)
+				s.disconnect(conn)
 			case message := <-s.messageChan:
 				s.broadcast(message)
 		}
@@ -93,10 +96,11 @@ func (s *Server) readClient(conn net.Conn, id int) {
 		if err != nil {
 			break
 		}
-		log.Println("Recieved message from", id)
+
 		if s.isValidMessage(data) {
-			data = append(data, '\n')
 			s.messageChan <- Message{conn, data}
+		} else {
+			log.Println("Ill-formed message recieved:")
 		}
 	}
 
@@ -104,7 +108,10 @@ func (s *Server) readClient(conn net.Conn, id int) {
 }
 
 func (s *Server) designate(conn net.Conn, id int) {
+	s.connsMutex.Lock()
 	s.conns[conn] = id
+	s.connsMutex.Unlock()
+
 	msg := strconv.Itoa(id) + "\n"
 	conn.Write([]byte(msg) )
 }
@@ -112,16 +119,34 @@ func (s *Server) designate(conn net.Conn, id int) {
 func (s *Server) isValidMessage(bytes []byte) bool {
 	player := Player{}
 	err := json.Unmarshal(bytes, &player)
-	if err != nil {
-		log.Println("Ill-formed message recieved:", err)
-	}
 	return err == nil
 }
 
 func (s *Server) broadcast(message Message) {
+	s.connsMutex.Lock()
 	for c := range s.conns {
 		if c != message.author {
 			c.Write(message.contents)
 		}
 	}
+	s.connsMutex.Unlock()
+}
+
+func (s *Server) disconnect(conn net.Conn) {
+	player := Player{}
+
+	s.connsMutex.Lock()
+	player.Id = s.conns[conn]
+	player.Connected = false
+	bytes, _ := json.Marshal(player)
+	bytes = append(bytes, '\n')
+
+	delete(s.conns, conn)
+
+	for c, id := range s.conns {
+		log.Println("Sending kill message from", player.Id, "to", id)
+		c.Write(bytes)
+	}
+	s.connsMutex.Unlock()
+	log.Println("Kill message sent")
 }
