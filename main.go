@@ -21,10 +21,12 @@ var collisionMarker *ebiten.Image
 var selectionX float64
 var selectionY float64
 var m2Pressed = false
+var keyHeld = 0
 
 const (
 	tileSize = 32
 	nTilesX = 8
+	KeyHeldLimit = 5	// Frames
 )
 
 var isServing = false
@@ -105,7 +107,7 @@ type TileMap struct {
 
 const playerMaxCycle = 8
 const playerVelocity = 2
-const playerOffsetX = 7
+const playerOffsetX = 13
 const playerOffsetY = 1
 
 func (player *Player) TryStep(dir Direction, g *Game) {
@@ -282,13 +284,17 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		return errors.New("")	//TODO Gotta be a better way to do this
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) || ebiten.IsKeyPressed(ebiten.KeyW) {
+	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) ||
+		ebiten.IsKeyPressed(ebiten.KeyW) {
 		g.player.TryStep(Up, g)
-	} else if ebiten.IsKeyPressed(ebiten.KeyDown) || ebiten.IsKeyPressed(ebiten.KeyJ) || ebiten.IsKeyPressed(ebiten.KeyS) {
+	} else if ebiten.IsKeyPressed(ebiten.KeyDown) || ebiten.IsKeyPressed(ebiten.KeyJ) ||
+		ebiten.IsKeyPressed(ebiten.KeyS) {
 		g.player.TryStep(Down, g)
-	} else if ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyL) || ebiten.IsKeyPressed(ebiten.KeyD) {
+	} else if ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyL) ||
+		ebiten.IsKeyPressed(ebiten.KeyD) {
 		g.player.TryStep(Right, g)
-	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyH) || ebiten.IsKeyPressed(ebiten.KeyA) {
+	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyH) ||
+		ebiten.IsKeyPressed(ebiten.KeyA) {
 		g.player.TryStep(Left, g)
 	} else {
 		g.player.TryStep(Static, g)
@@ -323,7 +329,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		nil,
 		selectionX,
 		selectionY,
-		0,
+		100,
 	})
 
 	g.CenterRendererOnPlayer()
