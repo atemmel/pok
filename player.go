@@ -6,12 +6,13 @@ type Player struct {
 	Gy float64
 	X int
 	Y int
-	AnimationState int
-	Frames int
 	Tx int
 	Ty int
-	Dir Direction
-	IsWalking bool
+
+	dir Direction
+	isWalking bool
+	animationState int
+	frames int
 }
 
 type Direction int

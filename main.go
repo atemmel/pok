@@ -110,8 +110,8 @@ const playerOffsetX = 7
 const playerOffsetY = 1
 
 func (player *Player) TryStep(dir Direction, g *Game) {
-	if !player.IsWalking && dir == Static {
-		if player.AnimationState != 0 {
+	if !player.isWalking && dir == Static {
+		if player.animationState != 0 {
 			player.Animate()
 		} else {
 			player.EndAnim()
@@ -119,20 +119,19 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 		return
 	}
 
-	if !player.IsWalking {
-		player.Dir = dir
+	if !player.isWalking {
+		player.dir = dir
 		ox, oy := player.X, player.Y
 		player.UpdatePosition()
-		index := player.Y * g.tileMap.Width + player.X
-		if g.tileMap.Collision[index] {
+		if g.TileIsOccupied(player.X, player.Y) {
 			player.X, player.Y = ox, oy	// Restore position
 			// Thud noise
-			player.Dir = dir
+			player.dir = dir
 			player.ChangeAnim()
 			player.Animate()
-			player.IsWalking = false
+			player.isWalking = false
 		} else {
-			player.IsWalking = true
+			player.isWalking = true
 		}
 	} else {
 		player.Animate()
@@ -140,35 +139,50 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 	}
 }
 
+func (g *Game) TileIsOccupied(x int, y int) bool {
+	index := y * g.tileMap.Width + x
+	if g.tileMap.Collision[index] {
+		return true
+	}
+
+	for _, p := range g.client.playerMap.players {
+		if p.X == x && p.Y == y {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (player *Player) Step(dir Direction, g *Game) {
-	player.Frames++
-	if player.Dir == Up {
+	player.frames++
+	if player.dir == Up {
 		player.Ty = 34
 		player.Gy += -playerVelocity
-	} else if player.Dir == Down {
+	} else if player.dir == Down {
 		player.Ty = 0
 		player.Gy += playerVelocity
-	} else if player.Dir == Left {
+	} else if player.dir == Left {
 		player.Ty = 34 * 2
 		player.Gx += -playerVelocity
-	} else if player.Dir == Right {
+	} else if player.dir == Right {
 		player.Ty = 34 * 3
 		player.Gx += playerVelocity
 	}
 
-	if player.Frames == tileSize / 2 {
-		player.IsWalking = false
-		player.Frames = 0
+	if player.frames == tileSize / 2 {
+		player.isWalking = false
+		player.frames = 0
 	}
 }
 
 func (player *Player) Animate() {
-	if player.AnimationState % 8 == 0 {
+	if player.animationState % 8 == 0 {
 		player.NextAnim()
 	}
-	player.AnimationState++
-	if player.AnimationState == playerMaxCycle {
-		player.AnimationState = 0
+	player.animationState++
+	if player.animationState == playerMaxCycle {
+		player.animationState = 0
 	}
 }
 
@@ -180,30 +194,30 @@ func (player *Player) NextAnim() {
 }
 
 func (player *Player) ChangeAnim() {
-	if player.Dir == Up {
+	if player.dir == Up {
 		player.Ty = 34
-	} else if player.Dir == Down {
+	} else if player.dir == Down {
 		player.Ty = 0
-	} else if player.Dir == Left {
+	} else if player.dir == Left {
 		player.Ty = 34 * 2
-	} else if player.Dir == Right {
+	} else if player.dir == Right {
 		player.Ty = 34 * 3
 	}
 }
 
 func (player *Player) EndAnim() {
-	player.AnimationState = 0
+	player.animationState = 0
 	player.Tx = 0
 }
 
 func (player *Player) UpdatePosition() {
-	if player.Dir == Up {
+	if player.dir == Up {
 		player.Y--
-	} else if player.Dir == Down {
+	} else if player.dir == Down {
 		player.Y++
-	} else if player.Dir == Left {
+	} else if player.dir == Left {
 		player.X--
-	} else if player.Dir == Right {
+	} else if player.dir == Right {
 		player.X++
 	}
 }
@@ -319,7 +333,7 @@ player.x: %d
 player.y: %d
 player.isWalking: %t
 player.id: %d`,
-		g.camera.x, g.camera.y, g.player.X, g.player.Y, g.player.IsWalking, g.player.Id) )
+		g.camera.x, g.camera.y, g.player.X, g.player.Y, g.player.isWalking, g.player.Id) )
 }
 
 func (g *Game) Load(str string) {
