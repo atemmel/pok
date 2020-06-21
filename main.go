@@ -106,7 +106,8 @@ type TileMap struct {
 }
 
 const playerMaxCycle = 8
-const playerVelocity = 2
+const playerWalkVelocity = 2
+const playerRunVelocity = 4
 const playerOffsetX = 13
 const playerOffsetY = 0
 
@@ -141,6 +142,11 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 				player.Animate()
 				player.isWalking = false
 			} else {
+				if player.isRunning {
+					player.velocity = playerRunVelocity
+				} else {
+					player.velocity = playerWalkVelocity
+				}
 				player.isWalking = true
 			}
 		}
@@ -181,19 +187,19 @@ func (player *Player) Step() {
 	player.frames++
 	if player.dir == Up {
 		player.Ty = 34
-		player.Gy += -playerVelocity
+		player.Gy += -player.velocity
 	} else if player.dir == Down {
 		player.Ty = 0
-		player.Gy += playerVelocity
+		player.Gy += player.velocity
 	} else if player.dir == Left {
 		player.Ty = 34 * 2
-		player.Gx += -playerVelocity
+		player.Gx += -player.velocity
 	} else if player.dir == Right {
 		player.Ty = 34 * 3
-		player.Gx += playerVelocity
+		player.Gx += player.velocity
 	}
 
-	if player.frames == tileSize / 2 {
+	if player.frames * int(player.velocity) >= tileSize {
 		player.isWalking = false
 		player.frames = 0
 	}
@@ -204,6 +210,7 @@ func (player *Player) Animate() {
 		player.NextAnim()
 	}
 	player.animationState++
+
 	if player.animationState == playerMaxCycle {
 		player.animationState = 0
 	}
@@ -211,9 +218,16 @@ func (player *Player) Animate() {
 
 func (player *Player) NextAnim() {
 	player.Tx += 34
-	if player.Tx >= 34 * 4 {
+	if (player.velocity <= playerWalkVelocity || !player.isWalking) && player.Tx >= 34 * 4 {
 		player.Tx = 0
-	}
+	} else if player.velocity > playerWalkVelocity && player.isWalking {
+		if player.Tx < 170 {
+			player.Tx += 170
+		}
+		if player.Tx >= 170 + 34 * 4 {
+			player.Tx = 170
+		}
+	} 
 }
 
 func (player *Player) ChangeAnim() {
@@ -247,8 +261,6 @@ func (player *Player) UpdatePosition() {
 
 func (g *Game) CenterRendererOnPlayer() {
 	g.rend.LookAt(
-		//g.player.Gx * 2 - 320 / 2 + tileSize + tileSize / 2,
-		//g.player.Gy * 2 - 240 / 2 + tileSize + tileSize / 2,
 		g.player.Gx - 320 / 2 + tileSize + tileSize / 2,
 		g.player.Gy - 240 / 2 + tileSize + tileSize/ 2,
 	)
@@ -299,6 +311,13 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
 		return errors.New("")	//TODO Gotta be a better way to do this
 	}
+
+	if !g.player.isWalking && ebiten.IsKeyPressed(ebiten.KeyShift) {
+		g.player.isRunning = true
+	} else {
+		g.player.isRunning = false
+	}
+
 
 	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) ||
 		ebiten.IsKeyPressed(ebiten.KeyW) {
@@ -357,12 +376,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 camera.y: %f
 player.x: %d
 player.y: %d
-player.Gx: %f
-player.Gy: %f
-player.isWalking: %t
-player.id: %d`,
+player.id: %d
+player.isRunning: %t`,
 		g.rend.Cam.X, g.rend.Cam.Y, g.player.X, g.player.Y,
-		g.player.Gx, g.player.Gy, g.player.isWalking, g.player.Id) )
+		g.player.Id, g.player.isRunning) )
 }
 
 func (g *Game) Load(str string) {

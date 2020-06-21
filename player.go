@@ -12,8 +12,10 @@ type Player struct {
 
 	dir Direction
 	isWalking bool
-	animationState int
+	isRunning bool
 	frames int
+	animationState int
+	velocity float64
 }
 
 type Direction int
