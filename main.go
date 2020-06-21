@@ -22,6 +22,7 @@ var selectionX float64
 var selectionY float64
 var m2Pressed = false
 var turnCheck = 0
+var copyBuffer = 0
 
 const (
 	tileSize = 32
@@ -30,10 +31,19 @@ const (
 )
 
 var isServing = false
+var buildPath = ""
+var buildW = 0
+var buildH = 0
 
 func init() {
 	flag.BoolVar(&isServing, "serve", false, "Run as game server")
+	flag.StringVar(&buildPath, "build", "", "Generates a blank JSON map of dimension NxM")
+	flag.IntVar(&buildW, "width", 10, "Desired width of JSON build")
+	flag.IntVar(&buildH, "height", 10, "Desired height of JSON build")
 	flag.Parse()
+	if len(buildPath) > 0 {
+		return
+	}
 	if isServing {
 		server := NewServer()
 		server.Serve()
@@ -103,13 +113,15 @@ type TileMap struct {
 	Height int
 	Tiles []int
 	Collision []bool
+	EntryX int
+	EntryY int
 }
 
 const playerMaxCycle = 8
 const playerWalkVelocity = 2
 const playerRunVelocity = 4
-const playerOffsetX = 13
-const playerOffsetY = 0
+const playerOffsetX = 13 - tileSize
+const playerOffsetY = 0 - tileSize
 
 func (player *Player) TryStep(dir Direction, g *Game) {
 	if !player.isWalking && dir == Static {
@@ -261,13 +273,12 @@ func (player *Player) UpdatePosition() {
 
 func (g *Game) CenterRendererOnPlayer() {
 	g.rend.LookAt(
-		g.player.Gx - 320 / 2 + tileSize + tileSize / 2,
-		g.player.Gy - 240 / 2 + tileSize + tileSize/ 2,
+		g.player.Gx - 320 / 2 + tileSize / 2,
+		g.player.Gy - 240 / 2 + tileSize / 2,
 	)
 }
 
 var selectedTile = 0
-
 var ticks = 0
 
 func (g *Game) Update(screen *ebiten.Image) error {
@@ -290,7 +301,6 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		selectionX = float64(cx)
 		selectionY = float64(cy)
 		selectedTile =  cx / tileSize + cy / tileSize * g.tileMap.Width
-		fmt.Println("selectedTile:", selectedTile)
 	}
 
 	if !m2Pressed && ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
@@ -303,7 +313,9 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		selectionX = float64(cx)
 		selectionY = float64(cy)
 		selectedTile =  cx / tileSize + cy / tileSize * g.tileMap.Width
-		g.tileMap.Collision[selectedTile] = !g.tileMap.Collision[selectedTile]
+		if 0 <= selectedTile && selectedTile < len(g.tileMap.Tiles) {
+			g.tileMap.Collision[selectedTile] = !g.tileMap.Collision[selectedTile]
+		}
 	} else if !ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
 		m2Pressed = false
 	}
@@ -333,6 +345,18 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		g.player.TryStep(Left, g)
 	} else {
 		g.player.TryStep(Static, g)
+	}
+
+	if ebiten.IsKeyPressed(ebiten.KeyC) {
+		if 0 <= selectedTile && selectedTile < len(g.tileMap.Tiles) {
+			copyBuffer = g.tileMap.Tiles[selectedTile]
+		}
+	}
+
+	if ebiten.IsKeyPressed(ebiten.KeyV) {
+		if 0 <= selectedTile && selectedTile < len(g.tileMap.Tiles) {
+			g.tileMap.Tiles[selectedTile] = copyBuffer
+		}
 	}
 
 	g.player.Update()
@@ -464,8 +488,29 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return 320, 240
 }
 
+func build() {
+	tiles := TileMap{
+		buildW,
+		buildH,
+		make([]int, buildW * buildH),
+		make([]bool, buildW * buildH),
+		buildW / 2,
+		buildH / 2,
+	}
+
+	fmt.Println("Wrote", buildW, "*", buildH, "tileset")
+
+	bytes, _ := json.Marshal(tiles)
+	ioutil.WriteFile(buildPath, bytes, 0644)
+}
+
 func main() {
 	if isServing {
+		return
+	}
+
+	if len(buildPath) > 0 {
+		build()
 		return
 	}
 
@@ -476,10 +521,14 @@ func main() {
 	ebiten.SetWindowResizable(true)
 
 	game := &Game{}
+
 	game.rend = NewRenderer(640, 480)
 	game.Load("./resources/tilemaps/tilemap.json")
-	game.player.X = 1
-	game.player.Y = 1
+	game.player.X = game.tileMap.EntryX
+	game.player.Y = game.tileMap.EntryY
+	game.player.Gx = float64(game.player.X * tileSize)
+	game.player.Gy = float64(game.player.Y * tileSize)
+	fmt.Println(game.player.Gx, game.player.Gy)
 	game.client = CreateClient()
 
 	game.player.Id = game.client.Connect()
