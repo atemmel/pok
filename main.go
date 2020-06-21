@@ -175,6 +175,10 @@ func (player *Player) Update() {
 }
 
 func (g *Game) TileIsOccupied(x int, y int) bool {
+	if x < 0 || x >= g.tileMap.Width || y < 0 ||  y >= g.tileMap.Height {
+		return true
+	}
+
 	index := y * g.tileMap.Width + x
 
 	// Out of bounds check
@@ -498,7 +502,7 @@ func build() {
 		buildH / 2,
 	}
 
-	fmt.Println("Wrote", buildW, "*", buildH, "tileset")
+	fmt.Println("Wrote", buildW, "*", buildH, "=", buildW * buildH, "tileset")
 
 	bytes, _ := json.Marshal(tiles)
 	ioutil.WriteFile(buildPath, bytes, 0644)
@@ -522,13 +526,12 @@ func main() {
 
 	game := &Game{}
 
-	game.rend = NewRenderer(640, 480)
 	game.Load("./resources/tilemaps/tilemap.json")
 	game.player.X = game.tileMap.EntryX
 	game.player.Y = game.tileMap.EntryY
 	game.player.Gx = float64(game.player.X * tileSize)
 	game.player.Gy = float64(game.player.Y * tileSize)
-	fmt.Println(game.player.Gx, game.player.Gy)
+	game.rend = NewRenderer(game.tileMap.Width * tileSize, game.tileMap.Height * tileSize)
 	game.client = CreateClient()
 
 	game.player.Id = game.client.Connect()
