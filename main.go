@@ -18,14 +18,18 @@ var p1img []*ebiten.Image
 var playerImg *ebiten.Image
 var selection *ebiten.Image
 var collisionMarker *ebiten.Image
-var selectionX float64
-var selectionY float64
+var exitMarker *ebiten.Image
+var selectionX int
+var selectionY int
 var m2Pressed = false
+var m3Pressed = false
 var copyBuffer = 0
+
 
 const (
 	tileSize = 32
 	nTilesX = 8
+	TileMapDir =  "./resources/tilemaps/"
 )
 
 var isServing = false
@@ -35,11 +39,18 @@ var buildH = 0
 var selectedTile = 0
 var ticks = 0
 
+type Exit struct {
+	Target string
+	X int
+	Y int
+}
+
 type TileMap struct {
-	Width int
-	Height int
 	Tiles []int
 	Collision []bool
+	Exits []Exit
+	Width int
+	Height int
 	EntryX int
 	EntryY int
 }
@@ -96,6 +107,11 @@ func initGame() {
 		panic(err)
 	}
 
+	exitMarker, err = ebiten.NewImage(32, 32, ebiten.FilterDefault)
+	if err != nil {
+		panic(err)
+	}
+
 	selectionClr := color.RGBA{255, 0, 0, 255}
 
 	for p := 0; p < selection.Bounds().Max.X; p++ {
@@ -115,6 +131,23 @@ func initGame() {
 			collisionMarker.Set(p, q, collisionClr)
 		}
 	}
+
+	exitClr := color.RGBA{0, 0, 255, 255}
+
+	for p:= 0; p < 4; p++ {
+		for q := 0; q < 4; q++ {
+			exitMarker.Set(p + 14, q, exitClr)
+		}
+	}
+}
+
+func (t *TileMap) HasExitAt(x, y int) int {
+	for i := range t.Exits {
+		if t.Exits[i].X == x && t.Exits[i].Y == y {
+			return i
+		}
+	}
+	return -1
 }
 
 func (g *Game) TileIsOccupied(x int, y int) bool {
@@ -149,6 +182,16 @@ func (g *Game) CenterRendererOnPlayer() {
 	)
 }
 
+func (g *Game) SelectTileFromMouse(cx, cy int) {
+	cx += int(g.rend.Cam.X)
+	cy += int(g.rend.Cam.Y)
+	cx -= cx % tileSize
+	cy -= cy % tileSize
+	selectionX = cx / tileSize
+	selectionY = cy / tileSize
+	selectedTile =  selectionX + selectionY * g.tileMap.Width
+}
+
 func (g *Game) Update(screen *ebiten.Image) error {
 	_, dy := ebiten.Wheel()
 	if dy != 0. && len(g.tileMap.Tiles) > selectedTile && selectedTile >= 0{
@@ -159,33 +202,40 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		}
 	}
 
-	//TODO Remove code dupe
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) {
 		cx, cy := ebiten.CursorPosition();
-		cx += int(g.rend.Cam.X)
-		cy += int(g.rend.Cam.Y)
-		cx -= cx % tileSize
-		cy -= cy % tileSize
-		selectionX = float64(cx)
-		selectionY = float64(cy)
-		selectedTile =  cx / tileSize + cy / tileSize * g.tileMap.Width
+		g.SelectTileFromMouse(cx, cy)
 	}
 
 	if !m2Pressed && ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
 		m2Pressed = true
 		cx, cy := ebiten.CursorPosition();
-		cx += int(g.rend.Cam.X)
-		cy += int(g.rend.Cam.Y)
-		cx -= cx % tileSize
-		cy -= cy % tileSize
-		selectionX = float64(cx)
-		selectionY = float64(cy)
-		selectedTile =  cx / tileSize + cy / tileSize * g.tileMap.Width
+		g.SelectTileFromMouse(cx, cy)
 		if 0 <= selectedTile && selectedTile < len(g.tileMap.Tiles) {
 			g.tileMap.Collision[selectedTile] = !g.tileMap.Collision[selectedTile]
 		}
 	} else if !ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
 		m2Pressed = false
+	}
+
+	if !m3Pressed && ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) {
+		m3Pressed = true
+		cx, cy := ebiten.CursorPosition();
+		g.SelectTileFromMouse(cx, cy)
+		if 0 <= selectedTile && selectedTile < len(g.tileMap.Tiles) {
+			if i := g.tileMap.HasExitAt(selectionX, selectionY); i != -1 {
+				g.tileMap.Exits[i] = g.tileMap.Exits[len(g.tileMap.Exits) - 1]
+				g.tileMap.Exits = g.tileMap.Exits[:len(g.tileMap.Exits) - 1]
+			} else {
+				g.tileMap.Exits = append(g.tileMap.Exits, Exit{
+					"",
+					selectionX,
+					selectionY,
+				})
+			}
+		}
+	} else if !ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) {
+		m3Pressed = false
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
@@ -227,7 +277,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		}
 	}
 
-	g.player.Update()
+	g.player.Update(g)
 
 	ticks++
 
@@ -256,8 +306,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		&ebiten.DrawImageOptions{},
 		selection,
 		nil,
-		selectionX,
-		selectionY,
+		float64(selectionX * tileSize),
+		float64(selectionY * tileSize),
 		100,
 	})
 
@@ -284,6 +334,15 @@ func (g *Game) Load(str string) {
 		panic(err)
 	}
 	g.path = str
+	g.player.X = g.tileMap.EntryX
+	g.player.Y = g.tileMap.EntryY
+	g.player.Gx = float64(g.player.X * tileSize)
+	g.player.Gy = float64(g.player.Y * tileSize)
+	g.rend = NewRenderer(g.tileMap.Width * tileSize,
+		g.tileMap.Height * tileSize,
+		320,
+		240,
+	)
 }
 
 func (g *Game) Save() {
@@ -347,6 +406,17 @@ func (g *Game) DrawTileset() {
 			})
 		}
 	}
+
+	for i := range g.tileMap.Exits {
+		g.rend.Draw(&RenderTarget{
+			&ebiten.DrawImageOptions{},
+			exitMarker,
+			nil,
+			float64(g.tileMap.Exits[i].X * tileSize),
+			float64(g.tileMap.Exits[i].Y * tileSize),
+			100,
+		})
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -356,10 +426,11 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func build() {
 	tiles := TileMap{
-		buildW,
-		buildH,
 		make([]int, buildW * buildH),
 		make([]bool, buildW * buildH),
+		make([]Exit, 0),
+		buildW,
+		buildH,
 		buildW / 2,
 		buildH / 2,
 	}
@@ -388,16 +459,7 @@ func main() {
 
 	game := &Game{}
 
-	game.Load("./resources/tilemaps/tilemap.json")
-	game.player.X = game.tileMap.EntryX
-	game.player.Y = game.tileMap.EntryY
-	game.player.Gx = float64(game.player.X * tileSize)
-	game.player.Gy = float64(game.player.Y * tileSize)
-	game.rend = NewRenderer(game.tileMap.Width * tileSize,
-		game.tileMap.Height * tileSize,
-		320,
-		240,
-	)
+	game.Load(TileMapDir + "old.json")
 	game.client = CreateClient()
 
 	game.player.Id = game.client.Connect()

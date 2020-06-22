@@ -80,16 +80,16 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 	}
 }
 
-func (player *Player) Update() {
+func (player *Player) Update(g *Game) {
 	if !player.isWalking {
 		return
 	}
 
 	player.Animate()
-	player.Step()
+	player.Step(g)
 }
 
-func (player *Player) Step() {
+func (player *Player) Step(g *Game) {
 	player.frames++
 	if player.dir == Up {
 		player.Ty = 34
@@ -108,6 +108,11 @@ func (player *Player) Step() {
 	if player.frames * int(player.velocity) >= tileSize {
 		player.isWalking = false
 		player.frames = 0
+		if i := g.tileMap.HasExitAt(player.X, player.Y); i != -1 {
+			if g.tileMap.Exits[i].Target != "" {
+				g.Load(TileMapDir + g.tileMap.Exits[i].Target)
+			}
+		}
 	}
 }
 
