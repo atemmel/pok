@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/hajimehoshi/ebiten"
 	"image"
+	"image/color"
 	"sort"
 )
 
@@ -35,6 +36,8 @@ func (do DrawOrder) Less(i, j int) bool {
 type Camera struct {
 	X float64
 	Y float64
+	W int
+	H int
 }
 
 type Renderer struct {
@@ -43,12 +46,12 @@ type Renderer struct {
 	Cam Camera
 }
 
-func NewRenderer(width int, height int) Renderer {
-	img, _ := ebiten.NewImage(width, height, ebiten.FilterDefault)
+func NewRenderer(destWidth int, destHeight int, screenWidth int, screenHeight int) Renderer {
+	img, _ := ebiten.NewImage(destWidth, destHeight, ebiten.FilterDefault)
 	return Renderer {
 		img,
 		make([]RenderTarget, 0),
-		Camera{},
+		Camera{0, 0, screenWidth, screenHeight},
 	}
 }
 
@@ -62,6 +65,8 @@ func (r *Renderer) Draw(target *RenderTarget) {
 }
 
 func (r *Renderer) Display(screen *ebiten.Image) {
+	r.clear()
+	r.cullRenderTargets()
 	r.prepareRenderTargets()
 
 	for _, t := range r.targets {
@@ -81,4 +86,33 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 
 func (r *Renderer) prepareRenderTargets() {
 	sort.Sort(DrawOrder(r.targets) )
+}
+
+func (r *Renderer) cullRenderTargets() {
+	rect := image.Rect(int(r.Cam.X), int(r.Cam.Y), int(r.Cam.X) + r.Cam.W, int(r.Cam.Y) + r.Cam.H)
+	for i := 0; i < len(r.targets); i++ {
+		prospect := image.Rect(
+			int(r.targets[i].X),
+			int(r.targets[i].Y),
+			int(r.targets[i].X),
+			int(r.targets[i].Y),
+		)
+
+		if r.targets[i].SubImage != nil {
+			prospect.Max.X += r.targets[i].SubImage.Max.X - r.targets[i].SubImage.Min.X
+			prospect.Max.Y += r.targets[i].SubImage.Max.Y - r.targets[i].SubImage.Min.Y
+		} else {
+			prospect.Max.X += r.targets[i].Src.Bounds().Max.X
+			prospect.Max.Y += r.targets[i].Src.Bounds().Max.Y
+		}
+
+		if !rect.Overlaps(prospect) {
+			r.targets[i] = r.targets[len(r.targets) - 1] // Copy last element
+			r.targets = r.targets[:len(r.targets) - 1]	// Pop back
+		}
+	}
+}
+
+func (r *Renderer) clear() {
+	r.dest.Fill(color.Black)
 }

@@ -490,6 +490,7 @@ func (g *Game) DrawTileset() {
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return 320, 240
+	//return 640, 480
 }
 
 func build() {
@@ -531,7 +532,11 @@ func main() {
 	game.player.Y = game.tileMap.EntryY
 	game.player.Gx = float64(game.player.X * tileSize)
 	game.player.Gy = float64(game.player.Y * tileSize)
-	game.rend = NewRenderer(game.tileMap.Width * tileSize, game.tileMap.Height * tileSize)
+	game.rend = NewRenderer(game.tileMap.Width * tileSize,
+		game.tileMap.Height * tileSize,
+		320,
+		240,
+	)
 	game.client = CreateClient()
 
 	game.player.Id = game.client.Connect()
