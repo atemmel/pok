@@ -21,19 +21,36 @@ var collisionMarker *ebiten.Image
 var selectionX float64
 var selectionY float64
 var m2Pressed = false
-var turnCheck = 0
 var copyBuffer = 0
 
 const (
 	tileSize = 32
 	nTilesX = 8
-	TurnCheckLimit = 5	// Frames
 )
 
 var isServing = false
 var buildPath = ""
 var buildW = 0
 var buildH = 0
+var selectedTile = 0
+var ticks = 0
+
+type TileMap struct {
+	Width int
+	Height int
+	Tiles []int
+	Collision []bool
+	EntryX int
+	EntryY int
+}
+
+type Game struct{
+	tileMap TileMap
+	path string
+	player Player
+	client Client
+	rend Renderer
+}
 
 func init() {
 	flag.BoolVar(&isServing, "serve", false, "Run as game server")
@@ -100,80 +117,6 @@ func initGame() {
 	}
 }
 
-type Game struct{
-	tileMap TileMap
-	path string
-	player Player
-	client Client
-	rend Renderer
-}
-
-type TileMap struct {
-	Width int
-	Height int
-	Tiles []int
-	Collision []bool
-	EntryX int
-	EntryY int
-}
-
-const playerMaxCycle = 8
-const playerWalkVelocity = 2
-const playerRunVelocity = 4
-const playerOffsetX = 13 - tileSize
-const playerOffsetY = 0 - tileSize
-
-func (player *Player) TryStep(dir Direction, g *Game) {
-	if !player.isWalking && dir == Static {
-		if turnCheck > 0 && turnCheck < TurnCheckLimit && 
-			player.animationState == 0 {
-			player.Animate()
-		}
-		turnCheck = 0
-		if player.animationState != 0 {
-			player.Animate()
-		} else {
-			player.EndAnim()
-		}
-		return
-	}
-
-	if !player.isWalking {
-		if player.dir == dir {
-			turnCheck++
-		}
-		player.dir = dir
-		player.ChangeAnim()
-		if turnCheck >= TurnCheckLimit {
-			ox, oy := player.X, player.Y
-			player.UpdatePosition()
-			if g.TileIsOccupied(player.X, player.Y) {
-				player.X, player.Y = ox, oy	// Restore position
-				// Thud noise
-				player.dir = dir
-				player.Animate()
-				player.isWalking = false
-			} else {
-				if player.isRunning {
-					player.velocity = playerRunVelocity
-				} else {
-					player.velocity = playerWalkVelocity
-				}
-				player.isWalking = true
-			}
-		}
-	}
-}
-
-func (player *Player) Update() {
-	if !player.isWalking {
-		return
-	}
-
-	player.Animate()
-	player.Step()
-}
-
 func (g *Game) TileIsOccupied(x int, y int) bool {
 	if x < 0 || x >= g.tileMap.Width || y < 0 ||  y >= g.tileMap.Height {
 		return true
@@ -199,91 +142,12 @@ func (g *Game) TileIsOccupied(x int, y int) bool {
 	return false
 }
 
-func (player *Player) Step() {
-	player.frames++
-	if player.dir == Up {
-		player.Ty = 34
-		player.Gy += -player.velocity
-	} else if player.dir == Down {
-		player.Ty = 0
-		player.Gy += player.velocity
-	} else if player.dir == Left {
-		player.Ty = 34 * 2
-		player.Gx += -player.velocity
-	} else if player.dir == Right {
-		player.Ty = 34 * 3
-		player.Gx += player.velocity
-	}
-
-	if player.frames * int(player.velocity) >= tileSize {
-		player.isWalking = false
-		player.frames = 0
-	}
-}
-
-func (player *Player) Animate() {
-	if player.animationState % 8 == 0 {
-		player.NextAnim()
-	}
-	player.animationState++
-
-	if player.animationState == playerMaxCycle {
-		player.animationState = 0
-	}
-}
-
-func (player *Player) NextAnim() {
-	player.Tx += 34
-	if (player.velocity <= playerWalkVelocity || !player.isWalking) && player.Tx >= 34 * 4 {
-		player.Tx = 0
-	} else if player.velocity > playerWalkVelocity && player.isWalking {
-		if player.Tx < 170 {
-			player.Tx += 170
-		}
-		if player.Tx >= 170 + 34 * 4 {
-			player.Tx = 170
-		}
-	} 
-}
-
-func (player *Player) ChangeAnim() {
-	if player.dir == Up {
-		player.Ty = 34
-	} else if player.dir == Down {
-		player.Ty = 0
-	} else if player.dir == Left {
-		player.Ty = 34 * 2
-	} else if player.dir == Right {
-		player.Ty = 34 * 3
-	}
-}
-
-func (player *Player) EndAnim() {
-	player.animationState = 0
-	player.Tx = 0
-}
-
-func (player *Player) UpdatePosition() {
-	if player.dir == Up {
-		player.Y--
-	} else if player.dir == Down {
-		player.Y++
-	} else if player.dir == Left {
-		player.X--
-	} else if player.dir == Right {
-		player.X++
-	}
-}
-
 func (g *Game) CenterRendererOnPlayer() {
 	g.rend.LookAt(
 		g.player.Gx - 320 / 2 + tileSize / 2,
 		g.player.Gy - 240 / 2 + tileSize / 2,
 	)
 }
-
-var selectedTile = 0
-var ticks = 0
 
 func (g *Game) Update(screen *ebiten.Image) error {
 	_, dy := ebiten.Wheel()
@@ -413,10 +277,7 @@ player.isRunning: %t`,
 func (g *Game) Load(str string) {
 	data, err := ioutil.ReadFile(str)
 	if err != nil {
-		fmt.Println("Web build assumed, dumping default file data...")
-		data = []byte(`
-{"Width":20,"Height":10,"Tiles":[3,0,0,0,5,0,0,0,16,18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,24,26,0,0,0,0,0,0,0,0,0,0,0,0,0,345,0,3,0,4,32,34,0,0,0,0,0,0,0,0,0,0,6,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,630,655,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}`)
-		//panic(err)
+		panic(err)
 	}
 	err = json.Unmarshal(data, &g.tileMap)
 	if err != nil {
