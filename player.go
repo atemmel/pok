@@ -9,6 +9,7 @@ type Player struct {
 	Tx int
 	Ty int
 	Connected bool
+	Location string
 
 	dir Direction
 	isWalking bool

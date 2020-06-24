@@ -57,7 +57,6 @@ type TileMap struct {
 
 type Game struct{
 	tileMap TileMap
-	path string
 	player Player
 	client Client
 	rend Renderer
@@ -297,7 +296,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.client.active {
 		g.client.playerMap.mutex.Lock()
 		for _, player := range g.client.playerMap.players {
-			g.DrawPlayer(&player)
+			if player.Location == g.player.Location {
+				g.DrawPlayer(&player)
+			}
 		}
 		g.client.playerMap.mutex.Unlock()
 	}
@@ -333,7 +334,7 @@ func (g *Game) Load(str string) {
 	if err != nil {
 		panic(err)
 	}
-	g.path = str
+	g.player.Location = str
 	g.player.X = g.tileMap.EntryX
 	g.player.Y = g.tileMap.EntryY
 	g.player.Gx = float64(g.player.X * tileSize)
@@ -350,7 +351,7 @@ func (g *Game) Save() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	ioutil.WriteFile(g.path, bytes, 0644)
+	ioutil.WriteFile(g.player.Location, bytes, 0644)
 }
 
 func (g *Game) DrawPlayer(player *Player) {
