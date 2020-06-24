@@ -41,6 +41,13 @@ var ticks = 0
 
 type Exit struct {
 	Target string
+	Id int
+	X int
+	Y int
+}
+
+type Entry struct {
+	Id int
 	X int
 	Y int
 }
@@ -49,10 +56,9 @@ type TileMap struct {
 	Tiles []int
 	Collision []bool
 	Exits []Exit
+	Entries []Entry
 	Width int
 	Height int
-	EntryX int
-	EntryY int
 }
 
 type Game struct{
@@ -228,6 +234,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 			} else {
 				g.tileMap.Exits = append(g.tileMap.Exits, Exit{
 					"",
+					0,
 					selectionX,
 					selectionY,
 				})
@@ -325,7 +332,7 @@ player.isRunning: %t`,
 		g.player.Id, g.player.isRunning) )
 }
 
-func (g *Game) Load(str string) {
+func (g *Game) Load(str string, entrypoint int) {
 	data, err := ioutil.ReadFile(str)
 	if err != nil {
 		panic(err)
@@ -335,8 +342,8 @@ func (g *Game) Load(str string) {
 		panic(err)
 	}
 	g.player.Location = str
-	g.player.X = g.tileMap.EntryX
-	g.player.Y = g.tileMap.EntryY
+	g.player.X = g.tileMap.Entries[entrypoint].X
+	g.player.Y = g.tileMap.Entries[entrypoint].Y
 	g.player.Gx = float64(g.player.X * tileSize)
 	g.player.Gy = float64(g.player.Y * tileSize)
 	g.rend = NewRenderer(g.tileMap.Width * tileSize,
@@ -430,10 +437,9 @@ func build() {
 		make([]int, buildW * buildH),
 		make([]bool, buildW * buildH),
 		make([]Exit, 0),
+		make([]Entry, 0),
 		buildW,
 		buildH,
-		buildW / 2,
-		buildH / 2,
 	}
 
 	fmt.Println("Wrote", buildW, "*", buildH, "=", buildW * buildH, "tileset")
@@ -460,7 +466,7 @@ func main() {
 
 	game := &Game{}
 
-	game.Load(TileMapDir + "old.json")
+	game.Load(TileMapDir + "old.json", 0)
 	game.client = CreateClient()
 
 	game.player.Id = game.client.Connect()

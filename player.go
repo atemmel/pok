@@ -111,7 +111,7 @@ func (player *Player) Step(g *Game) {
 		player.frames = 0
 		if i := g.tileMap.HasExitAt(player.X, player.Y); i != -1 {
 			if g.tileMap.Exits[i].Target != "" {
-				g.Load(TileMapDir + g.tileMap.Exits[i].Target)
+				g.Load(TileMapDir + g.tileMap.Exits[i].Target, i)
 			}
 		}
 	}
