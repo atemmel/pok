@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/audio"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"io/ioutil"
 	"image"
@@ -24,6 +25,7 @@ var selectionY int
 var m2Pressed = false
 var m3Pressed = false
 var copyBuffer = 0
+var audioContext *audio.Context
 
 
 const (
@@ -66,6 +68,7 @@ type Game struct{
 	player Player
 	client Client
 	rend Renderer
+	audio Audio
 }
 
 func init() {
@@ -468,6 +471,9 @@ func main() {
 
 	game.Load(TileMapDir + "old.json", 0)
 	game.client = CreateClient()
+	game.audio = NewAudio()
+
+	game.audio.audioPlayer.Play()
 
 	game.player.Id = game.client.Connect()
 	if game.client.active {
