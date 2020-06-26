@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	"io/ioutil"
 	"image"
 	"image/color"
-	"encoding/json"
 	"log"
 )
 
@@ -26,7 +26,6 @@ var m2Pressed = false
 var m3Pressed = false
 var copyBuffer = 0
 var audioContext *audio.Context
-
 
 const (
 	tileSize = 32
@@ -256,7 +255,6 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	} else {
 		g.player.isRunning = false
 	}
-
 
 	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) ||
 		ebiten.IsKeyPressed(ebiten.KeyW) {

@@ -66,6 +66,9 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 			if g.TileIsOccupied(player.X, player.Y) {
 				player.X, player.Y = ox, oy	// Restore position
 				// Thud noise
+				if player.animationState == playerMaxCycle -1 {
+					g.audio.PlayThud()
+				}
 				player.dir = dir
 				player.Animate()
 				player.isWalking = false
