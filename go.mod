@@ -1,4 +1,4 @@
-module github.com/atemmel/ebiten-test
+module github.com/atemmel/pok
 
 go 1.14
 
