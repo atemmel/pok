@@ -112,9 +112,9 @@ func (player *Player) Step(g *Game) {
 	if player.frames * int(player.velocity) >= tileSize {
 		player.isWalking = false
 		player.frames = 0
-		if i := g.tileMap.HasExitAt(player.X, player.Y); i != -1 {
-			if g.tileMap.Exits[i].Target != "" {
-				g.Load(TileMapDir + g.tileMap.Exits[i].Target, i)
+		if i := g.ows.tileMap.HasExitAt(player.X, player.Y); i != -1 {
+			if g.ows.tileMap.Exits[i].Target != "" {
+				g.Load(TileMapDir + g.ows.tileMap.Exits[i].Target, i)
 			}
 		}
 	}
@@ -142,7 +142,7 @@ func (player *Player) NextAnim() {
 		if player.Tx >= 170 + 34 * 4 {
 			player.Tx = 170
 		}
-	} 
+	}
 }
 
 func (player *Player) ChangeAnim() {
