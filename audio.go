@@ -7,6 +7,8 @@ import (
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 )
 
+const volume = 0.2
+
 type Audio struct {
 	audioContext *audio.Context
 	audioPlayer *audio.Player
@@ -57,6 +59,11 @@ func NewAudio() Audio {
 	if err != nil {
 		panic(err)
 	}
+
+	player.SetVolume(volume)
+	thud.SetVolume(volume)
+	door.SetVolume(volume)
+
 	return Audio{
 		ctx,
 		player,
