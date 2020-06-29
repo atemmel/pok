@@ -23,28 +23,6 @@ var buildPath = ""
 var buildW = 0
 var buildH = 0
 
-type Exit struct {
-	Target string
-	Id int
-	X int
-	Y int
-}
-
-type Entry struct {
-	Id int
-	X int
-	Y int
-}
-
-type TileMap struct {
-	Tiles []int
-	Collision []bool
-	Exits []Exit
-	Entries []Entry
-	Width int
-	Height int
-}
-
 type Game struct {
 	ows OverworldState
 	as GameState
@@ -136,7 +114,7 @@ func (t *TileMap) HasExitAt(x, y int) int {
 	return -1
 }
 
-func (g *Game) TileIsOccupied(x int, y int) bool {
+func (g *Game) TileIsOccupied(x int, y int, z int) bool {
 	if x < 0 || x >= g.ows.tileMap.Width || y < 0 ||  y >= g.ows.tileMap.Height {
 		return true
 	}
@@ -144,11 +122,15 @@ func (g *Game) TileIsOccupied(x int, y int) bool {
 	index := y * g.ows.tileMap.Width + x
 
 	// Out of bounds check
-	if index >= len(g.ows.tileMap.Tiles) || index < 0 {
+	if z < 0 || z >= len(g.ows.tileMap.Tiles) {
 		return true
 	}
 
-	if g.ows.tileMap.Collision[index] {
+	if index >= len(g.ows.tileMap.Tiles[z]) || index < 0 {
+		return true
+	}
+
+	if g.ows.tileMap.Collision[z][index] {
 		return true
 	}
 
@@ -226,37 +208,43 @@ func (g *Game) DrawPlayer(player *Player) {
 		&playerRect,
 		x,
 		y,
-		1,
+		3,
 	})
 }
 
 func (g *Game) DrawTileset() {
-	for i, n := range g.ows.tileMap.Tiles {
-		x := float64(i % g.ows.tileMap.Width) * tileSize
-		y := float64(i / g.ows.tileMap.Width) * tileSize
+	for j := range g.ows.tileMap.Tiles {
+		for i, n := range g.ows.tileMap.Tiles[j] {
+			x := float64(i % g.ows.tileMap.Width) * tileSize
+			y := float64(i / g.ows.tileMap.Width) * tileSize
 
-		tx := (n % nTilesX) * tileSize
-		ty := (n / nTilesX) * tileSize
+			tx := (n % nTilesX) * tileSize
+			ty := (n / nTilesX) * tileSize
 
-		rect := image.Rect(tx, ty, tx + tileSize, ty + tileSize)
-		g.rend.Draw(&RenderTarget{
-			&ebiten.DrawImageOptions{},
-			tileset,
-			&rect,
-			x,
-			y,
-			0,
-		})
+			if tx < 0 || ty < 0 {
+				continue
+			}
 
-		if g.ows.tileMap.Collision[i] {
+			rect := image.Rect(tx, ty, tx + tileSize, ty + tileSize)
 			g.rend.Draw(&RenderTarget{
 				&ebiten.DrawImageOptions{},
-				collisionMarker,
-				nil,
+				tileset,
+				&rect,
 				x,
 				y,
-				100,
+				uint32(j * 2),
 			})
+
+			if g.ows.tileMap.Collision[j][i] {
+				g.rend.Draw(&RenderTarget{
+					&ebiten.DrawImageOptions{},
+					collisionMarker,
+					nil,
+					x,
+					y,
+					100,
+				})
+			}
 		}
 	}
 
@@ -278,9 +266,15 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func build() {
+	tex := make([][]int, 1)
+	tex[0] = make([]int, buildW * buildH)
+
+	col := make([][]bool, 1)
+	col[0] = make([]bool, buildW * buildH)
+
 	tiles := TileMap{
-		make([]int, buildW * buildH),
-		make([]bool, buildW * buildH),
+		tex,
+		col,
 		make([]Exit, 0),
 		make([]Entry, 0),
 		buildW,

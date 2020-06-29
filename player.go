@@ -12,6 +12,7 @@ type Player struct {
 	Gy float64
 	X int
 	Y int
+	Z int
 	Tx int
 	Ty int
 	Connected bool
@@ -67,7 +68,7 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 		if turnCheck >= TurnCheckLimit {
 			ox, oy := player.X, player.Y
 			player.UpdatePosition()
-			if g.TileIsOccupied(player.X, player.Y) {
+			if g.TileIsOccupied(player.X, player.Y, player.Z) {
 				player.X, player.Y = ox, oy	// Restore position
 				// Thud noise
 				if player.animationState == playerMaxCycle -1 {

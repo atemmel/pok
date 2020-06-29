@@ -19,6 +19,36 @@ var m2Pressed = false
 var m3Pressed = false
 var copyBuffer = 0
 var selectedTile = 0
+var currentLayer = 0
+
+var plusPressed = false
+var minusPressed = false
+var pPressed = false
+
+type Exit struct {
+	Target string
+	Id int
+	X int
+	Y int
+	Z int
+}
+
+type Entry struct {
+	Id int
+	X int
+	Y int
+	Z int
+}
+
+type TileMap struct {
+	Tiles [][]int
+	Collision [][]bool
+	Exits []Exit
+	Entries []Entry
+	Width int
+	Height int
+}
+
 
 type GameState interface {
 	GetInputs(g *Game) error
@@ -32,11 +62,11 @@ type OverworldState struct {
 
 func (o *OverworldState) GetInputs(g *Game) error {
 	_, dy := ebiten.Wheel()
-	if dy != 0. && len(g.ows.tileMap.Tiles) > selectedTile && selectedTile >= 0 {
+	if dy != 0. && len(g.ows.tileMap.Tiles[currentLayer]) > selectedTile && selectedTile >= 0 {
 		if dy < 0 {
-			g.ows.tileMap.Tiles[selectedTile]--
+			g.ows.tileMap.Tiles[currentLayer][selectedTile]--
 		} else {
-			g.ows.tileMap.Tiles[selectedTile]++
+			g.ows.tileMap.Tiles[currentLayer][selectedTile]++
 		}
 	}
 
@@ -49,8 +79,8 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		m2Pressed = true
 		cx, cy := ebiten.CursorPosition();
 		g.SelectTileFromMouse(cx, cy)
-		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles) {
-			g.ows.tileMap.Collision[selectedTile] = !g.ows.tileMap.Collision[selectedTile]
+		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles[currentLayer]) {
+			g.ows.tileMap.Collision[currentLayer][selectedTile] = !g.ows.tileMap.Collision[currentLayer][selectedTile]
 		}
 	} else if !ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
 		m2Pressed = false
@@ -60,7 +90,7 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		m3Pressed = true
 		cx, cy := ebiten.CursorPosition();
 		g.SelectTileFromMouse(cx, cy)
-		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles) {
+		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles[currentLayer]) {
 			if i := g.ows.tileMap.HasExitAt(selectionX, selectionY); i != -1 {
 				g.ows.tileMap.Exits[i] = g.ows.tileMap.Exits[len(g.ows.tileMap.Exits) - 1]
 				g.ows.tileMap.Exits = g.ows.tileMap.Exits[:len(g.ows.tileMap.Exits) - 1]
@@ -70,6 +100,7 @@ func (o *OverworldState) GetInputs(g *Game) error {
 					0,
 					selectionX,
 					selectionY,
+					currentLayer,
 				})
 			}
 		}
@@ -104,15 +135,41 @@ func (o *OverworldState) GetInputs(g *Game) error {
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyC) {
-		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles) {
-			copyBuffer = g.ows.tileMap.Tiles[selectedTile]
+		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles[currentLayer]) {
+			copyBuffer = g.ows.tileMap.Tiles[currentLayer][selectedTile]
 		}
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyV) {
-		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles) {
-			g.ows.tileMap.Tiles[selectedTile] = copyBuffer
+		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles[currentLayer]) {
+			g.ows.tileMap.Tiles[currentLayer][selectedTile] = copyBuffer
 		}
+	}
+
+	if ebiten.IsKeyPressed(ebiten.KeyMinus) && !plusPressed {	// Plus
+		if currentLayer + 1 < len(o.tileMap.Tiles) {
+			currentLayer++
+		}
+		plusPressed = true
+	} else if !ebiten.IsKeyPressed(ebiten.KeyMinus) {
+		plusPressed = false
+	}
+
+	if ebiten.IsKeyPressed(ebiten.KeySlash) && !minusPressed {	// Minus
+		if currentLayer > 0 {
+			currentLayer--
+		}
+		minusPressed = true
+	} else if !ebiten.IsKeyPressed(ebiten.KeySlash) {
+		minusPressed = false
+	}
+
+	if ebiten.IsKeyPressed(ebiten.KeyP) && !pPressed {	// Minus
+		o.tileMap.Tiles = append(o.tileMap.Tiles, make([]int, len(o.tileMap.Tiles[0])))
+		o.tileMap.Collision = append(o.tileMap.Collision, make([]bool, len(o.tileMap.Collision[0])))
+		pPressed = true
+	} else if !ebiten.IsKeyPressed(ebiten.KeyP) {
+		pPressed = false
 	}
 	return nil
 }
@@ -153,14 +210,11 @@ func (o *OverworldState) Draw(g *Game, screen *ebiten.Image) {
 	g.CenterRendererOnPlayer()
 	g.rend.Display(screen)
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(
-`camera.x: %f
-camera.y: %f
-player.x: %d
+`player.x: %d
 player.y: %d
 player.id: %d
-player.isRunning: %t`,
-		g.rend.Cam.X, g.rend.Cam.Y, g.player.X, g.player.Y,
-		g.player.Id, g.player.isRunning) )
+currentLayer: %d`,
+		g.player.X, g.player.Y, g.player.Id, currentLayer) )
 }
 
 func (g *Game) CenterRendererOnPlayer() {
