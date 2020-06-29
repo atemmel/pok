@@ -11,6 +11,7 @@ type Audio struct {
 	audioContext *audio.Context
 	audioPlayer *audio.Player
 	thudPlayer *audio.Player
+	doorPlayer *audio.Player
 }
 
 func (a *Audio) PlayThud() {
@@ -19,6 +20,13 @@ func (a *Audio) PlayThud() {
 	}
 	a.thudPlayer.Rewind()
 	a.thudPlayer.Play()
+}
+
+func (a *Audio) PlayDoor() {
+	//if a.doorPlayer.IsPlaying() {
+	//}
+	a.doorPlayer.Rewind()
+	a.doorPlayer.Play()
 }
 
 func NewAudio() Audio {
@@ -35,12 +43,6 @@ func NewAudio() Audio {
 	if err != nil {
 		panic(err)
 	}
-	/*
-	thudBytes, err := loadMp3AsBytes(ctx, "resources/audio/thud.mp3")
-	if err != nil {
-		panic(err)
-	}
-	*/
 	src, err = loadMp3(ctx, "resources/audio/thud.mp3")
 	if err != nil {
 		panic(err)
@@ -49,10 +51,19 @@ func NewAudio() Audio {
 	if err != nil {
 		panic(err)
 	}
+	src, err = loadMp3(ctx, "resources/audio/door.mp3")
+	if err != nil {
+		panic(err)
+	}
+	door, err := audio.NewPlayer(ctx, src)
+	if err != nil {
+		panic(err)
+	}
 	return Audio{
 		ctx,
 		player,
 		thud,
+		door,
 	}
 }
 

@@ -1,5 +1,11 @@
 package main
 
+import (
+	"github.com/hajimehoshi/ebiten"
+)
+
+type Direction int
+
 type Player struct {
 	Id int
 	Gx float64
@@ -18,8 +24,6 @@ type Player struct {
 	animationState int
 	velocity float64
 }
-
-type Direction int
 
 const(
 	Static Direction = 0
@@ -114,7 +118,10 @@ func (player *Player) Step(g *Game) {
 		player.frames = 0
 		if i := g.ows.tileMap.HasExitAt(player.X, player.Y); i != -1 {
 			if g.ows.tileMap.Exits[i].Target != "" {
-				g.Load(TileMapDir + g.ows.tileMap.Exits[i].Target, i)
+				img, _ := ebiten.NewImage(320, 240, ebiten.FilterDefault);
+				g.as.Draw(g, img)
+				g.as = NewTransitionState(img, TileMapDir + g.ows.tileMap.Exits[i].Target, i)
+				g.audio.PlayDoor()
 			}
 		}
 	}

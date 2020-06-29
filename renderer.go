@@ -70,7 +70,8 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	r.prepareRenderTargets()
 
 	for _, t := range r.targets {
-		t.Op.GeoM.Translate(t.X, t.Y)
+		//t.Op.GeoM.Translate(t.X, t.Y)
+		t.Op.GeoM.Translate(t.X -r.Cam.X, t.Y -r.Cam.Y)
 		if t.SubImage != nil {
 			r.dest.DrawImage(t.Src.SubImage(*t.SubImage).(*ebiten.Image), t.Op) 
 		} else {
@@ -79,9 +80,11 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	}
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(-r.Cam.X, -r.Cam.Y)
+
+	//op.GeoM.Translate(-r.Cam.X, -r.Cam.Y)
 	screen.DrawImage(r.dest, op)
 	r.targets = r.targets[:0]
+	//return r.dest
 }
 
 func (r *Renderer) prepareRenderTargets() {
