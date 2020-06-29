@@ -23,8 +23,6 @@ func (a *Audio) PlayThud() {
 }
 
 func (a *Audio) PlayDoor() {
-	//if a.doorPlayer.IsPlaying() {
-	//}
 	a.doorPlayer.Rewind()
 	a.doorPlayer.Play()
 }

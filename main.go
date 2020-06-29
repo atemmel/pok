@@ -191,8 +191,8 @@ func (g *Game) Load(str string, entrypoint int) {
 	g.player.Y = g.ows.tileMap.Entries[entrypoint].Y
 	g.player.Gx = float64(g.player.X * tileSize)
 	g.player.Gy = float64(g.player.Y * tileSize)
-	g.rend = NewRenderer(g.ows.tileMap.Width * tileSize,
-		g.ows.tileMap.Height * tileSize,
+	g.rend = NewRenderer(320,
+		240,
 		320,
 		240,
 	)
