@@ -91,7 +91,7 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		cx, cy := ebiten.CursorPosition();
 		g.SelectTileFromMouse(cx, cy)
 		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles[currentLayer]) {
-			if i := g.ows.tileMap.HasExitAt(selectionX, selectionY); i != -1 {
+			if i := g.ows.tileMap.HasExitAt(selectionX, selectionY, currentLayer); i != -1 {
 				g.ows.tileMap.Exits[i] = g.ows.tileMap.Exits[len(g.ows.tileMap.Exits) - 1]
 				g.ows.tileMap.Exits = g.ows.tileMap.Exits[:len(g.ows.tileMap.Exits) - 1]
 			} else {

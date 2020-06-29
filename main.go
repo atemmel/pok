@@ -105,9 +105,18 @@ func initGame() {
 	}
 }
 
-func (t *TileMap) HasExitAt(x, y int) int {
+func (t *TileMap) HasExitAt(x, y, z int) int {
 	for i := range t.Exits {
-		if t.Exits[i].X == x && t.Exits[i].Y == y {
+		if t.Exits[i].X == x && t.Exits[i].Y == y && t.Exits[i].Z == z {
+			return i
+		}
+	}
+	return -1
+}
+
+func (t *TileMap) GetEntryWithId(id int) int {
+	for i := range t.Entries {
+		if t.Entries[i].Id == id {
 			return i
 		}
 	}
@@ -169,8 +178,9 @@ func (g *Game) Load(str string, entrypoint int) {
 		panic(err)
 	}
 	g.player.Location = str
-	g.player.X = g.ows.tileMap.Entries[entrypoint].X
-	g.player.Y = g.ows.tileMap.Entries[entrypoint].Y
+	index := g.ows.tileMap.GetEntryWithId(entrypoint)
+	g.player.X = g.ows.tileMap.Entries[index].X
+	g.player.Y = g.ows.tileMap.Entries[index].Y
 	g.player.Gx = float64(g.player.X * tileSize)
 	g.player.Gy = float64(g.player.Y * tileSize)
 	g.rend = NewRenderer(320,
