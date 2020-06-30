@@ -219,8 +219,8 @@ currentLayer: %d`,
 
 func (g *Game) CenterRendererOnPlayer() {
 	g.rend.LookAt(
-		g.player.Gx - 320 / 2 + tileSize / 2,
-		g.player.Gy - 240 / 2 + tileSize / 2,
+		g.player.Gx - DisplaySizeX / 2 + tileSize / 2,
+		g.player.Gy - DisplaySizeY / 2 + tileSize / 2,
 	)
 }
 

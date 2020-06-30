@@ -13,6 +13,11 @@ import (
 )
 
 const (
+	WindowSizeX = 800
+	WindowSizeY = 576
+	DisplaySizeX = WindowSizeX / 2
+	DisplaySizeY = WindowSizeY / 2
+
 	tileSize = 32
 	nTilesX = 8
 	TileMapDir =  "./resources/tilemaps/"
@@ -183,10 +188,10 @@ func (g *Game) Load(str string, entrypoint int) {
 	g.player.Y = g.ows.tileMap.Entries[index].Y
 	g.player.Gx = float64(g.player.X * tileSize)
 	g.player.Gy = float64(g.player.Y * tileSize)
-	g.rend = NewRenderer(320,
-		240,
-		320,
-		240,
+	g.rend = NewRenderer(DisplaySizeX,
+		DisplaySizeY,
+		DisplaySizeX,
+		DisplaySizeY,
 	)
 }
 
@@ -271,7 +276,7 @@ func (g *Game) DrawTileset() {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 320, 240
+	return DisplaySizeX, DisplaySizeY
 	//return 640, 480
 }
 
@@ -309,7 +314,7 @@ func main() {
 
 	var err error
 
-	ebiten.SetWindowSize(640, 480)
+	ebiten.SetWindowSize(WindowSizeX, WindowSizeY)
 	ebiten.SetWindowTitle("Title")
 	ebiten.SetWindowResizable(true)
 

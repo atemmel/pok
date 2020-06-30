@@ -119,7 +119,7 @@ func (player *Player) Step(g *Game) {
 		player.frames = 0
 		if i := g.ows.tileMap.HasExitAt(player.X, player.Y, player.Z); i > -1 {
 			if g.ows.tileMap.Exits[i].Target != "" {
-				img, _ := ebiten.NewImage(320, 240, ebiten.FilterDefault);
+				img, _ := ebiten.NewImage(DisplaySizeX, DisplaySizeY, ebiten.FilterDefault);
 				g.as.Draw(g, img)
 				g.as = NewTransitionState(img, TileMapDir + g.ows.tileMap.Exits[i].Target, g.ows.tileMap.Exits[i].Id)
 				g.audio.PlayDoor()
