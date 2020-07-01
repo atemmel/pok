@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	WindowSizeX = 800
-	WindowSizeY = 576
-	DisplaySizeX = WindowSizeX / 2
-	DisplaySizeY = WindowSizeY / 2
-
 	tileSize = 32
+	DisplaySizeX = 13 * tileSize
+	DisplaySizeY = 9 * tileSize
+	WindowSizeX = DisplaySizeX * 2
+	WindowSizeY = DisplaySizeY * 2
+
 	nTilesX = 8
 	TileMapDir =  "./resources/tilemaps/"
 )

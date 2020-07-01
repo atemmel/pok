@@ -26,7 +26,9 @@ var plusPressed = false
 var minusPressed = false
 var pPressed = false
 var uPressed = false
+var iPressed = false
 var drawOnlyCurrentLayer = false
+var drawUi = false
 
 type Exit struct {
 	Target string
@@ -182,6 +184,13 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		uPressed = false
 	}
 
+	if ebiten.IsKeyPressed(ebiten.KeyI) && !iPressed {
+		drawUi = !drawUi
+		iPressed = true
+	} else if !ebiten.IsKeyPressed(ebiten.KeyI) {
+		iPressed = false
+	}
+
 	return nil
 }
 
@@ -209,26 +218,31 @@ func (o *OverworldState) Draw(g *Game, screen *ebiten.Image) {
 		g.client.playerMap.mutex.Unlock()
 	}
 
-	g.rend.Draw(&RenderTarget{
-		&ebiten.DrawImageOptions{},
-		selection,
-		nil,
-		float64(selectionX * tileSize),
-		float64(selectionY * tileSize),
-		100,
-	})
+	if drawUi {
+		g.rend.Draw(&RenderTarget{
+			&ebiten.DrawImageOptions{},
+			selection,
+			nil,
+			float64(selectionX * tileSize),
+			float64(selectionY * tileSize),
+			100,
+		})
+	}
 
 	g.CenterRendererOnPlayer()
 	g.rend.Display(screen)
-	ebitenutil.DebugPrint(screen, fmt.Sprintf(
+
+	if drawUi {
+		ebitenutil.DebugPrint(screen, fmt.Sprintf(
 `player.x: %d
 player.y: %d
 player.id: %d
 currentLayer: %d
 drawOnlyCurrentLayer: %t
 selectedTexture: %d`,
-		g.player.X, g.player.Y, g.player.Id, currentLayer,
-		drawOnlyCurrentLayer, o.tileMap.Tiles[currentLayer][selectedTile]) )
+			g.player.X, g.player.Y, g.player.Id, currentLayer,
+			drawOnlyCurrentLayer, o.tileMap.Tiles[currentLayer][selectedTile]) )
+	}
 }
 
 func (o *OverworldState) DrawTileset(rend *Renderer) {
@@ -257,7 +271,7 @@ func (o *OverworldState) DrawTileset(rend *Renderer) {
 				uint32(j * 2),
 			})
 
-			if currentLayer == j && o.tileMap.Collision[j][i] {
+			if drawUi && currentLayer == j && o.tileMap.Collision[j][i] {
 				rend.Draw(&RenderTarget{
 					&ebiten.DrawImageOptions{},
 					collisionMarker,
@@ -270,15 +284,17 @@ func (o *OverworldState) DrawTileset(rend *Renderer) {
 		}
 	}
 
-	for i := range o.tileMap.Exits {
-		rend.Draw(&RenderTarget{
-			&ebiten.DrawImageOptions{},
-			exitMarker,
-			nil,
-			float64(o.tileMap.Exits[i].X * tileSize),
-			float64(o.tileMap.Exits[i].Y * tileSize),
-			100,
-		})
+	if drawUi {
+		for i := range o.tileMap.Exits {
+			rend.Draw(&RenderTarget{
+				&ebiten.DrawImageOptions{},
+				exitMarker,
+				nil,
+				float64(o.tileMap.Exits[i].X * tileSize),
+				float64(o.tileMap.Exits[i].Y * tileSize),
+				100,
+			})
+		}
 	}
 }
 
