@@ -182,6 +182,8 @@ func (g *Game) Load(str string, entrypoint int) {
 	if err != nil {
 		panic(err)
 	}
+	currentLayer = 0
+	selectedTile = 0
 	g.player.Location = str
 	index := g.ows.tileMap.GetEntryWithId(entrypoint)
 	g.player.X = g.ows.tileMap.Entries[index].X
