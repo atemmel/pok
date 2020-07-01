@@ -227,57 +227,8 @@ func (g *Game) DrawPlayer(player *Player) {
 	})
 }
 
-func (g *Game) DrawTileset() {
-	for j := range g.ows.tileMap.Tiles {
-		for i, n := range g.ows.tileMap.Tiles[j] {
-			x := float64(i % g.ows.tileMap.Width) * tileSize
-			y := float64(i / g.ows.tileMap.Width) * tileSize
-
-			tx := (n % nTilesX) * tileSize
-			ty := (n / nTilesX) * tileSize
-
-			if tx < 0 || ty < 0 {
-				continue
-			}
-
-			rect := image.Rect(tx, ty, tx + tileSize, ty + tileSize)
-			g.rend.Draw(&RenderTarget{
-				&ebiten.DrawImageOptions{},
-				tileset,
-				&rect,
-				x,
-				y,
-				uint32(j * 2),
-			})
-
-			if g.ows.tileMap.Collision[j][i] {
-				g.rend.Draw(&RenderTarget{
-					&ebiten.DrawImageOptions{},
-					collisionMarker,
-					nil,
-					x,
-					y,
-					100,
-				})
-			}
-		}
-	}
-
-	for i := range g.ows.tileMap.Exits {
-		g.rend.Draw(&RenderTarget{
-			&ebiten.DrawImageOptions{},
-			exitMarker,
-			nil,
-			float64(g.ows.tileMap.Exits[i].X * tileSize),
-			float64(g.ows.tileMap.Exits[i].Y * tileSize),
-			100,
-		})
-	}
-}
-
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return DisplaySizeX, DisplaySizeY
-	//return 640, 480
 }
 
 func build() {
