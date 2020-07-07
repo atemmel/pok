@@ -9,7 +9,6 @@ import (
 )
 
 var tileset *ebiten.Image
-var p1img []*ebiten.Image
 var playerImg *ebiten.Image
 var selection *ebiten.Image
 var collisionMarker *ebiten.Image
