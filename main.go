@@ -14,8 +14,8 @@ import (
 
 const (
 	tileSize = 32
-	DisplaySizeX = 13 * tileSize
-	DisplaySizeY = 9 * tileSize
+	DisplaySizeX = 16 * tileSize
+	DisplaySizeY = 12 * tileSize
 	WindowSizeX = DisplaySizeX * 2
 	WindowSizeY = DisplaySizeY * 2
 
