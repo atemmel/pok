@@ -1,4 +1,4 @@
-package main
+package pok
 
 import (
 	"errors"
@@ -55,6 +55,23 @@ type TileMap struct {
 	Height int
 }
 
+func (t *TileMap) HasExitAt(x, y, z int) int {
+	for i := range t.Exits {
+		if t.Exits[i].X == x && t.Exits[i].Y == y && t.Exits[i].Z == z {
+			return i
+		}
+	}
+	return -1
+}
+
+func (t *TileMap) GetEntryWithId(id int) int {
+	for i := range t.Entries {
+		if t.Entries[i].Id == id {
+			return i
+		}
+	}
+	return -1
+}
 
 type GameState interface {
 	GetInputs(g *Game) error
@@ -68,11 +85,11 @@ type OverworldState struct {
 
 func (o *OverworldState) GetInputs(g *Game) error {
 	_, dy := ebiten.Wheel()
-	if dy != 0. && len(g.ows.tileMap.Tiles[currentLayer]) > selectedTile && selectedTile >= 0 {
+	if dy != 0. && len(g.Ows.tileMap.Tiles[currentLayer]) > selectedTile && selectedTile >= 0 {
 		if dy < 0 {
-			g.ows.tileMap.Tiles[currentLayer][selectedTile]--
+			g.Ows.tileMap.Tiles[currentLayer][selectedTile]--
 		} else {
-			g.ows.tileMap.Tiles[currentLayer][selectedTile]++
+			g.Ows.tileMap.Tiles[currentLayer][selectedTile]++
 		}
 	}
 
@@ -85,8 +102,8 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		m2Pressed = true
 		cx, cy := ebiten.CursorPosition();
 		g.SelectTileFromMouse(cx, cy)
-		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles[currentLayer]) {
-			g.ows.tileMap.Collision[currentLayer][selectedTile] = !g.ows.tileMap.Collision[currentLayer][selectedTile]
+		if 0 <= selectedTile && selectedTile < len(g.Ows.tileMap.Tiles[currentLayer]) {
+			g.Ows.tileMap.Collision[currentLayer][selectedTile] = !g.Ows.tileMap.Collision[currentLayer][selectedTile]
 		}
 	} else if !ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
 		m2Pressed = false
@@ -96,12 +113,12 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		m3Pressed = true
 		cx, cy := ebiten.CursorPosition();
 		g.SelectTileFromMouse(cx, cy)
-		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles[currentLayer]) {
-			if i := g.ows.tileMap.HasExitAt(selectionX, selectionY, currentLayer); i != -1 {
-				g.ows.tileMap.Exits[i] = g.ows.tileMap.Exits[len(g.ows.tileMap.Exits) - 1]
-				g.ows.tileMap.Exits = g.ows.tileMap.Exits[:len(g.ows.tileMap.Exits) - 1]
+		if 0 <= selectedTile && selectedTile < len(g.Ows.tileMap.Tiles[currentLayer]) {
+			if i := g.Ows.tileMap.HasExitAt(selectionX, selectionY, currentLayer); i != -1 {
+				g.Ows.tileMap.Exits[i] = g.Ows.tileMap.Exits[len(g.Ows.tileMap.Exits) - 1]
+				g.Ows.tileMap.Exits = g.Ows.tileMap.Exits[:len(g.Ows.tileMap.Exits) - 1]
 			} else {
-				g.ows.tileMap.Exits = append(g.ows.tileMap.Exits, Exit{
+				g.Ows.tileMap.Exits = append(g.Ows.tileMap.Exits, Exit{
 					"",
 					0,
 					selectionX,
@@ -118,37 +135,37 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		return errors.New("")	//TODO Gotta be a better way to do this
 	}
 
-	if !g.player.isWalking && ebiten.IsKeyPressed(ebiten.KeyShift) {
-		g.player.isRunning = true
+	if !g.Player.isWalking && ebiten.IsKeyPressed(ebiten.KeyShift) {
+		g.Player.isRunning = true
 	} else {
-		g.player.isRunning = false
+		g.Player.isRunning = false
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) ||
 		ebiten.IsKeyPressed(ebiten.KeyW) {
-		g.player.TryStep(Up, g)
+		g.Player.TryStep(Up, g)
 	} else if ebiten.IsKeyPressed(ebiten.KeyDown) || ebiten.IsKeyPressed(ebiten.KeyJ) ||
 		ebiten.IsKeyPressed(ebiten.KeyS) {
-		g.player.TryStep(Down, g)
+		g.Player.TryStep(Down, g)
 	} else if ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyL) ||
 		ebiten.IsKeyPressed(ebiten.KeyD) {
-		g.player.TryStep(Right, g)
+		g.Player.TryStep(Right, g)
 	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyH) ||
 		ebiten.IsKeyPressed(ebiten.KeyA) {
-		g.player.TryStep(Left, g)
+		g.Player.TryStep(Left, g)
 	} else {
-		g.player.TryStep(Static, g)
+		g.Player.TryStep(Static, g)
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyC) {
-		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles[currentLayer]) {
-			copyBuffer = g.ows.tileMap.Tiles[currentLayer][selectedTile]
+		if 0 <= selectedTile && selectedTile < len(g.Ows.tileMap.Tiles[currentLayer]) {
+			copyBuffer = g.Ows.tileMap.Tiles[currentLayer][selectedTile]
 		}
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyV) {
-		if 0 <= selectedTile && selectedTile < len(g.ows.tileMap.Tiles[currentLayer]) {
-			g.ows.tileMap.Tiles[currentLayer][selectedTile] = copyBuffer
+		if 0 <= selectedTile && selectedTile < len(g.Ows.tileMap.Tiles[currentLayer]) {
+			g.Ows.tileMap.Tiles[currentLayer][selectedTile] = copyBuffer
 		}
 	}
 
@@ -196,42 +213,42 @@ func (o *OverworldState) GetInputs(g *Game) error {
 }
 
 func (o *OverworldState) Update(g *Game) error {
-	g.player.Update(g)
+	g.Player.Update(g)
 
-	if g.client.active {
-		g.client.WritePlayer(&g.player)
+	if g.Client.Active {
+		g.Client.WritePlayer(&g.Player)
 	}
 
 	return nil
 }
 
 func (o *OverworldState) Draw(g *Game, screen *ebiten.Image) {
-	o.DrawTileset(&g.rend)
-	g.DrawPlayer(&g.player)
+	o.DrawTileset(&g.Rend)
+	g.DrawPlayer(&g.Player)
 
-	if g.client.active {
-		g.client.playerMap.mutex.Lock()
-		for _, player := range g.client.playerMap.players {
-			if player.Location == g.player.Location {
+	if g.Client.Active {
+		g.Client.playerMap.mutex.Lock()
+		for _, player := range g.Client.playerMap.players {
+			if player.Location == g.Player.Location {
 				g.DrawPlayer(&player)
 			}
 		}
-		g.client.playerMap.mutex.Unlock()
+		g.Client.playerMap.mutex.Unlock()
 	}
 
 	if drawUi {
-		g.rend.Draw(&RenderTarget{
+		g.Rend.Draw(&RenderTarget{
 			&ebiten.DrawImageOptions{},
 			selection,
 			nil,
-			float64(selectionX * tileSize),
-			float64(selectionY * tileSize),
+			float64(selectionX * TileSize),
+			float64(selectionY * TileSize),
 			100,
 		})
 	}
 
 	g.CenterRendererOnPlayer()
-	g.rend.Display(screen)
+	g.Rend.Display(screen)
 
 	if drawUi {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(
@@ -241,7 +258,7 @@ player.id: %d
 currentLayer: %d
 drawOnlyCurrentLayer: %t
 selectedTexture: %d`,
-			g.player.X, g.player.Y, g.player.Id, currentLayer,
+			g.Player.X, g.Player.Y, g.Player.Id, currentLayer,
 			drawOnlyCurrentLayer, o.tileMap.Tiles[currentLayer][selectedTile]) )
 	}
 }
@@ -252,17 +269,17 @@ func (o *OverworldState) DrawTileset(rend *Renderer) {
 			continue
 		}
 		for i, n := range o.tileMap.Tiles[j] {
-			x := float64(i % o.tileMap.Width) * tileSize
-			y := float64(i / o.tileMap.Width) * tileSize
+			x := float64(i % o.tileMap.Width) * TileSize
+			y := float64(i / o.tileMap.Width) * TileSize
 
-			tx := (n % nTilesX) * tileSize
-			ty := (n / nTilesX) * tileSize
+			tx := (n % NTilesX) * TileSize
+			ty := (n / NTilesX) * TileSize
 
 			if tx < 0 || ty < 0 {
 				continue
 			}
 
-			rect := image.Rect(tx, ty, tx + tileSize, ty + tileSize)
+			rect := image.Rect(tx, ty, tx + TileSize, ty + TileSize)
 			rend.Draw(&RenderTarget{
 				&ebiten.DrawImageOptions{},
 				tileset,
@@ -291,8 +308,8 @@ func (o *OverworldState) DrawTileset(rend *Renderer) {
 				&ebiten.DrawImageOptions{},
 				exitMarker,
 				nil,
-				float64(o.tileMap.Exits[i].X * tileSize),
-				float64(o.tileMap.Exits[i].Y * tileSize),
+				float64(o.tileMap.Exits[i].X * TileSize),
+				float64(o.tileMap.Exits[i].Y * TileSize),
 				100,
 			})
 		}
@@ -300,18 +317,18 @@ func (o *OverworldState) DrawTileset(rend *Renderer) {
 }
 
 func (g *Game) CenterRendererOnPlayer() {
-	g.rend.LookAt(
-		g.player.Gx - DisplaySizeX / 2 + tileSize / 2,
-		g.player.Gy - DisplaySizeY / 2 + tileSize / 2,
+	g.Rend.LookAt(
+		g.Player.Gx - DisplaySizeX / 2 + TileSize / 2,
+		g.Player.Gy - DisplaySizeY / 2 + TileSize / 2,
 	)
 }
 
 func (g *Game) SelectTileFromMouse(cx, cy int) {
-	cx += int(g.rend.Cam.X)
-	cy += int(g.rend.Cam.Y)
-	cx -= cx % tileSize
-	cy -= cy % tileSize
-	selectionX = cx / tileSize
-	selectionY = cy / tileSize
-	selectedTile =  selectionX + selectionY * g.ows.tileMap.Width
+	cx += int(g.Rend.Cam.X)
+	cy += int(g.Rend.Cam.Y)
+	cx -= cx % TileSize
+	cy -= cy % TileSize
+	selectionX = cx / TileSize
+	selectionY = cy / TileSize
+	selectedTile =  selectionX + selectionY * g.Ows.tileMap.Width
 }

@@ -1,4 +1,4 @@
-package main
+package pok
 
 import (
 	"bufio"
@@ -16,7 +16,8 @@ type Client struct {
 	rw *bufio.ReadWriter
 	conn net.Conn
 	playerMap PlayerMap
-	active bool
+
+	Active bool
 }
 
 type PlayerMap struct {
@@ -70,7 +71,7 @@ func (c *Client) Connect() int {
 		log.Println("Id given (", string(data), ") was not valid")
 		return -1
 	}
-	c.active = true
+	c.Active = true
 	return id
 }
 
@@ -88,7 +89,7 @@ func (c *Client) ReadPlayer() {
 			//TODO Identify which errors should be ignored and which 
 			//     errors should abort the connection
 			log.Println("Could not read message:", err)
-			c.active = false
+			c.Active = false
 			return
 		} else {
 			player := Player{}
@@ -115,11 +116,11 @@ func (c *Client) updatePlayer(player *Player) {
 }
 
 func (c *Client) Disconnect() {
-	if !c.active {
+	if !c.Active {
 		return
 	}
 	log.Println("Disconnecting...")
-	c.active = false
+	c.Active = false
 	c.rw.WriteByte(0)
 	c.conn.Close()
 }

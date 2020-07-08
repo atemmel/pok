@@ -1,4 +1,4 @@
-package main
+package pok
 
 import (
 	"github.com/hajimehoshi/ebiten"

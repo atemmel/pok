@@ -1,4 +1,4 @@
-package main
+package pok
 
 import (
 	"github.com/hajimehoshi/ebiten"
@@ -39,12 +39,12 @@ func (t *TransitionState) Update(g *Game) error {
 	t.Ticks += t.magnitude
 	if t.Ticks > nTransitionTicks {
 		g.Load(t.file, t.exitId)
-		g.ows.Update(g)
-		g.ows.Draw(g, t.fadeFrom)
+		g.Ows.Update(g)
+		g.Ows.Draw(g, t.fadeFrom)
 		t.magnitude = -1;
 		return nil
 	} else if t.Ticks == 0 {
-		g.as = &g.ows
+		g.As = &g.Ows
 		return nil
 	}
 	scale := float64(t.Ticks) / float64(nTransitionTicks)

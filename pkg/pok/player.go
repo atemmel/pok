@@ -1,4 +1,4 @@
-package main
+package pok
 
 import (
 	"github.com/hajimehoshi/ebiten"
@@ -38,8 +38,8 @@ const(
 	playerMaxCycle = 8
 	playerWalkVelocity = 2
 	playerRunVelocity = 4
-	playerOffsetX = 13 - tileSize
-	playerOffsetY = 0 - tileSize
+	playerOffsetX = 13 - TileSize
+	playerOffsetY = 0 - TileSize
 )
 
 var turnCheck = 0
@@ -72,7 +72,7 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 				player.X, player.Y = ox, oy	// Restore position
 				// Thud noise
 				if player.animationState == playerMaxCycle -1 {
-					g.audio.PlayThud()
+					g.Audio.PlayThud()
 				}
 				player.dir = dir
 				player.Animate()
@@ -114,15 +114,15 @@ func (player *Player) Step(g *Game) {
 		player.Gx += player.velocity
 	}
 
-	if player.frames * int(player.velocity) >= tileSize {
+	if player.frames * int(player.velocity) >= TileSize {
 		player.isWalking = false
 		player.frames = 0
-		if i := g.ows.tileMap.HasExitAt(player.X, player.Y, player.Z); i > -1 {
-			if g.ows.tileMap.Exits[i].Target != "" {
+		if i := g.Ows.tileMap.HasExitAt(player.X, player.Y, player.Z); i > -1 {
+			if g.Ows.tileMap.Exits[i].Target != "" {
 				img, _ := ebiten.NewImage(DisplaySizeX, DisplaySizeY, ebiten.FilterDefault);
-				g.as.Draw(g, img)
-				g.as = NewTransitionState(img, TileMapDir + g.ows.tileMap.Exits[i].Target, g.ows.tileMap.Exits[i].Id)
-				g.audio.PlayDoor()
+				g.As.Draw(g, img)
+				g.As = NewTransitionState(img, TileMapDir + g.Ows.tileMap.Exits[i].Target, g.Ows.tileMap.Exits[i].Id)
+				g.Audio.PlayDoor()
 			}
 		}
 	}
