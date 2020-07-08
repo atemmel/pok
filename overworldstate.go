@@ -47,6 +47,8 @@ type Entry struct {
 type TileMap struct {
 	Tiles [][]int
 	Collision [][]bool
+	TextureIndicies [][]int
+	Textures []string
 	Exits []Exit
 	Entries []Entry
 	Width int
