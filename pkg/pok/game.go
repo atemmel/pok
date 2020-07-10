@@ -1,13 +1,12 @@
 package pok
 
-import ( 
+import (
 	"encoding/json"
 	"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"io/ioutil"
 	"image"
-	"image/color"
 	"log"
 )
 
@@ -30,49 +29,6 @@ func InitGame() {
 	tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	selection, err = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	if err != nil {
-		panic(err)
-	}
-
-	collisionMarker, err = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	if err != nil {
-		panic(err)
-	}
-
-	exitMarker, err = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	if err != nil {
-		panic(err)
-	}
-
-	selectionClr := color.RGBA{255, 0, 0, 255}
-
-	for p := 0; p < selection.Bounds().Max.X; p++ {
-		selection.Set(p, 0, selectionClr)
-		selection.Set(p, selection.Bounds().Max.Y - 1, selectionClr)
-	}
-
-	for p := 1; p < selection.Bounds().Max.Y - 1; p++ {
-		selection.Set(0, p, selectionClr)
-		selection.Set(selection.Bounds().Max.Y - 1, p, selectionClr)
-	}
-
-	collisionClr := color.RGBA{255, 0, 255, 255}
-
-	for p := 0; p < 4; p++ {
-		for q := 0; q < 4; q++ {
-			collisionMarker.Set(p, q, collisionClr)
-		}
-	}
-
-	exitClr := color.RGBA{0, 0, 255, 255}
-
-	for p:= 0; p < 4; p++ {
-		for q := 0; q < 4; q++ {
-			exitMarker.Set(p + 14, q, exitClr)
-		}
 	}
 }
 

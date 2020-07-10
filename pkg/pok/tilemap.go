@@ -1,5 +1,10 @@
 package pok
 
+import(
+	"github.com/hajimehoshi/ebiten"
+	"image"
+)
+
 type Exit struct {
 	Target string
 	Id int
@@ -42,4 +47,33 @@ func (t *TileMap) GetEntryWithId(id int) int {
 		}
 	}
 	return -1
+}
+
+func (t *TileMap) Draw(rend *Renderer) {
+	for j := range t.Tiles {
+		if drawOnlyCurrentLayer && j != currentLayer {
+			continue
+		}
+		for i, n := range t.Tiles[j] {
+			x := float64(i % t.Width) * TileSize
+			y := float64(i / t.Width) * TileSize
+
+			tx := (n % NTilesX) * TileSize
+			ty := (n / NTilesX) * TileSize
+
+			if tx < 0 || ty < 0 {
+				continue
+			}
+
+			rect := image.Rect(tx, ty, tx + TileSize, ty + TileSize)
+			rend.Draw(&RenderTarget{
+				&ebiten.DrawImageOptions{},
+				tileset,
+				&rect,
+				x,
+				y,
+				uint32(j * 2),
+			})
+		}
+	}
 }
