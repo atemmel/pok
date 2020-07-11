@@ -17,6 +17,7 @@ const (
 type DialogBox struct {
 	str *string
 	font font.Face
+	box *ebiten.Image
 }
 
 func NewDialogBox() DialogBox {
@@ -39,10 +40,20 @@ func NewDialogBox() DialogBox {
 		Hinting: font.HintingFull,
 	})
 
+	boxColor := color.RGBA{
+		255, 255, 255, 255,
+	}
+
+	db.box, _ = ebiten.NewImage(DisplaySizeX, 16 * 2 + 10, ebiten.FilterDefault)
+	db.box.Fill(boxColor)
+
 	return db
 }
 
 func (d *DialogBox) Draw(target *ebiten.Image) {
 	clr := color.RGBA{20, 20, 20, 255}
+	opt := &ebiten.DrawImageOptions{}
+	opt.GeoM.Translate(0, DisplaySizeY - (16 * 2 + 10))
+	target.DrawImage(d.box, opt)
 	text.Draw(target, "Tjena moss", d.font, dialogX, dialogY, clr)
 }

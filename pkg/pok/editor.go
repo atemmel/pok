@@ -25,6 +25,7 @@ var drawUi = false
 type Editor struct {
 	tileMap TileMap
 	rend Renderer
+	dialog DialogBox
 	selection *ebiten.Image
 	collisionMarker *ebiten.Image
 	exitMarker *ebiten.Image
@@ -33,6 +34,8 @@ type Editor struct {
 func NewEditor() *Editor {
 	var err error
 	es := &Editor{}
+
+	es.dialog = NewDialogBox()
 
 	es.selection, err = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
 	if err != nil {
@@ -88,6 +91,7 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	if drawUi {
 		e.DrawTileMapDetail()
 	}
+	e.dialog.Draw(screen)
 }
 
 func (e *Editor) DrawTileMapDetail() {
@@ -123,9 +127,7 @@ func (e *Editor) DrawTileMapDetail() {
 				100,
 			})
 		}
-	}
 
-	if drawUi {
 		e.rend.Draw(&RenderTarget{
 			&ebiten.DrawImageOptions{},
 			e.selection,
