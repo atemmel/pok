@@ -2,6 +2,7 @@ package pok
 
 import (
 	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/text"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
@@ -10,12 +11,18 @@ import (
 )
 
 const (
-	dialogX = 120
-	dialogY = 120
+	textXDelta = 12
+	textYDelta = 17
+	maxLetters = 44
+)
+
+var (
+	fgClr = color.RGBA{80, 80, 88, 255}
+	bgClr = color.RGBA{160, 160, 168, 255}
 )
 
 type DialogBox struct {
-	str *string
+	str string
 	font font.Face
 	box *ebiten.Image
 }
@@ -40,20 +47,40 @@ func NewDialogBox() DialogBox {
 		Hinting: font.HintingFull,
 	})
 
-	boxColor := color.RGBA{
-		255, 255, 255, 255,
+	db.box, _, err = ebitenutil.NewImageFromFile("./resources/images/dialog1.png", ebiten.FilterDefault);
+	if err != nil {
+		panic(err);
 	}
 
-	db.box, _ = ebiten.NewImage(DisplaySizeX, 16 * 2 + 10, ebiten.FilterDefault)
-	db.box.Fill(boxColor)
+	db.SetString("Lorem ipsum dolor sit amet, lorem ipsum dolor sit amet")
 
 	return db
 }
 
+func (d *DialogBox) SetString(str string) {
+	result := str
+	if(len(str) > maxLetters) {
+		index := maxLetters
+		for i := maxLetters; i > 0; i-- {
+			if result[i] == ' ' {
+				index = i
+				break
+			}
+		}
+		result = result[:index] + "\n" + result[index + 1:];
+	}
+	d.str = result
+}
+
 func (d *DialogBox) Draw(target *ebiten.Image) {
-	clr := color.RGBA{20, 20, 20, 255}
 	opt := &ebiten.DrawImageOptions{}
-	opt.GeoM.Translate(0, DisplaySizeY - (16 * 2 + 10))
+	dx := DisplaySizeX / 2 - d.box.Bounds().Dx() / 2
+	dy := DisplaySizeY - d.box.Bounds().Dy() - 4
+	opt.GeoM.Translate(float64(dx), float64(dy))
+	target.Fill(color.RGBA{255,0,255,255})
 	target.DrawImage(d.box, opt)
-	text.Draw(target, "Tjena moss", d.font, dialogX, dialogY, clr)
+	text.Draw(target, d.str, d.font, dx + textXDelta + 1, dy + textYDelta, bgClr)
+	text.Draw(target, d.str, d.font, dx + textXDelta, dy + textYDelta + 1, bgClr)
+	text.Draw(target, d.str, d.font, dx + textXDelta + 1, dy + textYDelta + 1, bgClr)
+	text.Draw(target, d.str, d.font, dx + textXDelta, dy + textYDelta, fgClr)
 }
