@@ -22,6 +22,7 @@ var iPressed = false
 var drawOnlyCurrentLayer = false
 var drawUi = false
 
+
 type Editor struct {
 	tileMap TileMap
 	rend Renderer
@@ -29,6 +30,7 @@ type Editor struct {
 	selection *ebiten.Image
 	collisionMarker *ebiten.Image
 	exitMarker *ebiten.Image
+	activeFile string
 }
 
 func NewEditor() *Editor {
@@ -154,6 +156,21 @@ func (e *Editor) handleInputs() error {
 		return errors.New("")	//TODO Gotta be a better way to do this
 	}
 
+	if e.activeFile != "" {
+		e.handleInputs()
+	}
+
+	if ebiten.IsKeyPressed(ebiten.KeyI) && !iPressed {
+		drawUi = !drawUi
+		iPressed = true
+	} else if !ebiten.IsKeyPressed(ebiten.KeyI) {
+		iPressed = false
+	}
+
+	return nil
+}
+
+func (e *Editor) handleMapInputs() {
 	_, dy := ebiten.Wheel()
 	if dy != 0. && len(e.tileMap.Tiles[currentLayer]) > selectedTile && selectedTile >= 0 {
 		if dy < 0 {
@@ -231,7 +248,7 @@ func (e *Editor) handleInputs() error {
 		minusPressed = false
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyP) && !pPressed {	// Minus
+	if ebiten.IsKeyPressed(ebiten.KeyP) && !pPressed {
 		e.tileMap.Tiles = append(e.tileMap.Tiles, make([]int, len(e.tileMap.Tiles[0])))
 		e.tileMap.Collision = append(e.tileMap.Collision, make([]bool, len(e.tileMap.Collision[0])))
 		pPressed = true
@@ -245,15 +262,6 @@ func (e *Editor) handleInputs() error {
 	} else if !ebiten.IsKeyPressed(ebiten.KeyU) {
 		uPressed = false
 	}
-
-	if ebiten.IsKeyPressed(ebiten.KeyI) && !iPressed {
-		drawUi = !drawUi
-		iPressed = true
-	} else if !ebiten.IsKeyPressed(ebiten.KeyI) {
-		iPressed = false
-	}
-
-	return nil
 }
 
 func (e *Editor) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
