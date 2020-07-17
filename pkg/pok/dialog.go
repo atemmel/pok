@@ -64,7 +64,7 @@ func (d *DialogBox) SetString(str string) {
 	if(len(str) > maxLetters) {
 		index := maxLetters
 		for i := maxLetters; i > 0; i-- {
-			if result[i] == ' ' {
+			if result[i] == ' ' || result[i] == '\n' {
 				index = i
 				break
 			}

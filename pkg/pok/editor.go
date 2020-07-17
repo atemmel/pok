@@ -49,7 +49,11 @@ func (tw *typewriter) Start() {
 
 func (tw *typewriter) HandleInputs() {
 	tw.Input += string(ebiten.InputChars())
-	if ebiten.IsKeyPressed(ebiten.KeyEnter) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
+		if len(tw.Input) > 0 {
+			tw.Input = tw.Input[:len(tw.Input)-1]
+		}
+	} else if ebiten.IsKeyPressed(ebiten.KeyEnter) {
 		tw.Result = Success
 		tw.Mode = false;
 	} else if ebiten.IsKeyPressed(ebiten.KeyEscape) {
@@ -111,7 +115,7 @@ func NewEditor() *Editor {
 func (e *Editor) Update(screen *ebiten.Image) error {
 	if e.tw.Mode {
 		e.tw.HandleInputs();
-		e.dialog.SetString("Enter name of file to open: \n " + e.tw.Input);
+		e.dialog.SetString("Enter name of file to open:\n" + e.tw.Input);
 		if e.tw.Result != None {
 			e.dialog.Hidden = true
 		}
