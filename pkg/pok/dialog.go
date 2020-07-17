@@ -22,6 +22,7 @@ var (
 )
 
 type DialogBox struct {
+	Hidden bool
 	str string
 	font font.Face
 	box *ebiten.Image
@@ -52,7 +53,8 @@ func NewDialogBox() DialogBox {
 		panic(err);
 	}
 
-	db.SetString("Lorem ipsum dolor sit amet, lorem ipsum dolor sit amet")
+	//db.SetString("Lorem ipsum dolor sit amet, lorem ipsum dolor sit amet")
+	db.Hidden = true;
 
 	return db
 }
@@ -73,11 +75,13 @@ func (d *DialogBox) SetString(str string) {
 }
 
 func (d *DialogBox) Draw(target *ebiten.Image) {
+	if d.Hidden {
+		return
+	}
 	opt := &ebiten.DrawImageOptions{}
 	dx := DisplaySizeX / 2 - d.box.Bounds().Dx() / 2
 	dy := DisplaySizeY - d.box.Bounds().Dy() - 4
 	opt.GeoM.Translate(float64(dx), float64(dy))
-	target.Fill(color.RGBA{255,0,255,255})
 	target.DrawImage(d.box, opt)
 	text.Draw(target, d.str, d.font, dx + textXDelta + 1, dy + textYDelta, bgClr)
 	text.Draw(target, d.str, d.font, dx + textXDelta, dy + textYDelta + 1, bgClr)

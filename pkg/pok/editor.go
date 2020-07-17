@@ -3,25 +3,18 @@ package pok
 import (
 	"errors"
 	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/inpututil"
 	"image/color"
 )
 
 var selectionX int
 var selectionY int
-var m2Pressed = false
-var m3Pressed = false
 var copyBuffer = 0
 var selectedTile = 0
 var currentLayer = 0
 
-var plusPressed = false
-var minusPressed = false
-var pPressed = false
-var uPressed = false
-var iPressed = false
 var drawOnlyCurrentLayer = false
 var drawUi = false
-
 
 type Editor struct {
 	tileMap TileMap
@@ -31,6 +24,38 @@ type Editor struct {
 	collisionMarker *ebiten.Image
 	exitMarker *ebiten.Image
 	activeFile string
+	tw typewriter
+}
+
+type typewriterResult int
+
+const (
+	None typewriterResult = 0
+	Success typewriterResult = 1
+	Abort typewriterResult = 2
+)
+
+type typewriter struct {
+	Mode bool
+	Input string
+	Result typewriterResult
+}
+
+func (tw *typewriter) Start() {
+	tw.Mode = true
+	tw.Result = None
+	tw.Input = ""
+}
+
+func (tw *typewriter) HandleInputs() {
+	tw.Input += string(ebiten.InputChars())
+	if ebiten.IsKeyPressed(ebiten.KeyEnter) {
+		tw.Result = Success
+		tw.Mode = false;
+	} else if ebiten.IsKeyPressed(ebiten.KeyEscape) {
+		tw.Result = Abort
+		tw.Mode = false;
+	}
 }
 
 func NewEditor() *Editor {
@@ -84,6 +109,14 @@ func NewEditor() *Editor {
 }
 
 func (e *Editor) Update(screen *ebiten.Image) error {
+	if e.tw.Mode {
+		e.tw.HandleInputs();
+		e.dialog.SetString("Enter name of file to open: \n " + e.tw.Input);
+		if e.tw.Result != None {
+			e.dialog.Hidden = true
+		}
+		return nil
+	}
 	err := e.handleInputs()
 	return err
 }
@@ -152,7 +185,7 @@ func (e *Editor) SelectTileFromMouse(cx, cy int) {
 }
 
 func (e *Editor) handleInputs() error {
-	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return errors.New("")	//TODO Gotta be a better way to do this
 	}
 
@@ -160,11 +193,14 @@ func (e *Editor) handleInputs() error {
 		e.handleInputs()
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyI) && !iPressed {
+	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
 		drawUi = !drawUi
-		iPressed = true
-	} else if !ebiten.IsKeyPressed(ebiten.KeyI) {
-		iPressed = false
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
+		e.dialog.Hidden = false
+		e.tw.Start()
+
 	}
 
 	return nil
@@ -185,19 +221,15 @@ func (e *Editor) handleMapInputs() {
 		e.SelectTileFromMouse(cx, cy)
 	}
 
-	if !m2Pressed && ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
-		m2Pressed = true
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
 		cx, cy := ebiten.CursorPosition();
 		e.SelectTileFromMouse(cx, cy)
 		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
 			e.tileMap.Collision[currentLayer][selectedTile] = !e.tileMap.Collision[currentLayer][selectedTile]
 		}
-	} else if !ebiten.IsMouseButtonPressed(ebiten.MouseButton(1)) {
-		m2Pressed = false
 	}
 
-	if !m3Pressed && ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) {
-		m3Pressed = true
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(2)) {
 		cx, cy := ebiten.CursorPosition();
 		e.SelectTileFromMouse(cx, cy)
 		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
@@ -214,8 +246,6 @@ func (e *Editor) handleMapInputs() {
 				})
 			}
 		}
-	} else if !ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) {
-		m3Pressed = false
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyC) {
@@ -230,37 +260,25 @@ func (e *Editor) handleMapInputs() {
 		}
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyMinus) && !plusPressed {	// Plus
+	if inpututil.IsKeyJustPressed(ebiten.KeyMinus) {	// Plus
 		if currentLayer + 1 < len(e.tileMap.Tiles) {
 			currentLayer++
 		}
-		plusPressed = true
-	} else if !ebiten.IsKeyPressed(ebiten.KeyMinus) {
-		plusPressed = false
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeySlash) && !minusPressed {	// Minus
+	if inpututil.IsKeyJustPressed(ebiten.KeySlash) {	// Minus
 		if currentLayer > 0 {
 			currentLayer--
 		}
-		minusPressed = true
-	} else if !ebiten.IsKeyPressed(ebiten.KeySlash) {
-		minusPressed = false
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyP) && !pPressed {
+	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
 		e.tileMap.Tiles = append(e.tileMap.Tiles, make([]int, len(e.tileMap.Tiles[0])))
 		e.tileMap.Collision = append(e.tileMap.Collision, make([]bool, len(e.tileMap.Collision[0])))
-		pPressed = true
-	} else if !ebiten.IsKeyPressed(ebiten.KeyP) {
-		pPressed = false
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyU) && !uPressed {
+	if inpututil.IsKeyJustPressed(ebiten.KeyU) {
 		drawOnlyCurrentLayer = !drawOnlyCurrentLayer
-		uPressed = true
-	} else if !ebiten.IsKeyPressed(ebiten.KeyU) {
-		uPressed = false
 	}
 }
 
