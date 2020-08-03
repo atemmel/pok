@@ -1,7 +1,9 @@
 package pok
 
 import(
+	"encoding/json"
 	"github.com/hajimehoshi/ebiten"
+	"io/ioutil"
 	"image"
 )
 
@@ -76,4 +78,16 @@ func (t *TileMap) Draw(rend *Renderer) {
 			})
 		}
 	}
+}
+
+func (t *TileMap) OpenFile(path string) error {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(data, t)
+	if err != nil {
+		return err
+	}
+	return nil
 }

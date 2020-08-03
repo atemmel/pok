@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"fmt"
 	"errors"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/inpututil"
@@ -27,24 +28,18 @@ type Editor struct {
 	tw typewriter
 }
 
-type typewriterResult int
-
-const (
-	None typewriterResult = 0
-	Success typewriterResult = 1
-	Abort typewriterResult = 2
-)
-
 type typewriter struct {
-	Mode bool
+	Active bool
 	Input string
-	Result typewriterResult
+	Query string
+	callback func(string)
 }
 
-func (tw *typewriter) Start() {
-	tw.Mode = true
-	tw.Result = None
+func (tw *typewriter) Start(query string, fn func(string)) {
+	tw.Active = true
 	tw.Input = ""
+	tw.Query = query
+	tw.callback = fn
 }
 
 func (tw *typewriter) HandleInputs() {
@@ -53,13 +48,19 @@ func (tw *typewriter) HandleInputs() {
 		if len(tw.Input) > 0 {
 			tw.Input = tw.Input[:len(tw.Input)-1]
 		}
-	} else if ebiten.IsKeyPressed(ebiten.KeyEnter) {
-		tw.Result = Success
-		tw.Mode = false;
-	} else if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-		tw.Result = Abort
-		tw.Mode = false;
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		fmt.Println("donezo")
+		tw.Active = false
+		tw.callback(tw.Input)
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		fmt.Println("donezo")
+		tw.Active = false
+		tw.callback("")
 	}
+}
+
+func (tw *typewriter) GetDisplayString() string {
+	return tw.Query + tw.Input
 }
 
 func NewEditor() *Editor {
@@ -113,12 +114,24 @@ func NewEditor() *Editor {
 }
 
 func (e *Editor) Update(screen *ebiten.Image) error {
-	if e.tw.Mode {
+	//fmt.Println(e.tw.Active)
+	if e.tw.Active {
 		e.tw.HandleInputs();
-		e.dialog.SetString("Enter name of file to open:\n" + e.tw.Input);
+		e.dialog.SetString(e.tw.GetDisplayString());
+		/*
+		e.dialog.SetString("Enter name of file to open:\n" + e.tw.Input)
 		if e.tw.Result != None {
 			e.dialog.Hidden = true
 		}
+
+		if e.tw.Result == Success {
+			err := e.tileMap.OpenFile(e.tw.Input);
+			if(err != nil) {
+				e.dialog.SetString("Could not open file " + e.tw.Input + ". Create new file? (y/n):")
+			}
+			e.dialog.Hidden = false
+		}
+		*/
 		return nil
 	}
 	err := e.handleInputs()
@@ -203,8 +216,26 @@ func (e *Editor) handleInputs() error {
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
 		e.dialog.Hidden = false
-		e.tw.Start()
+		e.tw.Start("Enter name of file to open:\n", func(str string) {
+			if str == "" {
+				e.dialog.Hidden = true
+				return
+			}
 
+			err := e.tileMap.OpenFile(str);
+			if err != nil {
+				e.dialog.Hidden = false
+				e.tw.Start("Could not open file " + e.tw.Input + ". Create new file? (y/n):", func(str string) {
+					e.dialog.Hidden = true
+					if str == "" || str == "n" || str == "N" {
+						// create new file
+						return
+					}
+
+					// open file
+				})
+			}
+		})
 	}
 
 	return nil
