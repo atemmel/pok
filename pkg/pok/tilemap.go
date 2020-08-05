@@ -51,7 +51,8 @@ func (t *TileMap) GetEntryWithId(id int) int {
 	return -1
 }
 
-func (t *TileMap) Draw(rend *Renderer) {
+// TODO: This function should only take one argument
+func (t *TileMap) Draw(rend *Renderer, tileset *ebiten.Image) {
 	for j := range t.Tiles {
 		if drawOnlyCurrentLayer && j != currentLayer {
 			continue
@@ -90,4 +91,24 @@ func (t *TileMap) OpenFile(path string) error {
 		return err
 	}
 	return nil
+}
+
+func CreateTileMap(width int, height int) TileMap {
+	tex := make([][]int, 1)
+	tex[0] = make([]int, width * height)
+
+	col := make([][]bool, 1)
+	col[0] = make([]bool, width * height)
+
+	tiles := TileMap{
+		tex,
+		col,
+		tex,
+		make([]string, 0),
+		make([]Exit, 0),
+		make([]Entry, 0),
+		width,
+		height,
+	}
+	return tiles
 }

@@ -19,17 +19,21 @@ type Game struct {
 	Audio Audio
 }
 
-func InitGame() {
+func CreateGame() *Game {
+	g := &Game{}
+	g.As = &g.Ows
 	var err error
 	playerImg, _, err = ebitenutil.NewImageFromFile("./resources/images/lucas.png", ebiten.FilterDefault)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
+	g.Ows.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return g
 }
 
 func (g *Game) TileIsOccupied(x int, y int, z int) bool {
@@ -78,11 +82,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Load(str string, entrypoint int) {
-	data, err := ioutil.ReadFile(str)
-	if err != nil {
-		panic(err)
-	}
-	err = json.Unmarshal(data, &g.Ows.tileMap)
+	err := g.Ows.tileMap.OpenFile(str)
 	if err != nil {
 		panic(err)
 	}

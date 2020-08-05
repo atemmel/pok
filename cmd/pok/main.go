@@ -14,8 +14,6 @@ func init() {
 	if isServing {
 		server := pok.NewServer()
 		server.Serve()
-	} else {
-		pok.InitGame()
 	}
 }
 
@@ -30,8 +28,7 @@ func main() {
 	ebiten.SetWindowTitle("Title")
 	ebiten.SetWindowResizable(true)
 
-	game := &pok.Game{}
-	game.As = &game.Ows
+	game := pok.CreateGame()
 
 	game.Load(pok.TileMapDir + "old.json", 0)
 	game.Client = pok.CreateClient()

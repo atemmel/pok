@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"errors"
 	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"image/color"
 )
@@ -26,6 +27,9 @@ type Editor struct {
 	exitMarker *ebiten.Image
 	activeFile string
 	tw typewriter
+
+	// TODO: Refactor
+	tileset *ebiten.Image
 }
 
 type typewriter struct {
@@ -49,11 +53,9 @@ func (tw *typewriter) HandleInputs() {
 			tw.Input = tw.Input[:len(tw.Input)-1]
 		}
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
-		fmt.Println("donezo")
 		tw.Active = false
 		tw.callback(tw.Input)
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		fmt.Println("donezo")
 		tw.Active = false
 		tw.callback("")
 	}
@@ -110,6 +112,14 @@ func NewEditor() *Editor {
 		}
 	}
 
+	es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
+
+	fmt.Println(es.tileset)
+
+	if err != nil {
+		panic(err)
+	}
+
 	return es;
 }
 
@@ -139,11 +149,12 @@ func (e *Editor) Update(screen *ebiten.Image) error {
 }
 
 func (e *Editor) Draw(screen *ebiten.Image) {
-	e.tileMap.Draw(&e.rend)
+	e.tileMap.Draw(&e.rend, e.tileset)
 	if drawUi {
 		e.DrawTileMapDetail()
 	}
 	e.dialog.Draw(screen)
+	e.rend.Display(screen)
 }
 
 func (e *Editor) DrawTileMapDetail() {
@@ -229,10 +240,10 @@ func (e *Editor) handleInputs() error {
 					e.dialog.Hidden = true
 					if str == "" || str == "n" || str == "N" {
 						// create new file
+						e.tileMap = CreateTileMap(8, 8)
 						return
 					}
 
-					// open file
 				})
 			}
 		})
