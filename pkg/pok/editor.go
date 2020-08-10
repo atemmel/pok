@@ -1,7 +1,6 @@
 package pok
 
 import (
-	"fmt"
 	"errors"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
@@ -26,7 +25,10 @@ type Editor struct {
 	collisionMarker *ebiten.Image
 	exitMarker *ebiten.Image
 	activeFile string
+	nextFile string
 	tw typewriter
+	clickStartX float64
+	clickStartY float64
 
 	// TODO: Refactor
 	tileset *ebiten.Image
@@ -114,34 +116,23 @@ func NewEditor() *Editor {
 
 	es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
 
-	fmt.Println(es.tileset)
 
 	if err != nil {
 		panic(err)
 	}
 
+	es.rend = NewRenderer(DisplaySizeX, DisplaySizeY, DisplaySizeX, DisplaySizeY)
+
+	es.clickStartX = -1
+	es.clickStartY = -1
+
 	return es;
 }
 
 func (e *Editor) Update(screen *ebiten.Image) error {
-	//fmt.Println(e.tw.Active)
 	if e.tw.Active {
 		e.tw.HandleInputs();
 		e.dialog.SetString(e.tw.GetDisplayString());
-		/*
-		e.dialog.SetString("Enter name of file to open:\n" + e.tw.Input)
-		if e.tw.Result != None {
-			e.dialog.Hidden = true
-		}
-
-		if e.tw.Result == Success {
-			err := e.tileMap.OpenFile(e.tw.Input);
-			if(err != nil) {
-				e.dialog.SetString("Could not open file " + e.tw.Input + ". Create new file? (y/n):")
-			}
-			e.dialog.Hidden = false
-		}
-		*/
 		return nil
 	}
 	err := e.handleInputs()
@@ -153,8 +144,13 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	if drawUi {
 		e.DrawTileMapDetail()
 	}
-	e.dialog.Draw(screen)
 	e.rend.Display(screen)
+	e.dialog.Draw(screen)
+	if e.activeFile == "" {
+		ebitenutil.DebugPrint(screen, "(No file)")
+	} else {
+		ebitenutil.DebugPrint(screen, e.activeFile)
+	}
 }
 
 func (e *Editor) DrawTileMapDetail() {
@@ -218,7 +214,7 @@ func (e *Editor) handleInputs() error {
 	}
 
 	if e.activeFile != "" {
-		e.handleInputs()
+		e.handleMapInputs()
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
@@ -228,23 +224,29 @@ func (e *Editor) handleInputs() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
 		e.dialog.Hidden = false
 		e.tw.Start("Enter name of file to open:\n", func(str string) {
+			e.dialog.Hidden = true
 			if str == "" {
-				e.dialog.Hidden = true
 				return
 			}
 
+			e.nextFile = str
 			err := e.tileMap.OpenFile(str);
 			if err != nil {
 				e.dialog.Hidden = false
 				e.tw.Start("Could not open file " + e.tw.Input + ". Create new file? (y/n):", func(str string) {
 					e.dialog.Hidden = true
-					if str == "" || str == "n" || str == "N" {
+					if str == "" || str == "y" || str == "Y" {
 						// create new file
+						e.activeFile = e.nextFile
+						drawUi = true
 						e.tileMap = CreateTileMap(8, 8)
 						return
 					}
 
 				})
+			} else {
+				e.activeFile = e.nextFile
+				drawUi = true
 			}
 		})
 	}
@@ -275,8 +277,18 @@ func (e *Editor) handleMapInputs() {
 		}
 	}
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(2)) {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) {
 		cx, cy := ebiten.CursorPosition();
+		if(e.clickStartX == -1 && e.clickStartY == -1) {
+			e.clickStartY = float64(cy)
+			e.clickStartX = float64(cx)
+		} else {
+			e.rend.Cam.X -= (float64(cx) - e.clickStartX)
+			e.rend.Cam.Y -= (float64(cy) - e.clickStartY)
+			e.clickStartX = float64(cx)
+			e.clickStartY = float64(cy)
+		}
+		/*
 		e.SelectTileFromMouse(cx, cy)
 		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
 			if i := e.tileMap.HasExitAt(selectionX, selectionY, currentLayer); i != -1 {
@@ -292,6 +304,10 @@ func (e *Editor) handleMapInputs() {
 				})
 			}
 		}
+		*/
+	} else {
+		e.clickStartX = -1
+		e.clickStartY = -1
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyC) {
