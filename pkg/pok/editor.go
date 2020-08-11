@@ -26,45 +26,13 @@ type Editor struct {
 	exitMarker *ebiten.Image
 	activeFile string
 	nextFile string
-	tw typewriter
+	tw Typewriter
 	clickStartX float64
 	clickStartY float64
+	resize Resize
 
 	// TODO: Refactor
 	tileset *ebiten.Image
-}
-
-type typewriter struct {
-	Active bool
-	Input string
-	Query string
-	callback func(string)
-}
-
-func (tw *typewriter) Start(query string, fn func(string)) {
-	tw.Active = true
-	tw.Input = ""
-	tw.Query = query
-	tw.callback = fn
-}
-
-func (tw *typewriter) HandleInputs() {
-	tw.Input += string(ebiten.InputChars())
-	if inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
-		if len(tw.Input) > 0 {
-			tw.Input = tw.Input[:len(tw.Input)-1]
-		}
-	} else if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
-		tw.Active = false
-		tw.callback(tw.Input)
-	} else if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		tw.Active = false
-		tw.callback("")
-	}
-}
-
-func (tw *typewriter) GetDisplayString() string {
-	return tw.Query + tw.Input
 }
 
 func NewEditor() *Editor {
@@ -125,6 +93,7 @@ func NewEditor() *Editor {
 
 	es.clickStartX = -1
 	es.clickStartY = -1
+	es.resize = NewResize(&es.tileMap)
 
 	return es;
 }
@@ -143,6 +112,7 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	e.tileMap.Draw(&e.rend, e.tileset)
 	if drawUi {
 		e.DrawTileMapDetail()
+		e.resize.Draw(&e.rend)
 	}
 	e.rend.Display(screen)
 	e.dialog.Draw(screen)
@@ -266,7 +236,9 @@ func (e *Editor) handleMapInputs() {
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) {
 		cx, cy := ebiten.CursorPosition();
-		e.SelectTileFromMouse(cx, cy)
+		if !e.resize.tryClick(cx, cy, &e.rend.Cam) {
+			e.SelectTileFromMouse(cx, cy)
+		}
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
