@@ -2,6 +2,7 @@ package pok
 
 import (
 	"errors"
+	"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
@@ -116,11 +117,14 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	}
 	e.rend.Display(screen)
 	e.dialog.Draw(screen)
+	debugStr := ""
 	if e.activeFile == "" {
-		ebitenutil.DebugPrint(screen, "(No file)")
+		debugStr += "(No file)"
 	} else {
-		ebitenutil.DebugPrint(screen, e.activeFile)
+		debugStr += "e.activeFile"
 	}
+	debugStr += fmt.Sprintf("\nx: %f, y: %f", e.rend.Cam.X, e.rend.Cam.Y)
+	ebitenutil.DebugPrint(screen, debugStr)
 }
 
 func (e *Editor) DrawTileMapDetail() {
