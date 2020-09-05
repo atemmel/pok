@@ -93,6 +93,14 @@ func (t *TileMap) OpenFile(path string) error {
 	return nil
 }
 
+func (t *TileMap) SaveToFile(path string) error {
+	data, err := json.Marshal(t)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, data, 0644)
+}
+
 func CreateTileMap(width int, height int) TileMap {
 	tex := make([][]int, 1)
 	tex[0] = make([]int, width * height)

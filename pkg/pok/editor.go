@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/google/go-cmp/cmp"
 	"image/color"
 )
 
@@ -20,6 +21,7 @@ var drawUi = false
 
 type Editor struct {
 	tileMap TileMap
+	lastSavedTileMap TileMap
 	rend Renderer
 	dialog DialogBox
 	selection *ebiten.Image
@@ -31,6 +33,7 @@ type Editor struct {
 	clickStartX float64
 	clickStartY float64
 	resize Resize
+	dieOnNextTick bool
 
 	// TODO: Refactor
 	tileset *ebiten.Image
@@ -41,6 +44,7 @@ func NewEditor() *Editor {
 	es := &Editor{}
 
 	es.dialog = NewDialogBox()
+	es.dieOnNextTick = false
 
 	es.selection, err = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
 	if err != nil {
@@ -182,9 +186,72 @@ func (e *Editor) SelectTileFromMouse(cx, cy int) {
 	selectedTile =  selectionX + selectionY * e.tileMap.Width
 }
 
+func (e *Editor) loadFile() {
+	e.dialog.Hidden = false
+	e.tw.Start("Enter name of file to open:\n", func(str string) {
+		e.dialog.Hidden = true
+		if str == "" {
+			return
+		}
+
+		e.nextFile = str
+		err := e.tileMap.OpenFile(str);
+		if err != nil {
+			e.dialog.Hidden = false
+			e.tw.Start("Could not open file " + e.tw.Input + ". Create new file? (y/n):", func(str string) {
+				e.dialog.Hidden = true
+				if str == "" || str == "y" || str == "Y" {
+					// create new file
+					e.activeFile = e.nextFile
+					drawUi = true
+					e.tileMap = CreateTileMap(8, 8)
+					return
+				}
+
+			})
+		} else {
+			e.activeFile = e.nextFile
+			drawUi = true
+		}
+	})
+}
+
+func (e *Editor) saveFile() {
+	err := e.tileMap.SaveToFile(e.activeFile)
+	if err != nil {
+		e.dialog.Hidden = false
+		e.tw.Start("Could not save file " + err.Error(), func(str string) {
+			e.dialog.Hidden = true
+		})
+	}
+	e.lastSavedTileMap = e.tileMap
+}
+
+func (e *Editor) hasSaved() bool {
+	return cmp.Equal(e.lastSavedTileMap, e.tileMap)
+}
+
+func (e *Editor) unsavedWorkDialog() {
+	e.dialog.Hidden = false
+	e.tw.Start("You have unsaved work. Are you sure you want to exit?:", func(str string) {
+		e.dialog.Hidden = true
+		if str == "y" || str == "Y" {
+			e.dieOnNextTick = true
+		}
+	})
+}
+
 func (e *Editor) handleInputs() error {
+	if e.dieOnNextTick {
+		return errors.New("")
+	}
+
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		return errors.New("")	//TODO Gotta be a better way to do this
+		if !e.hasSaved() {
+			e.unsavedWorkDialog()
+		} else {
+			e.dieOnNextTick = true
+		}
 	}
 
 	if e.activeFile != "" {
@@ -196,33 +263,11 @@ func (e *Editor) handleInputs() error {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
-		e.dialog.Hidden = false
-		e.tw.Start("Enter name of file to open:\n", func(str string) {
-			e.dialog.Hidden = true
-			if str == "" {
-				return
-			}
+		e.loadFile()
+	}
 
-			e.nextFile = str
-			err := e.tileMap.OpenFile(str);
-			if err != nil {
-				e.dialog.Hidden = false
-				e.tw.Start("Could not open file " + e.tw.Input + ". Create new file? (y/n):", func(str string) {
-					e.dialog.Hidden = true
-					if str == "" || str == "y" || str == "Y" {
-						// create new file
-						e.activeFile = e.nextFile
-						drawUi = true
-						e.tileMap = CreateTileMap(8, 8)
-						return
-					}
-
-				})
-			} else {
-				e.activeFile = e.nextFile
-				drawUi = true
-			}
-		})
+	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
+		e.saveFile()
 	}
 
 	return nil
