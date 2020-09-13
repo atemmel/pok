@@ -24,6 +24,7 @@ type Editor struct {
 	lastSavedTileMap TileMap
 	rend Renderer
 	dialog DialogBox
+	grid Grid
 	selection *ebiten.Image
 	collisionMarker *ebiten.Image
 	exitMarker *ebiten.Image
@@ -94,6 +95,8 @@ func NewEditor() *Editor {
 		panic(err)
 	}
 
+	es.grid = NewGrid(es.tileset)
+
 	es.rend = NewRenderer(DisplaySizeX, DisplaySizeY, DisplaySizeX, DisplaySizeY)
 
 	es.clickStartX = -1
@@ -121,11 +124,16 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	}
 	e.rend.Display(screen)
 	e.dialog.Draw(screen)
+
+	if drawUi {
+		e.grid.Draw(screen)
+	}
+
 	debugStr := ""
 	if e.activeFile == "" {
 		debugStr += "(No file)"
 	} else {
-		debugStr += "e.activeFile"
+		debugStr += e.activeFile
 	}
 	debugStr += fmt.Sprintf("\nx: %f, y: %f", e.rend.Cam.X, e.rend.Cam.Y)
 	ebitenutil.DebugPrint(screen, debugStr)

@@ -54,7 +54,7 @@ func NewDialogBox() DialogBox {
 	}
 
 	//db.SetString("Lorem ipsum dolor sit amet, lorem ipsum dolor sit amet")
-	db.Hidden = true;
+	db.Hidden = true
 
 	return db
 }
