@@ -25,6 +25,7 @@ type Grid struct {
 	selection *ebiten.Image
 	selectionX float64
 	selectionY float64
+	currentIndex int
 	currentCol int
 	maxCol int
 	rect image.Rectangle
@@ -46,6 +47,7 @@ func NewGrid(tileSet *ebiten.Image) Grid {
 	return Grid{
 		tileSet,
 		selection,
+		0,
 		0,
 		0,
 		0,
@@ -86,7 +88,7 @@ func (g *Grid) Scroll(dir ScrollDirection) {
 	}
 }
 
-func (g *Grid) Select(cx, cy int) int {
+func (g *Grid) Select(cx, cy int) {
 	// Translate
 	cx -= xGridPos
 	cy -= yGridPos
@@ -94,9 +96,13 @@ func (g *Grid) Select(cx, cy int) int {
 	iy := cy / TileSize
 	g.selectionX = float64(ix) * TileSize
 	g.selectionY = float64(iy) * TileSize
-	return g.currentCol + ix + iy * nItemsPerRow
+	g.currentIndex = ix + (g.currentCol + iy) * nItemsPerRow
 }
 
 func (g *Grid) Contains(p image.Point) bool {
 	return p.In(g.rect)
+}
+
+func (g *Grid) GetIndex() int {
+	return g.currentIndex
 }

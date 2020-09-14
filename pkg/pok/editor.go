@@ -334,7 +334,7 @@ func (e *Editor) handleMapInputs() {
 
 func (e *Editor) handleMapMouseInputs() {
 	_, dy := ebiten.Wheel()
-	if dy != 0. && len(e.tileMap.Tiles[currentLayer]) > selectedTile && selectedTile >= 0 {
+	if dy != 0. && e.selectedTileIsValid() {
 		if dy < 0 {
 			e.tileMap.Tiles[currentLayer][selectedTile]--
 		} else {
@@ -346,13 +346,18 @@ func (e *Editor) handleMapMouseInputs() {
 		cx, cy := ebiten.CursorPosition();
 		if !e.resize.tryClick(cx, cy, &e.rend.Cam) {
 			e.SelectTileFromMouse(cx, cy)
+			if e.selectedTileIsValid() {
+				i := e.grid.GetIndex()
+				fmt.Println(i)
+				e.tileMap.Tiles[currentLayer][selectedTile] = i
+			}
 		}
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
 		cx, cy := ebiten.CursorPosition();
 		e.SelectTileFromMouse(cx, cy)
-		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
+		if e.selectedTileIsValid() {
 			e.tileMap.Collision[currentLayer][selectedTile] = !e.tileMap.Collision[currentLayer][selectedTile]
 		}
 	}
@@ -389,6 +394,10 @@ func (e *Editor) handleMapMouseInputs() {
 		e.clickStartX = -1
 		e.clickStartY = -1
 	}
+}
+
+func (e *Editor) selectedTileIsValid() bool {
+	return 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer])
 }
 
 func (e *Editor) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
