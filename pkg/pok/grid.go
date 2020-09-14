@@ -69,16 +69,20 @@ func (g *Grid) Draw(target *ebiten.Image) {
 		}
 	}
 
-	opt := &ebiten.DrawImageOptions{}
-	opt.GeoM.Translate(xGridPos + g.selectionX, yGridPos + g.selectionY)
-	target.DrawImage(g.selection, opt)
+	if g.selectionY >= 0 && g.selectionY < float64(TileSize * columnLen) {
+		opt := &ebiten.DrawImageOptions{}
+		opt.GeoM.Translate(xGridPos + g.selectionX, yGridPos + g.selectionY)
+		target.DrawImage(g.selection, opt)
+	}
 }
 
 func (g *Grid) Scroll(dir ScrollDirection) {
 	if dir == ScrollUp && g.currentCol < g.maxCol {
 		g.currentCol++
+		g.selectionY -= TileSize
 	} else if dir == ScrollDown && g.currentCol > 0 {
 		g.currentCol--
+		g.selectionY += TileSize
 	}
 }
 
