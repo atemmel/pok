@@ -91,7 +91,6 @@ func NewEditor() *Editor {
 
 	es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
 
-
 	if err != nil {
 		panic(err)
 	}
@@ -299,13 +298,13 @@ func (e *Editor) handleInputs() error {
 
 func (e *Editor) handleMapInputs() {
 	if ebiten.IsKeyPressed(ebiten.KeyC) {
-		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
+		if e.selectedTileIsValid() {
 			copyBuffer = e.tileMap.Tiles[currentLayer][selectedTile]
 		}
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyV) {
-		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
+		if e.selectedTileIsValid() {
 			e.tileMap.Tiles[currentLayer][selectedTile] = copyBuffer
 		}
 	}
@@ -348,7 +347,6 @@ func (e *Editor) handleMapMouseInputs() {
 			e.SelectTileFromMouse(cx, cy)
 			if e.selectedTileIsValid() {
 				i := e.grid.GetIndex()
-				fmt.Println(i)
 				e.tileMap.Tiles[currentLayer][selectedTile] = i
 			}
 		}
