@@ -20,28 +20,60 @@ type OverworldState struct {
 	tileset *ebiten.Image
 }
 
+func gamepadUp() bool {
+	return ebiten.GamepadAxis(0, 1) < -0.1 || ebiten.IsGamepadButtonPressed(0, ebiten.GamepadButton11)
+}
+
+func gamepadDown() bool {
+	return ebiten.GamepadAxis(0, 1) > 0.1 || ebiten.IsGamepadButtonPressed(0, ebiten.GamepadButton13)
+}
+
+func gamepadLeft() bool {
+	return ebiten.GamepadAxis(0, 0) < -0.1 || ebiten.IsGamepadButtonPressed(0, ebiten.GamepadButton14)
+}
+
+func gamepadRight() bool {
+	return ebiten.GamepadAxis(0, 0) > 0.1 || ebiten.IsGamepadButtonPressed(0, ebiten.GamepadButton12)
+}
+
+func movingUp() bool {
+	return ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) || ebiten.IsKeyPressed(ebiten.KeyW) || gamepadUp()
+}
+
+func movingDown() bool {
+	return ebiten.IsKeyPressed(ebiten.KeyDown) || ebiten.IsKeyPressed(ebiten.KeyJ) || ebiten.IsKeyPressed(ebiten.KeyS) || gamepadDown()
+}
+
+func movingLeft() bool {
+	return ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyH) || ebiten.IsKeyPressed(ebiten.KeyA) || gamepadLeft()
+}
+
+func movingRight() bool {
+	return ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyL) || ebiten.IsKeyPressed(ebiten.KeyD) || gamepadRight()
+}
+
+func holdingSprint() bool {
+	return ebiten.IsKeyPressed(ebiten.KeyShift) || ebiten.IsGamepadButtonPressed(0, ebiten.GamepadButton1)
+}
+
 func (o *OverworldState) GetInputs(g *Game) error {
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
 		return errors.New("")	//TODO Gotta be a better way to do this
 	}
 
-	if !g.Player.isWalking && ebiten.IsKeyPressed(ebiten.KeyShift) {
+	if !g.Player.isWalking && holdingSprint() {
 		g.Player.isRunning = true
 	} else {
 		g.Player.isRunning = false
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyK) ||
-		ebiten.IsKeyPressed(ebiten.KeyW) {
+	if movingUp() {
 		g.Player.TryStep(Up, g)
-	} else if ebiten.IsKeyPressed(ebiten.KeyDown) || ebiten.IsKeyPressed(ebiten.KeyJ) ||
-		ebiten.IsKeyPressed(ebiten.KeyS) {
+	} else if movingDown() {
 		g.Player.TryStep(Down, g)
-	} else if ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyL) ||
-		ebiten.IsKeyPressed(ebiten.KeyD) {
+	} else if movingRight() {
 		g.Player.TryStep(Right, g)
-	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyH) ||
-		ebiten.IsKeyPressed(ebiten.KeyA) {
+	} else if movingLeft() {
 		g.Player.TryStep(Left, g)
 	} else {
 		g.Player.TryStep(Static, g)
