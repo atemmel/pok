@@ -7,6 +7,7 @@ import (
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/google/go-cmp/cmp"
+	"image"
 	"image/color"
 )
 
@@ -263,6 +264,21 @@ func (e *Editor) handleInputs() error {
 	}
 
 	if e.activeFile != "" {
+		cx, cy := ebiten.CursorPosition()
+		if e.grid.Contains(image.Point{cx, cy}) {
+			_, sy := ebiten.Wheel()
+			if sy < 0 {
+				e.grid.Scroll(ScrollDown)
+			} else if sy > 0 {
+				e.grid.Scroll(ScrollUp)
+			}
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
+				cx, cy := ebiten.CursorPosition()
+				e.grid.Select(cx, cy)
+			}
+		} else {
+			e.handleMapMouseInputs()
+		}
 		e.handleMapInputs()
 	}
 
@@ -282,63 +298,6 @@ func (e *Editor) handleInputs() error {
 }
 
 func (e *Editor) handleMapInputs() {
-	_, dy := ebiten.Wheel()
-	if dy != 0. && len(e.tileMap.Tiles[currentLayer]) > selectedTile && selectedTile >= 0 {
-		if dy < 0 {
-			e.tileMap.Tiles[currentLayer][selectedTile]--
-		} else {
-			e.tileMap.Tiles[currentLayer][selectedTile]++
-		}
-	}
-
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) {
-		cx, cy := ebiten.CursorPosition();
-		if !e.resize.tryClick(cx, cy, &e.rend.Cam) {
-			e.SelectTileFromMouse(cx, cy)
-		}
-	}
-
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
-		cx, cy := ebiten.CursorPosition();
-		e.SelectTileFromMouse(cx, cy)
-		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
-			e.tileMap.Collision[currentLayer][selectedTile] = !e.tileMap.Collision[currentLayer][selectedTile]
-		}
-	}
-
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) {
-		cx, cy := ebiten.CursorPosition();
-		if(e.clickStartX == -1 && e.clickStartY == -1) {
-			e.clickStartY = float64(cy)
-			e.clickStartX = float64(cx)
-		} else {
-			e.rend.Cam.X -= (float64(cx) - e.clickStartX)
-			e.rend.Cam.Y -= (float64(cy) - e.clickStartY)
-			e.clickStartX = float64(cx)
-			e.clickStartY = float64(cy)
-		}
-		/*
-		e.SelectTileFromMouse(cx, cy)
-		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
-			if i := e.tileMap.HasExitAt(selectionX, selectionY, currentLayer); i != -1 {
-				e.tileMap.Exits[i] = e.tileMap.Exits[len(e.tileMap.Exits) - 1]
-				e.tileMap.Exits = e.tileMap.Exits[:len(e.tileMap.Exits) - 1]
-			} else {
-				e.tileMap.Exits = append(e.tileMap.Exits, Exit{
-					"",
-					0,
-					selectionX,
-					selectionY,
-					currentLayer,
-				})
-			}
-		}
-		*/
-	} else {
-		e.clickStartX = -1
-		e.clickStartY = -1
-	}
-
 	if ebiten.IsKeyPressed(ebiten.KeyC) {
 		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
 			copyBuffer = e.tileMap.Tiles[currentLayer][selectedTile]
@@ -370,6 +329,65 @@ func (e *Editor) handleMapInputs() {
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyU) {
 		drawOnlyCurrentLayer = !drawOnlyCurrentLayer
+	}
+}
+
+func (e *Editor) handleMapMouseInputs() {
+	_, dy := ebiten.Wheel()
+	if dy != 0. && len(e.tileMap.Tiles[currentLayer]) > selectedTile && selectedTile >= 0 {
+		if dy < 0 {
+			e.tileMap.Tiles[currentLayer][selectedTile]--
+		} else {
+			e.tileMap.Tiles[currentLayer][selectedTile]++
+		}
+	}
+
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) {
+		cx, cy := ebiten.CursorPosition();
+		if !e.resize.tryClick(cx, cy, &e.rend.Cam) {
+			e.SelectTileFromMouse(cx, cy)
+		}
+	}
+
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
+		cx, cy := ebiten.CursorPosition();
+		e.SelectTileFromMouse(cx, cy)
+		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
+			e.tileMap.Collision[currentLayer][selectedTile] = !e.tileMap.Collision[currentLayer][selectedTile]
+		}
+	}
+
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) || (ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && ebiten.IsKeyPressed(ebiten.KeyControl)) {
+		cx, cy := ebiten.CursorPosition();
+		if(e.clickStartX == -1 && e.clickStartY == -1) {
+			e.clickStartY = float64(cy)
+			e.clickStartX = float64(cx)
+		} else {
+			e.rend.Cam.X -= (float64(cx) - e.clickStartX)
+			e.rend.Cam.Y -= (float64(cy) - e.clickStartY)
+			e.clickStartX = float64(cx)
+			e.clickStartY = float64(cy)
+		}
+		/*
+		e.SelectTileFromMouse(cx, cy)
+		if 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer]) {
+			if i := e.tileMap.HasExitAt(selectionX, selectionY, currentLayer); i != -1 {
+				e.tileMap.Exits[i] = e.tileMap.Exits[len(e.tileMap.Exits) - 1]
+				e.tileMap.Exits = e.tileMap.Exits[:len(e.tileMap.Exits) - 1]
+			} else {
+				e.tileMap.Exits = append(e.tileMap.Exits, Exit{
+					"",
+					0,
+					selectionX,
+					selectionY,
+					currentLayer,
+				})
+			}
+		}
+		*/
+	} else {
+		e.clickStartX = -1
+		e.clickStartY = -1
 	}
 }
 
