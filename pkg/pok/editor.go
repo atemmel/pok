@@ -343,7 +343,7 @@ func (e *Editor) handleMapMouseInputs() {
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) {
 		cx, cy := ebiten.CursorPosition();
-		if e.resize.tryClick(cx, cy, &e.rend.Cam) {
+		if e.resize.IsHolding() || e.resize.tryClick(cx, cy, &e.rend.Cam) {
 			e.resize.Hold()
 		} else {
 			e.SelectTileFromMouse(cx, cy)

@@ -6,6 +6,8 @@ import (
 	"math"
 )
 
+type CornerIndex int
+
 type Corner struct {
 	x float64
 	y float64
@@ -18,10 +20,20 @@ type Resize struct {
 	holding [4]bool
 	holdStart Corner
 	holdEnd Corner
+	holdIndex int
+	clickStartX int
+	clickStartY int
+	dx int
+	dy int
 }
 
 const (
 	DragRadius = 8
+
+	TopLeftCorner  = 0
+	TopRightCorner = 1
+	BotLeftCorner  = 2
+	BotRightCorner = 3
 )
 
 func NewResize(tileMap *TileMap) Resize {
@@ -41,6 +53,11 @@ func NewResize(tileMap *TileMap) Resize {
 		},
 		Corner{0,0},
 		Corner{0,0},
+		0,
+		0,
+		0,
+		0,
+		0,
 	}
 	return r
 }
@@ -91,14 +108,14 @@ func (r *Resize) HasCorners() bool {
 }
 
 func (r *Resize) GetCorners() [4]Corner {
-	return [...]Corner{
+	corners := [...]Corner{
 		{
 			-float64(r.outlined.Bounds().Max.X / 2),
 			-float64(r.outlined.Bounds().Max.Y / 2),
 		},
 		{
 			float64(r.tileMap.Width * TileSize -r.outlined.Bounds().Max.X / 2),
-			float64(r.tileMap.Height * TileSize -r.outlined.Bounds().Max.Y / 2),
+			-float64(r.outlined.Bounds().Max.Y / 2),
 		},
 		{
 			-float64(r.outlined.Bounds().Max.X / 2),
@@ -106,9 +123,20 @@ func (r *Resize) GetCorners() [4]Corner {
 		},
 		{
 			float64(r.tileMap.Width * TileSize -r.outlined.Bounds().Max.X / 2),
-			-float64(r.outlined.Bounds().Max.Y / 2),
+			float64(r.tileMap.Height * TileSize -r.outlined.Bounds().Max.Y / 2),
 		},
 	}
+
+	if r.holdIndex == -1 {
+		return corners
+	}
+
+	dx := float64(r.dx / TileSize) * TileSize
+	dy := float64(r.dy / TileSize) * TileSize
+
+	corners = r.moveCorners(corners, dx, dy)
+
+	return corners
 }
 
 func (r *Resize) Draw(rend *Renderer) {
@@ -147,7 +175,7 @@ func (r *Resize) tryClick(px, py int, cam *Camera) bool {
 		return false
 	}
 
-	for i := range  r.holding {
+	for i := range r.holding {
 		r.holding[i] = false
 	}
 
@@ -162,6 +190,10 @@ func (r *Resize) tryClick(px, py int, cam *Camera) bool {
 		b := circleIntersect(float64(px), float64(py), cx, cy, DragRadius)
 		r.holding[i] = b
 		if b {
+			if !r.IsHolding() {
+				r.holdIndex = i
+				r.clickStartX, r.clickStartY = ebiten.CursorPosition()
+			}
 			return true
 		}
 	}
@@ -169,12 +201,70 @@ func (r *Resize) tryClick(px, py int, cam *Camera) bool {
 	return false
 }
 
+func (r *Resize) IsHolding() bool {
+	return r.holdIndex != -1
+}
+
 func (r *Resize) Hold() {
-	
+	cx, cy := ebiten.CursorPosition()
+	r.dx = cx - r.clickStartX
+	r.dy = cy - r.clickStartY
 }
 
 func (r *Resize) Release() {
-	for i := range r.holding {
-		r.holding[i] = false
+	if r.IsHolding() {
+		r.holding[r.holdIndex] = false
+		r.holdIndex = -1
 	}
+}
+
+func (r *Resize) moveCorners(corners [4]Corner, dx, dy float64) [4]Corner {
+	switch r.holdIndex {
+		case TopLeftCorner:
+			if !(dx < 0 && dy > 0) && !(dx > 0 && dy < 0) {
+				corners[TopLeftCorner].x += dx
+				corners[TopLeftCorner].y += dy
+				if dy != 0 {
+					corners[TopRightCorner].y += dy
+				}
+				if dx != 0 {
+					corners[BotLeftCorner].x += dx
+				}
+			}
+		case TopRightCorner:
+			if !(dx > 0 && dy > 0) && !(dx < 0 && dy < 0) {
+				corners[TopRightCorner].x += dx
+				corners[TopRightCorner].y += dy
+				if dy != 0 {
+					corners[TopLeftCorner].y += dy
+				}
+				if dx != 0 {
+					corners[BotRightCorner].x += dx
+				}
+			}
+		case BotLeftCorner:
+			if !(dx < 0 && dy < 0) && !(dx > 0 && dy > 0) {
+				corners[BotLeftCorner].x += dx
+				corners[BotLeftCorner].y += dy
+				if dy != 0 {
+					corners[BotRightCorner].y += dy
+				}
+				if dx != 0 {
+					corners[TopLeftCorner].x += dx
+				}
+			}
+		case BotRightCorner:
+			if !(dx > 0 && dy < 0) && !(dx < 0 && dy > 0) {
+				corners[BotRightCorner].x += dx
+				corners[BotRightCorner].y += dy
+				if dy != 0 {
+					corners[BotLeftCorner].y += dy
+				}
+				if dx != 0 {
+					corners[TopRightCorner].x += dx
+				}
+			}
+	}
+
+	return corners
 }
