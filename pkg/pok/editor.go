@@ -343,13 +343,17 @@ func (e *Editor) handleMapMouseInputs() {
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) {
 		cx, cy := ebiten.CursorPosition();
-		if !e.resize.tryClick(cx, cy, &e.rend.Cam) {
+		if e.resize.tryClick(cx, cy, &e.rend.Cam) {
+			e.resize.Hold()
+		} else {
 			e.SelectTileFromMouse(cx, cy)
 			if e.selectedTileIsValid() {
 				i := e.grid.GetIndex()
 				e.tileMap.Tiles[currentLayer][selectedTile] = i
 			}
 		}
+	} else {
+		e.resize.Release()
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {

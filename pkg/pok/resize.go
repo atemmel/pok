@@ -168,3 +168,13 @@ func (r *Resize) tryClick(px, py int, cam *Camera) bool {
 
 	return false
 }
+
+func (r *Resize) Hold() {
+	
+}
+
+func (r *Resize) Release() {
+	for i := range r.holding {
+		r.holding[i] = false
+	}
+}
