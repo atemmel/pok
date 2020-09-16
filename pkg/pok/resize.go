@@ -211,11 +211,29 @@ func (r *Resize) Hold() {
 	r.dy = cy - r.clickStartY
 }
 
-func (r *Resize) Release() {
-	if r.IsHolding() {
-		r.holding[r.holdIndex] = false
-		r.holdIndex = -1
+func (r *Resize) Release() (int, int) {
+	if !r.IsHolding() {
+		return 0, 0
 	}
+
+	x := r.dx / TileSize
+	y := r.dy / TileSize
+	i := r.holdIndex
+	r.holding[r.holdIndex] = false
+	r.holdIndex = -1
+
+	switch i {
+		case TopLeftCorner:
+			return -x, -y
+		case TopRightCorner:
+			return x, -y
+		case BotLeftCorner:
+			return -x, y
+		case BotRightCorner:
+			return x, y
+	}
+
+	return 0, 0
 }
 
 func (r *Resize) moveCorners(corners [4]Corner, dx, dy float64) [4]Corner {

@@ -353,7 +353,8 @@ func (e *Editor) handleMapMouseInputs() {
 			}
 		}
 	} else {
-		e.resize.Release()
+		x, y := e.resize.Release()
+		e.tileMap.Resize(x, y)
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
