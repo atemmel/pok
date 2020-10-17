@@ -323,6 +323,9 @@ func (e *Editor) handleMapInputs() {
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
 		e.tileMap.Tiles = append(e.tileMap.Tiles, make([]int, len(e.tileMap.Tiles[0])))
+		for i := range e.tileMap.Tiles[len(e.tileMap.Tiles) - 1] {
+			e.tileMap.Tiles[len(e.tileMap.Tiles)-1][i] = -1
+		}
 		e.tileMap.Collision = append(e.tileMap.Collision, make([]bool, len(e.tileMap.Collision[0])))
 	}
 
