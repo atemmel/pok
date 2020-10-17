@@ -6,8 +6,6 @@ import (
 	"math"
 )
 
-type CornerIndex int
-
 type Corner struct {
 	x float64
 	y float64
@@ -53,7 +51,7 @@ func NewResize(tileMap *TileMap) Resize {
 		},
 		Corner{0,0},
 		Corner{0,0},
-		0,
+		-1,
 		0,
 		0,
 		0,
@@ -211,9 +209,9 @@ func (r *Resize) Hold() {
 	r.dy = cy - r.clickStartY
 }
 
-func (r *Resize) Release() (int, int) {
+func (r *Resize) Release() (int, int, int) {
 	if !r.IsHolding() {
-		return 0, 0
+		return 0, 0, -1
 	}
 
 	x := r.dx / TileSize
@@ -224,16 +222,16 @@ func (r *Resize) Release() (int, int) {
 
 	switch i {
 		case TopLeftCorner:
-			return -x, -y
+			return -x, -y, i
 		case TopRightCorner:
-			return x, -y
+			return x, -y, i
 		case BotLeftCorner:
-			return -x, y
+			return -x, y, i
 		case BotRightCorner:
-			return x, y
+			return x, y, i
 	}
 
-	return 0, 0
+	return 0, 0, -1
 }
 
 func (r *Resize) moveCorners(corners [4]Corner, dx, dy float64) [4]Corner {

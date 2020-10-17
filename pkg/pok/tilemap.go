@@ -2,6 +2,7 @@ package pok
 
 import(
 	"encoding/json"
+	"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"io/ioutil"
 	"image"
@@ -101,16 +102,17 @@ func (t *TileMap) SaveToFile(path string) error {
 	return ioutil.WriteFile(path, data, 0644)
 }
 
-func (t *TileMap) Resize(dx, dy int) {
-	if (t.Width == 1 && dx < 0) || (t.Height == 1 && dy < 1) {
+func (t *TileMap) Resize(dx, dy, origin int) {
+	if (t.Width == 1 && dx < 0) || (t.Height == 1 && dy < 0) || origin == -1 {
 		return
 	}
 
+	/*
 	invalidate := func(x, y int) {
 		j := y * t.Width + x
 		for i := range t.Tiles {
 			copy(t.Tiles[i][j:], t.Tiles[i][j + 1:])
-			t.Tiles[i][len(t.Tiles[i]) - 1] = 0
+			t.Tiles[i][len(t.Tiles[i]) - 1] = 10
 			t.Tiles[i] = t.Tiles[i][:len(t.Tiles[i]) - 1]
 
 			copy(t.Collision[i][j:], t.Collision[i][j + 1:])
@@ -122,30 +124,71 @@ func (t *TileMap) Resize(dx, dy int) {
 			t.TextureIndicies[i] = t.TextureIndicies[i][:len(t.TextureIndicies[i]) - 1]
 		}
 	}
+	*/
+
+	insertCol := func(x int) {
+		for i := range t.Tiles {
+			for j := 0; j < t.Height; j++ {
+				index := j * t.Width + x
+				t.Tiles[i] = append(t.Tiles[i][:index], 0)
+				t.Collision[i] = append(t.Collision[i][:index], false)
+				t.TextureIndicies[i] = append(t.TextureIndicies[i][:index], 0)
+				fmt.Println("Appending", x, j)
+			}
+		}
+	}
+
+	insertRow := func(y int) {
+		for i := range t.Tiles {
+			for j := 0; j < t.Width; j++ {
+				index := y * t.Width + j
+				t.Tiles[i] = append(t.Tiles[i][:index], 0)
+				t.Collision[i] = append(t.Collision[i][:index], false)
+				t.TextureIndicies[i] = append(t.TextureIndicies[i][:index], 0)
+				fmt.Println("Appending", j, y)
+			}
+		}
+	}
+
+	/*
+	eraseCol := func(x int) {
+
+	}
+	*/
 
 	newWidth := t.Width + dx
 	newHeight := t.Height + dy
 
-	maxx := newWidth
-	maxy := newHeight
-	minx := t.Width
-	miny := t.Height
+	if origin == TopLeftCorner || origin == BotLeftCorner {
+		if dx < 0 {	// Crop left side
 
-	if maxx < minx {
-		maxx, minx = minx, maxx
-	}
+		} else if dx > 0 { // Grow left side
+			insertCol(0)
+		}
+	} else if origin == TopRightCorner || origin == TopLeftCorner {
+		if dx < 0 { // Crop right side 
 
-	if maxy < miny {
-		maxy, miny = miny, maxy
-	}
-
-	for j := maxy - 1; j >= miny; j-- {
-		for i := maxx - 1; i >= minx; i-- {
-			invalidate(i, j)
+		} else if dx > 0 { // Grow right side 
+			insertCol(t.Width - 1)
 		}
 	}
 
 	t.Width = newWidth
+
+	if origin == TopLeftCorner || origin == TopRightCorner {
+		if dy < 0 {	// Crop top side
+
+		} else if dy > 0 { // Grow top side
+			insertRow(0)
+		}
+	} else if origin == BotLeftCorner || origin == BotRightCorner {
+		if dy < 0 { // Crop bot side 
+
+		} else if dy > 0 { // Grow bot side 
+			insertRow(t.Height - 1)
+		}
+	}
+
 	t.Height = newHeight
 
 	for i, exit := range t.Exits {

@@ -326,6 +326,13 @@ func (e *Editor) handleMapInputs() {
 		e.tileMap.Collision = append(e.tileMap.Collision, make([]bool, len(e.tileMap.Collision[0])))
 	}
 
+	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
+		if(len(e.tileMap.Tiles) > 1) {
+			e.tileMap.Tiles = e.tileMap.Tiles[:len(e.tileMap.Tiles)-1]
+			e.tileMap.Collision = e.tileMap.Collision[:len(e.tileMap.Collision)-1]
+		}
+	}
+
 	if inpututil.IsKeyJustPressed(ebiten.KeyU) {
 		drawOnlyCurrentLayer = !drawOnlyCurrentLayer
 	}
@@ -353,8 +360,8 @@ func (e *Editor) handleMapMouseInputs() {
 			}
 		}
 	} else {
-		x, y := e.resize.Release()
-		e.tileMap.Resize(x, y)
+		x, y, origin := e.resize.Release()
+		e.tileMap.Resize(x, y, origin)
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
