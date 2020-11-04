@@ -20,6 +20,11 @@ var currentLayer = 0
 var drawOnlyCurrentLayer = false
 var drawUi = false
 
+const(
+	IconOffsetX = 2
+	IconOffsetY = 70
+)
+
 type Editor struct {
 	tileMap TileMap
 	lastSavedTileMap TileMap
@@ -29,6 +34,7 @@ type Editor struct {
 	selection *ebiten.Image
 	collisionMarker *ebiten.Image
 	exitMarker *ebiten.Image
+	icons *ebiten.Image
 	activeFile string
 	nextFile string
 	tw Typewriter
@@ -103,6 +109,11 @@ func NewEditor() *Editor {
 	es.clickStartY = -1
 	es.resize = NewResize(&es.tileMap)
 
+	es.icons, _, err = ebitenutil.NewImageFromFile("./resources/images/editoricons.png", ebiten.FilterDefault)
+	if err != nil {
+		panic(err)
+	}
+
 	return es;
 }
 
@@ -127,6 +138,7 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 
 	if drawUi {
 		e.grid.Draw(screen)
+		e.drawIcons(screen)
 	}
 
 	debugStr := ""
@@ -415,4 +427,17 @@ func (e *Editor) selectedTileIsValid() bool {
 
 func (e *Editor) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return DisplaySizeX, DisplaySizeY
+}
+
+func (e *Editor) drawIcons(screen *ebiten.Image) {
+	w, h := e.icons.Size()
+	n := 3
+	iconPadding := 2
+	h /= n
+	for i := 0; i < n; i++ {
+		opt := &ebiten.DrawImageOptions{}
+		opt.GeoM.Translate(IconOffsetX, IconOffsetY + float64(i * (h + iconPadding)))
+		r := image.Rect(0, i * h, w, i * h + h)
+		screen.DrawImage(e.icons.SubImage(r).(*ebiten.Image), opt)
+	}
 }

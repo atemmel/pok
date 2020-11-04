@@ -58,6 +58,11 @@ func (t *TileMap) Draw(rend *Renderer, tileset *ebiten.Image) {
 			continue
 		}
 		for i, n := range t.Tiles[j] {
+			// Do not "draw" invisible sprites
+			if t.Tiles[j][i] < 0 {
+				continue;
+			}
+
 			x := float64(i % t.Width) * TileSize
 			y := float64(i / t.Width) * TileSize
 
@@ -105,25 +110,6 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 	if (t.Width == 1 && dx < 0) || (t.Height == 1 && dy < 0) || origin == -1 {
 		return
 	}
-
-	/*
-	invalidate := func(x, y int) {
-		j := y * t.Width + x
-		for i := range t.Tiles {
-			copy(t.Tiles[i][j:], t.Tiles[i][j + 1:])
-			t.Tiles[i][len(t.Tiles[i]) - 1] = 10
-			t.Tiles[i] = t.Tiles[i][:len(t.Tiles[i]) - 1]
-
-			copy(t.Collision[i][j:], t.Collision[i][j + 1:])
-			t.Collision[i][len(t.Collision[i]) - 1] = false
-			t.Collision[i] = t.Collision[i][:len(t.Collision[i]) - 1]
-
-			copy(t.TextureIndicies[i][j:], t.TextureIndicies[i][j + 1:])
-			t.TextureIndicies[i][len(t.TextureIndicies[i]) - 1] = 0
-			t.TextureIndicies[i] = t.TextureIndicies[i][:len(t.TextureIndicies[i]) - 1]
-		}
-	}
-	*/
 
 	insertCol := func(x int) {
 		//fmt.Println("Inserting col")
@@ -174,6 +160,9 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 	}
 
 	eraseCol := func(x int) {
+		if t.Width <= 1 {
+			return;
+		}
 		t.Width--
 		for i := range t.Tiles {
 			for j := 0; j < t.Height; j++ {
@@ -189,6 +178,9 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 	}
 
 	eraseRow := func(y int) {
+		if t.Height <= 1 {
+			return
+		}
 		t.Height--
 		for i := range t.Tiles {
 			start := y * t.Width
@@ -201,29 +193,45 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 
 	if origin == TopLeftCorner || origin == BotLeftCorner {
 		if dx < 0 {	// Crop left side
-			eraseCol(0)
+			for ; dx < 0; dx++ {
+				eraseCol(0)
+			}
 		} else if dx > 0 { // Grow left side
-			insertCol(0)
+			for ; dx > 0; dx-- {
+				insertCol(0)
+			}
 		}
-	} else if origin == TopRightCorner || origin == TopLeftCorner {
+	} else if origin == TopRightCorner || origin == BotRightCorner {
 		if dx < 0 { // Crop right side 
-			eraseCol(t.Width - 1)
+			for ; dx < 0; dx++ {
+				eraseCol(t.Width - 1)
+			}
 		} else if dx > 0 { // Grow right side 
-			insertCol(t.Width - 1)
+			for ; dx > 0; dx-- {
+				insertCol(t.Width - 1)
+			}
 		}
 	}
 
 	if origin == TopLeftCorner || origin == TopRightCorner {
 		if dy < 0 {	// Crop top side
-			eraseRow(0)
+			for ; dy < 0; dy++ {
+				eraseRow(0)
+			}
 		} else if dy > 0 { // Grow top side
-			insertRow(0)
+			for ; dy > 0; dy-- {
+				insertRow(0)
+			}
 		}
 	} else if origin == BotLeftCorner || origin == BotRightCorner {
 		if dy < 0 { // Crop bot side 
-			eraseRow(t.Height - 1)
+			for ; dy < 0; dy++ {
+				eraseRow(t.Height - 1)
+			}
 		} else if dy > 0 { // Grow bot side 
-			insertRow(t.Height - 1)
+			for ; dy > 0; dy-- {
+				insertRow(t.Height - 1)
+			}
 		}
 	}
 

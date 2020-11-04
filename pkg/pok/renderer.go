@@ -72,7 +72,7 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	for _, t := range r.targets {
 		t.Op.GeoM.Translate(t.X -r.Cam.X, t.Y -r.Cam.Y)
 		if t.SubImage != nil {
-			r.dest.DrawImage(t.Src.SubImage(*t.SubImage).(*ebiten.Image), t.Op) 
+			r.dest.DrawImage(t.Src.SubImage(*t.SubImage).(*ebiten.Image), t.Op)
 		} else {
 			r.dest.DrawImage(t.Src, t.Op)
 		}
