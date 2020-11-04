@@ -2,7 +2,6 @@ package pok
 
 import(
 	"encoding/json"
-	"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"io/ioutil"
 	"image"
@@ -127,69 +126,106 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 	*/
 
 	insertCol := func(x int) {
+		//fmt.Println("Inserting col")
+		if x == t.Width - 1 {
+			x++
+		}
+		t.Width++
 		for i := range t.Tiles {
 			for j := 0; j < t.Height; j++ {
 				index := j * t.Width + x
-				t.Tiles[i] = append(t.Tiles[i][:index], 0)
-				t.Collision[i] = append(t.Collision[i][:index], false)
-				t.TextureIndicies[i] = append(t.TextureIndicies[i][:index], 0)
-				fmt.Println("Appending", x, j)
+				t.Tiles[i] = append(t.Tiles[i], 0)
+				t.Collision[i] = append(t.Collision[i], false)
+				t.TextureIndicies[i] = append(t.TextureIndicies[i], 0)
+				copy(t.Tiles[i][index + 1:], t.Tiles[i][index:])
+				copy(t.Collision[i][index + 1:], t.Collision[i][index:])
+				copy(t.TextureIndicies[i][index + 1:], t.TextureIndicies[i][index:])
+
+				t.Tiles[i][index] = 0
+				t.Collision[i][index] = false
+				t.TextureIndicies[i][index] = 0
+
+				//fmt.Println("Appending", x, j, index)
+				//fmt.Println(t.Tiles[0])
 			}
 		}
 	}
 
 	insertRow := func(y int) {
+		if y == t.Height - 1 {
+			y++
+		}
+		t.Height++
 		for i := range t.Tiles {
 			for j := 0; j < t.Width; j++ {
 				index := y * t.Width + j
-				t.Tiles[i] = append(t.Tiles[i][:index], 0)
-				t.Collision[i] = append(t.Collision[i][:index], false)
-				t.TextureIndicies[i] = append(t.TextureIndicies[i][:index], 0)
-				fmt.Println("Appending", j, y)
+				t.Tiles[i] = append(t.Tiles[i], 0)
+				t.Collision[i] = append(t.Collision[i], false)
+				t.TextureIndicies[i] = append(t.TextureIndicies[i], 0)
+				copy(t.Tiles[i][index + 1:], t.Tiles[i][index:])
+				copy(t.Collision[i][index + 1:], t.Collision[i][index:])
+				copy(t.TextureIndicies[i][index + 1:], t.TextureIndicies[i][index:])
+				t.Tiles[i][index] = 0
+				t.Collision[i][index] = false
+				t.TextureIndicies[i][index] = 0
+				//fmt.Println("Appending", j, y)
 			}
 		}
 	}
 
-	/*
 	eraseCol := func(x int) {
-
+		t.Width--
+		for i := range t.Tiles {
+			for j := 0; j < t.Height; j++ {
+				index := j * t.Width + x
+				copy(t.Tiles[i][index:], t.Tiles[i][index + 1:])
+				t.Tiles[i] = t.Tiles[i][:len(t.Tiles[i]) - 1]
+				copy(t.Collision[i][index:], t.Collision[i][index + 1:])
+				t.Collision[i] = t.Collision[i][:len(t.Collision[i]) - 1]
+				copy(t.TextureIndicies[i][index:], t.TextureIndicies[i][index + 1:])
+				t.TextureIndicies[i] = t.TextureIndicies[i][:len(t.TextureIndicies[i]) - 1]
+			}
+		}
 	}
-	*/
 
-	newWidth := t.Width + dx
-	newHeight := t.Height + dy
+	eraseRow := func(y int) {
+		t.Height--
+		for i := range t.Tiles {
+			start := y * t.Width
+			end := y * t.Width + t.Width
+			t.Tiles[i] = append(t.Tiles[i][:start], t.Tiles[i][end:]...)
+			t.Collision[i] = append(t.Collision[i][:start], t.Collision[i][end:]...)
+			t.TextureIndicies[i] = append(t.TextureIndicies[i][:start], t.TextureIndicies[i][end:]...)
+		}
+	}
 
 	if origin == TopLeftCorner || origin == BotLeftCorner {
 		if dx < 0 {	// Crop left side
-
+			eraseCol(0)
 		} else if dx > 0 { // Grow left side
 			insertCol(0)
 		}
 	} else if origin == TopRightCorner || origin == TopLeftCorner {
 		if dx < 0 { // Crop right side 
-
+			eraseCol(t.Width - 1)
 		} else if dx > 0 { // Grow right side 
 			insertCol(t.Width - 1)
 		}
 	}
 
-	t.Width = newWidth
-
 	if origin == TopLeftCorner || origin == TopRightCorner {
 		if dy < 0 {	// Crop top side
-
+			eraseRow(0)
 		} else if dy > 0 { // Grow top side
 			insertRow(0)
 		}
 	} else if origin == BotLeftCorner || origin == BotRightCorner {
 		if dy < 0 { // Crop bot side 
-
+			eraseRow(t.Height - 1)
 		} else if dy > 0 { // Grow bot side 
 			insertRow(t.Height - 1)
 		}
 	}
-
-	t.Height = newHeight
 
 	for i, exit := range t.Exits {
 		if exit.X >= t.Width || exit.Y >= t.Height {
