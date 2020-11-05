@@ -152,11 +152,11 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 }
 
 func (e *Editor) DrawTileMapDetail() {
-	for j := range e.tileMap.Tiles {
+	for j := range e.tileMap.Collision {
 		if drawOnlyCurrentLayer && j != currentLayer {
 			continue
 		}
-		for i := range e.tileMap.Tiles[j] {
+		for i := range e.tileMap.Collision[j] {
 			x := float64(i % e.tileMap.Width) * TileSize
 			y := float64(i / e.tileMap.Width) * TileSize
 
@@ -224,7 +224,7 @@ func (e *Editor) loadFile() {
 					// create new file
 					e.activeFile = e.nextFile
 					drawUi = true
-					e.tileMap = CreateTileMap(8, 8)
+					e.tileMap = CreateTileMap(2, 2)
 					return
 				}
 
