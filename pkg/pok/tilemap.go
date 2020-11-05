@@ -53,6 +53,10 @@ func (t *TileMap) GetEntryWithId(id int) int {
 
 // TODO: This function should only take one argument
 func (t *TileMap) Draw(rend *Renderer, tileset *ebiten.Image) {
+
+	w, _ := tileset.Size()
+	nTilesX := w / TileSize
+
 	for j := range t.Tiles {
 		if drawOnlyCurrentLayer && j != currentLayer {
 			continue
@@ -66,16 +70,18 @@ func (t *TileMap) Draw(rend *Renderer, tileset *ebiten.Image) {
 			x := float64(i % t.Width) * TileSize
 			y := float64(i / t.Width) * TileSize
 
-			tx := (n % NTilesX) * TileSize
-			ty := (n / NTilesX) * TileSize
+			tx := (n % nTilesX) * TileSize
+			ty := (n / nTilesX) * TileSize
 
 			if tx < 0 || ty < 0 {
 				continue
 			}
 
+			opt := &ebiten.DrawImageOptions{}
+
 			rect := image.Rect(tx, ty, tx + TileSize, ty + TileSize)
 			rend.Draw(&RenderTarget{
-				&ebiten.DrawImageOptions{},
+				opt,
 				tileset,
 				&rect,
 				x,

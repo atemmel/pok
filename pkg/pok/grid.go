@@ -9,7 +9,7 @@ import (
 type ScrollDirection int
 
 const (
-	nItemsPerRow = 4
+	nItemsPerRow = 6
 	columnLen = 10
 
 	xGridPos = WindowSizeX / 2 - (nItemsPerRow * TileSize) - 10
@@ -57,11 +57,13 @@ func NewGrid(tileSet *ebiten.Image) Grid {
 }
 
 func (g *Grid) Draw(target *ebiten.Image) {
+	w, _ := g.tileSet.Size()
+	nTilesX := w / TileSize
 	for i := 0; i < columnLen; i++ {
 		for j := 0; j < nItemsPerRow; j++ {
 			n := (i + g.currentCol) * nItemsPerRow + j
-			tx := n % NTilesX * TileSize
-			ty := n / NTilesX * TileSize
+			tx := n % nTilesX * TileSize
+			ty := n / nTilesX * TileSize
 			gx := float64(j) * TileSize
 			gy := float64(i) * TileSize
 			opt := &ebiten.DrawImageOptions{}

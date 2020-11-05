@@ -19,10 +19,15 @@ var currentLayer = 0
 
 var drawOnlyCurrentLayer = false
 var drawUi = false
+var activeTool = Pencil
 
 const(
 	IconOffsetX = 2
 	IconOffsetY = 70
+
+	Pencil = 0
+	Eraser = 1
+	Bucket = 2
 )
 
 type Editor struct {
@@ -95,7 +100,8 @@ func NewEditor() *Editor {
 		}
 	}
 
-	es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
+	//es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
+	es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/buildings.png", ebiten.FilterDefault)
 
 	if err != nil {
 		panic(err)
@@ -427,6 +433,10 @@ func (e *Editor) selectedTileIsValid() bool {
 
 func (e *Editor) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return DisplaySizeX, DisplaySizeY
+}
+
+func (e *Editor) paletteIsVisible() bool {
+	return activeTool == Pencil || activeTool == Bucket
 }
 
 func (e *Editor) drawIcons(screen *ebiten.Image) {

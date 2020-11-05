@@ -28,7 +28,7 @@ func CreateGame() *Game {
 		log.Fatal(err)
 	}
 
-	g.Ows.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
+	g.Ows.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/buildings.png", ebiten.FilterDefault)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -111,7 +111,6 @@ func (g *Game) Save() {
 
 func (g *Game) DrawPlayer(player *Player) {
 	playerOpt := &ebiten.DrawImageOptions{}
-	playerOpt.GeoM.Scale(2,2)
 
 	x := player.Gx + playerOffsetX
 	y := player.Gy + playerOffsetY
@@ -119,8 +118,8 @@ func (g *Game) DrawPlayer(player *Player) {
 	playerRect := image.Rect(
 		player.Tx,
 		player.Ty,
-		player.Tx + TileSize,
-		player.Ty + TileSize,
+		player.Tx + (TileSize * 2),
+		player.Ty + (TileSize * 2),
 	)
 
 	g.Rend.Draw(&RenderTarget{

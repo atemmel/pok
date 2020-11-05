@@ -36,8 +36,8 @@ const(
 	TurnCheckLimit = 5	// in frames
 
 	playerMaxCycle = 8
-	playerWalkVelocity = 2
-	playerRunVelocity = 4
+	playerWalkVelocity = 1
+	playerRunVelocity = 2
 	playerOffsetX = 13 - TileSize
 	playerOffsetY = 0 - TileSize
 )
