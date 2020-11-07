@@ -8,7 +8,5 @@ const (
 	WindowSizeX = DisplaySizeX * 2
 	WindowSizeY = DisplaySizeY * 2
 
-	// TODO: Deprecate this
-	NTilesX = 8
 	TileMapDir =  "./resources/tilemaps/"
 )

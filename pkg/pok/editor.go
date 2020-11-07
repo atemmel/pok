@@ -24,11 +24,22 @@ var activeTool = Pencil
 const(
 	IconOffsetX = 2
 	IconOffsetY = 70
+	IconPadding = 2
 
 	Pencil = 0
 	Eraser = 1
-	Bucket = 2
+	Object = 2
+	Bucket = 3
+	NIcons = 4
+
 )
+
+var ToolNames = [NIcons]string{
+	"Pencil",
+	"Eraser",
+	"Object",
+	"Bucket",
+}
 
 type Editor struct {
 	tileMap TileMap
@@ -101,7 +112,7 @@ func NewEditor() *Editor {
 	}
 
 	//es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
-	es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/buildings.png", ebiten.FilterDefault)
+	es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/base.png", ebiten.FilterDefault)
 
 	if err != nil {
 		panic(err)
@@ -143,7 +154,9 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	e.dialog.Draw(screen)
 
 	if drawUi {
-		e.grid.Draw(screen)
+		if e.gridIsVisible() {
+			e.grid.Draw(screen)
+		}
 		e.drawIcons(screen)
 	}
 
@@ -153,7 +166,7 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	} else {
 		debugStr += e.activeFile
 	}
-	debugStr += fmt.Sprintf("\nx: %f, y: %f", e.rend.Cam.X, e.rend.Cam.Y)
+	debugStr += fmt.Sprintf("\nx: %f, y: %f\n%s", e.rend.Cam.X, e.rend.Cam.Y, ToolNames[activeTool])
 	ebitenutil.DebugPrint(screen, debugStr)
 }
 
@@ -292,6 +305,10 @@ func (e *Editor) handleInputs() error {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 				cx, cy := ebiten.CursorPosition()
 				e.grid.Select(cx, cy)
+			}
+		} else if i := e.containsIcon(cx, cy); i != NIcons {
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
+				activeTool = i
 			}
 		} else {
 			e.handleMapMouseInputs()
@@ -435,19 +452,32 @@ func (e *Editor) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHei
 	return DisplaySizeX, DisplaySizeY
 }
 
-func (e *Editor) paletteIsVisible() bool {
+func (e *Editor) gridIsVisible() bool {
 	return activeTool == Pencil || activeTool == Bucket
 }
 
 func (e *Editor) drawIcons(screen *ebiten.Image) {
 	w, h := e.icons.Size()
-	n := 3
-	iconPadding := 2
-	h /= n
-	for i := 0; i < n; i++ {
+	h /= NIcons
+	for i := 0; i < NIcons; i++ {
 		opt := &ebiten.DrawImageOptions{}
-		opt.GeoM.Translate(IconOffsetX, IconOffsetY + float64(i * (h + iconPadding)))
+		opt.GeoM.Translate(IconOffsetX, IconOffsetY + float64(i * (h + IconPadding)))
 		r := image.Rect(0, i * h, w, i * h + h)
 		screen.DrawImage(e.icons.SubImage(r).(*ebiten.Image), opt)
 	}
+}
+
+func (e *Editor) containsIcon(x, y int) int {
+	w, h := e.icons.Size()
+	h /= NIcons
+	p := image.Point{x, y}
+
+	for i := 0; i < NIcons; i++ {
+		r := image.Rect(IconOffsetX, IconOffsetY + i * h, w, IconOffsetY + i * h + h)
+		if p.In(r) {
+			return i
+		}
+	}
+
+	return NIcons
 }

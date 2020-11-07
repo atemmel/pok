@@ -79,6 +79,12 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		g.Player.TryStep(Static, g)
 	}
 
+	if ebiten.IsKeyPressed(ebiten.Key1) {
+		g.Rend.Cam.Scale += 0.1
+	} else if ebiten.IsKeyPressed(ebiten.Key2) {
+		g.Rend.Cam.Scale -= 0.1
+	}
+
 	return nil
 }
 

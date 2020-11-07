@@ -38,7 +38,7 @@ const(
 	playerMaxCycle = 8
 	playerWalkVelocity = 1
 	playerRunVelocity = 2
-	playerOffsetX = 13 - TileSize
+	playerOffsetX = 6 - TileSize
 	playerOffsetY = 0 - TileSize
 )
 

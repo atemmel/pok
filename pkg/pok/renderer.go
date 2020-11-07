@@ -38,6 +38,7 @@ type Camera struct {
 	Y float64
 	W int
 	H int
+	Scale float64
 }
 
 type Renderer struct {
@@ -51,7 +52,7 @@ func NewRenderer(destWidth int, destHeight int, screenWidth int, screenHeight in
 	return Renderer {
 		img,
 		make([]RenderTarget, 0),
-		Camera{0, 0, screenWidth, screenHeight},
+		Camera{0, 0, screenWidth, screenHeight, 1},
 	}
 }
 
@@ -70,7 +71,7 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	r.prepareRenderTargets()
 
 	for _, t := range r.targets {
-		t.Op.GeoM.Translate(t.X -r.Cam.X, t.Y -r.Cam.Y)
+		t.Op.GeoM.Translate(t.X - r.Cam.X, t.Y - r.Cam.Y)
 		if t.SubImage != nil {
 			r.dest.DrawImage(t.Src.SubImage(*t.SubImage).(*ebiten.Image), t.Op)
 		} else {
@@ -79,7 +80,9 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	}
 
 	op := &ebiten.DrawImageOptions{}
-
+	//op.GeoM.Translate(-r.Cam.X, -r.Cam.Y)
+	op.GeoM.Scale(r.Cam.Scale, r.Cam.Scale)
+	op.GeoM.Translate((float64(r.Cam.W) - float64(r.Cam.W) * r.Cam.Scale) / 2 , (float64(r.Cam.H) - float64(r.Cam.H) * r.Cam.Scale) / 2)
 	screen.DrawImage(r.dest, op)
 	r.targets = r.targets[:0]
 }

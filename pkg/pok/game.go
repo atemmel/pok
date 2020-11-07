@@ -28,7 +28,7 @@ func CreateGame() *Game {
 		log.Fatal(err)
 	}
 
-	g.Ows.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/buildings.png", ebiten.FilterDefault)
+	g.Ows.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/base.png", ebiten.FilterDefault)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,6 +99,7 @@ func (g *Game) Load(str string, entrypoint int) {
 		DisplaySizeX,
 		DisplaySizeY,
 	)
+	g.Rend.Cam.Scale = 2
 }
 
 func (g *Game) Save() {
