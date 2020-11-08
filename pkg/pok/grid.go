@@ -40,7 +40,7 @@ func NewGrid(tileSet *ebiten.Image) Grid {
 	}
 	for p := 1; p < selection.Bounds().Max.Y - 1; p++ {
 		selection.Set(0, p, selectionClr)
-		selection.Set(selection.Bounds().Max.Y - 1, p, selectionClr)
+		selection.Set(selection.Bounds().Max.X - 1, p, selectionClr)
 	}
 
 	totalTilesetItems := tileSet.Bounds().Max.X * tileSet.Bounds().Max.Y / TileSize

@@ -10,6 +10,8 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"image"
 	"image/color"
+	"io/ioutil"
+	"strings"
 )
 
 var selectionX int
@@ -17,6 +19,7 @@ var selectionY int
 var copyBuffer = 0
 var selectedTile = 0
 var currentLayer = 0
+var activeObjs *EditorObject
 
 var drawOnlyCurrentLayer = false
 var drawUi = false
@@ -48,6 +51,7 @@ type Editor struct {
 	rend Renderer
 	dialog DialogBox
 	grid Grid
+	objectGrid ObjectGrid
 	selection *ebiten.Image
 	collisionMarker *ebiten.Image
 	exitMarker *ebiten.Image
@@ -103,7 +107,7 @@ func NewEditor() *Editor {
 		}
 	}
 
-	for p:= 0; p < 4; p++ {
+	for p := 0; p < 4; p++ {
 		for q := 0; q < 4; q++ {
 			es.exitMarker.Set(p + 14, q, exitClr)
 		}
@@ -115,10 +119,13 @@ func NewEditor() *Editor {
 	es.clickStartY = -1
 	es.resize = NewResize(&es.tileMap)
 
-	es.icons, _, err = ebitenutil.NewImageFromFile("./resources/images/editoricons.png", ebiten.FilterDefault)
+	es.icons, _, err = ebitenutil.NewImageFromFile("./editorresources/images/editoricons.png", ebiten.FilterDefault)
 	if err != nil {
 		panic(err)
 	}
+
+	//TODO: Make constant
+	//basedir := "editorresources/overworldobjects/"
 
 	return es;
 }
@@ -145,6 +152,8 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	if drawUi {
 		if e.gridIsVisible() {
 			e.grid.Draw(screen)
+		} else if e.objectGridIsVisible() {
+			e.objectGrid.Draw(screen)
 		}
 		e.drawIcons(screen)
 	}
@@ -235,8 +244,9 @@ func (e *Editor) loadFile() {
 					// create new file
 					e.activeFile = e.nextFile
 					drawUi = true
-					e.tileMap = CreateTileMap(2, 2, []string{"base.png"})
+					e.tileMap = CreateTileMap(2, 2, listPngs("resources/images/overworld/"))
 					e.grid = NewGrid(e.tileMap.images[0])
+					e.fillObjectGrid("editorresources/overworldobjects/")
 					return
 				}
 
@@ -245,6 +255,7 @@ func (e *Editor) loadFile() {
 			e.activeFile = e.nextFile
 			drawUi = true
 			e.grid = NewGrid(e.tileMap.images[0])
+			e.fillObjectGrid("editorresources/overworldobjects/")
 		}
 	})
 }
@@ -290,7 +301,7 @@ func (e *Editor) handleInputs() error {
 
 	if e.activeFile != "" {
 		cx, cy := ebiten.CursorPosition()
-		if e.grid.Contains(image.Point{cx, cy}) {
+		if e.gridIsVisible() && e.grid.Contains(image.Point{cx, cy}) {
 			_, sy := ebiten.Wheel()
 			if sy < 0 {
 				e.grid.Scroll(ScrollDown)
@@ -300,6 +311,13 @@ func (e *Editor) handleInputs() error {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 				cx, cy := ebiten.CursorPosition()
 				e.grid.Select(cx, cy)
+			}
+		} else if e.objectGridIsVisible() && e.objectGrid.Contains(image.Point{cx, cy}) {
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
+				obj := e.objectGrid.Select(cx, cy)
+				if obj != nil {
+					activeObjs = obj
+				}
 			}
 		} else if i := e.containsIcon(cx, cy); i != NIcons {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
@@ -390,8 +408,12 @@ func (e *Editor) handleMapMouseInputs() {
 		} else {
 			e.SelectTileFromMouse(cx, cy)
 			if e.selectedTileIsValid() {
-				i := e.grid.GetIndex()
-				e.tileMap.Tiles[currentLayer][selectedTile] = i
+				if activeTool == Object {
+					e.tileMap.InsertObject(activeObjs, selectedTile, currentLayer)
+				} else if activeTool == Pencil {
+					i := e.grid.GetIndex()
+					e.tileMap.Tiles[currentLayer][selectedTile] = i
+				}
 			}
 		}
 	} else {
@@ -455,6 +477,10 @@ func (e *Editor) gridIsVisible() bool {
 	return activeTool == Pencil || activeTool == Bucket
 }
 
+func (e *Editor) objectGridIsVisible() bool {
+	return activeTool == Object
+}
+
 func (e *Editor) drawIcons(screen *ebiten.Image) {
 	w, h := e.icons.Size()
 	h /= NIcons
@@ -479,4 +505,38 @@ func (e *Editor) containsIcon(x, y int) int {
 	}
 
 	return NIcons
+}
+
+func (e *Editor) fillObjectGrid(dir string) {
+	objs, err := ReadAllObjects(dir)
+	if err != nil {
+		panic(err)
+	}
+
+	for i := range objs {
+		for j := range e.tileMap.Textures {
+			if e.tileMap.Textures[j] == objs[i].Texture {
+				objs[i].textureIndex = j
+			}
+		}
+	}
+
+	fmt.Println(objs)
+	e.objectGrid = NewObjectGrid(&e.tileMap, objs)
+}
+
+func listPngs(dir string) []string {
+	dirs, err := ioutil.ReadDir(dir)
+	if err != nil {
+		panic(err)
+	}
+
+	valid := make([]string, 0)
+	for i := range dirs {
+		if dirs[i].IsDir() || !strings.HasSuffix(dirs[i].Name(), ".png") {
+			continue
+		}
+		valid = append(valid, dirs[i].Name())
+	}
+	return valid
 }

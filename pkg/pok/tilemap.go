@@ -136,6 +136,30 @@ func (t *TileMap) SaveToFile(path string) error {
 	return ioutil.WriteFile(path, data, 0644)
 }
 
+//TODO: This does not work properly
+func (t *TileMap) InsertObject(obj *EditorObject, i, z int) {
+	for y := 0; y != obj.H; y++ {
+		wy := obj.Y * t.Width + y
+		if wy < 0 || wy >= t.Height {
+			continue
+		}
+		ty := obj.Y * t.nTilesX[obj.textureIndex] + y
+		for x := 0; x != obj.W; x++ {
+			wx := obj.X + x
+			if wy < 0 || wy >= t.Width {
+				continue
+			}
+			tx := obj.X + x
+
+			tile := ty + tx
+			index := wy + wx
+			t.Tiles[z][index] = tile
+			t.Collision[z][index] = true
+			t.TextureIndicies[z][index] = obj.textureIndex
+		}
+	}
+}
+
 func (t *TileMap) Resize(dx, dy, origin int) {
 	if (t.Width == 1 && dx < 0) || (t.Height == 1 && dy < 0) || origin == -1 {
 		return
