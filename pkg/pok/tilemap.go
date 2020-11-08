@@ -119,7 +119,7 @@ func (t *TileMap) OpenFile(path string) error {
 	nTilesX := make([]int, len(imgs))
 	for i := range imgs {
 		w, _ := imgs[i].Size()
-		nTilesX[i] = w
+		nTilesX[i] = w / TileSize
 	}
 
 	t.images = imgs
@@ -295,7 +295,7 @@ func CreateTileMap(width int, height int, textures []string) TileMap {
 	nTilesX := make([]int, len(imgs))
 	for i := range imgs {
 		w, _ := imgs[i].Size()
-		nTilesX[i] = w
+		nTilesX[i] = w / TileSize
 	}
 
 	tex := make([][]int, 1)
