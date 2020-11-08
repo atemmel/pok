@@ -9,8 +9,8 @@ import (
 type ScrollDirection int
 
 const (
-	nItemsPerRow = 6
-	columnLen = 10
+	nItemsPerRow = 8
+	columnLen = 20
 
 	xGridPos = WindowSizeX / 2 - (nItemsPerRow * TileSize) - 10
 	yGridPos = 10

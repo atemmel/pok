@@ -3,6 +3,7 @@ package pok
 import(
 	"encoding/json"
 	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"io/ioutil"
 	"image"
 )
@@ -31,6 +32,9 @@ type TileMap struct {
 	Entries []Entry
 	Width int
 	Height int
+
+	images []*ebiten.Image
+	nTilesX []int
 }
 
 func (t *TileMap) HasExitAt(x, y, z int) int {
@@ -52,10 +56,7 @@ func (t *TileMap) GetEntryWithId(id int) int {
 }
 
 // TODO: This function should only take one argument
-func (t *TileMap) Draw(rend *Renderer, tileset *ebiten.Image) {
-
-	w, _ := tileset.Size()
-	nTilesX := w / TileSize
+func (t *TileMap) Draw(rend *Renderer) {
 
 	for j := range t.Tiles {
 		if drawOnlyCurrentLayer && j != currentLayer {
@@ -70,6 +71,8 @@ func (t *TileMap) Draw(rend *Renderer, tileset *ebiten.Image) {
 			x := float64(i % t.Width) * TileSize
 			y := float64(i / t.Width) * TileSize
 
+			nTilesX := t.nTilesX[t.TextureIndicies[j][i]]
+
 			tx := (n % nTilesX) * TileSize
 			ty := (n / nTilesX) * TileSize
 
@@ -78,11 +81,12 @@ func (t *TileMap) Draw(rend *Renderer, tileset *ebiten.Image) {
 			}
 
 			opt := &ebiten.DrawImageOptions{}
+			img := t.images[t.TextureIndicies[j][i]]
 
 			rect := image.Rect(tx, ty, tx + TileSize, ty + TileSize)
 			rend.Draw(&RenderTarget{
 				opt,
-				tileset,
+				img,
 				&rect,
 				x,
 				y,
@@ -101,6 +105,26 @@ func (t *TileMap) OpenFile(path string) error {
 	if err != nil {
 		return err
 	}
+
+	imgs := make([]*ebiten.Image, len(t.Textures))
+	for i := range imgs {
+		//img, _, err := ebitenutil.NewImageFromFile("./resources/images/base.png", ebiten.FilterDefault)
+		img, _, err := ebitenutil.NewImageFromFile("./resources/images/overworld/" + t.Textures[i], ebiten.FilterDefault)
+		if err != nil {
+			panic(err)
+		}
+		imgs[i] = img
+	}
+
+	nTilesX := make([]int, len(imgs))
+	for i := range imgs {
+		w, _ := imgs[i].Size()
+		nTilesX[i] = w
+	}
+
+	t.images = imgs
+	t.nTilesX = nTilesX
+
 	return nil
 }
 
@@ -256,22 +280,44 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 	}
 }
 
-func CreateTileMap(width int, height int) TileMap {
+func CreateTileMap(width int, height int, textures []string) TileMap {
+
+	imgs := make([]*ebiten.Image, len(textures))
+	for i := range imgs {
+		//img, _, err := ebitenutil.NewImageFromFile("./resources/images/base.png", ebiten.FilterDefault)
+		img, _, err := ebitenutil.NewImageFromFile("./resources/images/overworld/" + textures[i], ebiten.FilterDefault)
+		if err != nil {
+			panic(err)
+		}
+		imgs[i] = img
+	}
+
+	nTilesX := make([]int, len(imgs))
+	for i := range imgs {
+		w, _ := imgs[i].Size()
+		nTilesX[i] = w
+	}
+
 	tex := make([][]int, 1)
 	tex[0] = make([]int, width * height)
 
 	col := make([][]bool, 1)
 	col[0] = make([]bool, width * height)
 
+	ind := make([][]int, 1)
+	ind[0] = make([]int, width * height)
+
 	tiles := TileMap{
 		tex,
 		col,
-		tex,
-		make([]string, 0),
+		ind,
+		textures,
 		make([]Exit, 0),
 		make([]Entry, 0),
 		width,
 		height,
+		imgs,
+		nTilesX,
 	}
 	return tiles
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"image"
 	"image/color"
 )
@@ -58,9 +59,6 @@ type Editor struct {
 	clickStartY float64
 	resize Resize
 	dieOnNextTick bool
-
-	// TODO: Refactor
-	tileset *ebiten.Image
 }
 
 func NewEditor() *Editor {
@@ -111,16 +109,7 @@ func NewEditor() *Editor {
 		}
 	}
 
-	//es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/tileset1.png", ebiten.FilterDefault)
-	es.tileset, _, err = ebitenutil.NewImageFromFile("./resources/images/base.png", ebiten.FilterDefault)
-
-	if err != nil {
-		panic(err)
-	}
-
-	es.grid = NewGrid(es.tileset)
-
-	es.rend = NewRenderer(DisplaySizeX, DisplaySizeY, DisplaySizeX, DisplaySizeY)
+	es.rend = NewRenderer(DisplaySizeX, DisplaySizeY, 1)
 
 	es.clickStartX = -1
 	es.clickStartY = -1
@@ -145,7 +134,7 @@ func (e *Editor) Update(screen *ebiten.Image) error {
 }
 
 func (e *Editor) Draw(screen *ebiten.Image) {
-	e.tileMap.Draw(&e.rend, e.tileset)
+	e.tileMap.Draw(&e.rend)
 	if drawUi {
 		e.DrawTileMapDetail()
 		e.resize.Draw(&e.rend)
@@ -166,7 +155,10 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	} else {
 		debugStr += e.activeFile
 	}
-	debugStr += fmt.Sprintf("\nx: %f, y: %f\n%s", e.rend.Cam.X, e.rend.Cam.Y, ToolNames[activeTool])
+	debugStr += fmt.Sprintf(`
+x: %f, y: %f
+zoom: %d%%
+%s`, e.rend.Cam.X, e.rend.Cam.Y, int(e.rend.Cam.Scale * 100), ToolNames[activeTool])
 	ebitenutil.DebugPrint(screen, debugStr)
 }
 
@@ -243,7 +235,8 @@ func (e *Editor) loadFile() {
 					// create new file
 					e.activeFile = e.nextFile
 					drawUi = true
-					e.tileMap = CreateTileMap(2, 2)
+					e.tileMap = CreateTileMap(2, 2, []string{"base.png"})
+					e.grid = NewGrid(e.tileMap.images[0])
 					return
 				}
 
@@ -251,6 +244,7 @@ func (e *Editor) loadFile() {
 		} else {
 			e.activeFile = e.nextFile
 			drawUi = true
+			e.grid = NewGrid(e.tileMap.images[0])
 		}
 	})
 }
@@ -267,7 +261,8 @@ func (e *Editor) saveFile() {
 }
 
 func (e *Editor) hasSaved() bool {
-	return cmp.Equal(e.lastSavedTileMap, e.tileMap)
+	opt := cmpopts.IgnoreFields(e.tileMap, "images", "nTilesX")
+	return cmp.Equal(e.lastSavedTileMap, e.tileMap, opt)
 }
 
 func (e *Editor) unsavedWorkDialog() {
@@ -380,9 +375,11 @@ func (e *Editor) handleMapMouseInputs() {
 	_, dy := ebiten.Wheel()
 	if dy != 0. && e.selectedTileIsValid() {
 		if dy < 0 {
-			e.tileMap.Tiles[currentLayer][selectedTile]--
+			//e.tileMap.Tiles[currentLayer][selectedTile]--
+			e.rend.Cam.Scale -= 0.1
 		} else {
-			e.tileMap.Tiles[currentLayer][selectedTile]++
+			//e.tileMap.Tiles[currentLayer][selectedTile]++
+			e.rend.Cam.Scale += 0.1
 		}
 	}
 
@@ -399,7 +396,9 @@ func (e *Editor) handleMapMouseInputs() {
 		}
 	} else {
 		x, y, origin := e.resize.Release()
-		e.tileMap.Resize(x, y, origin)
+		if origin != -1 {
+			e.tileMap.Resize(x, y, origin)
+		}
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {

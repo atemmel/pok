@@ -17,7 +17,6 @@ type GameState interface {
 
 type OverworldState struct {
 	tileMap TileMap
-	tileset *ebiten.Image
 }
 
 func gamepadUp() bool {
@@ -99,7 +98,7 @@ func (o *OverworldState) Update(g *Game) error {
 }
 
 func (o *OverworldState) Draw(g *Game, screen *ebiten.Image) {
-	o.tileMap.Draw(&g.Rend, o.tileset)
+	o.tileMap.Draw(&g.Rend)
 	g.DrawPlayer(&g.Player)
 
 	if g.Client.Active {

@@ -47,12 +47,12 @@ type Renderer struct {
 	Cam Camera
 }
 
-func NewRenderer(destWidth int, destHeight int, screenWidth int, screenHeight int) Renderer {
-	img, _ := ebiten.NewImage(destWidth, destHeight, ebiten.FilterDefault)
+func NewRenderer(screenWidth, screenHeight int, scale float64) Renderer {
+	img, _ := ebiten.NewImage(screenWidth, screenHeight, ebiten.FilterDefault)
 	return Renderer {
 		img,
 		make([]RenderTarget, 0),
-		Camera{0, 0, screenWidth, screenHeight, 1},
+		Camera{0, 0, screenWidth, screenHeight, scale},
 	}
 }
 
@@ -80,7 +80,6 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	}
 
 	op := &ebiten.DrawImageOptions{}
-	//op.GeoM.Translate(-r.Cam.X, -r.Cam.Y)
 	op.GeoM.Scale(r.Cam.Scale, r.Cam.Scale)
 	op.GeoM.Translate((float64(r.Cam.W) - float64(r.Cam.W) * r.Cam.Scale) / 2 , (float64(r.Cam.H) - float64(r.Cam.H) * r.Cam.Scale) / 2)
 	screen.DrawImage(r.dest, op)
