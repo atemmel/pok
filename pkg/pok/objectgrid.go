@@ -85,7 +85,7 @@ func (og *ObjectGrid) Scroll(dir ScrollDirection) {
 
 }
 
-func (og *ObjectGrid) Select(cx, cy int) *EditorObject {
+func (og *ObjectGrid) Select(cx, cy int) int {
 	cy -= yGridPos
 	cx -= xGridPos
 
@@ -112,10 +112,10 @@ func (og *ObjectGrid) Select(cx, cy int) *EditorObject {
 		og.selectionX = float64(og.rects[i].Min.X)
 		og.selectionY = float64(og.rects[i].Min.Y)
 
-		return &og.objs[i]
+		return i
 	}
 
-	return nil
+	return -1
 }
 
 func (og *ObjectGrid) Contains(p image.Point) bool {

@@ -136,10 +136,25 @@ func (t *TileMap) SaveToFile(path string) error {
 	return ioutil.WriteFile(path, data, 0644)
 }
 
-//TODO: This does not work properly
-func (t *TileMap) InsertObject(obj *EditorObject, i, z int) {
+func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObjects *[]PlacedEditorObject) {
 	row := i / t.Width
 	col := i % t.Width
+
+	// Get max depth
+	maxZ := 0
+	for _, z := range obj.Z {
+		if z > maxZ {
+			maxZ = z
+		}
+	}
+	maxZ++
+
+	// Append layers as necessary
+	for maxZ > len(t.Tiles) {
+		t.AppendLayer()
+	}
+
+	zIndex := 0
 
 	for y := 0; y != obj.H; y++ {
 		gy := row + y
@@ -161,10 +176,41 @@ func (t *TileMap) InsertObject(obj *EditorObject, i, z int) {
 
 			tile := ty + tx
 			index := wy + wx
-			t.Tiles[z][index] = tile
-			t.Collision[z][index] = true
-			t.TextureIndicies[z][index] = obj.textureIndex
+			depth := z + obj.Z[zIndex]
+
+			t.Tiles[depth][index] = tile
+			t.TextureIndicies[depth][index] = obj.textureIndex
+
+			if (y > 0 || obj.H == 1) && (x > 0 || obj.W == 1) {
+				t.Collision[z][index] = true
+			}
+
+			zIndex++
 		}
+	}
+
+	p := PlacedEditorObject{
+		col, row,
+		objIndex,
+	}
+
+	*placedObjects = append(*placedObjects, p)
+}
+
+//TODO: More code here
+func (t *TileMap) EraseObject(placedObjects *[]PlacedEditorObject) {
+	
+}
+
+func (t *TileMap) AppendLayer() {
+	t.Tiles = append(t.Tiles, make([]int, len(t.Tiles[0])))
+	for i := range t.Tiles[len(t.Tiles) - 1] {
+		t.Tiles[len(t.Tiles)-1][i] = -1
+	}
+	t.Collision = append(t.Collision, make([]bool, len(t.Collision[0])))
+	t.TextureIndicies = append(t.TextureIndicies, make([]int, len(t.TextureIndicies[0])))
+	for i := range t.TextureIndicies[len(t.TextureIndicies) - 1] {
+		t.TextureIndicies[len(t.TextureIndicies)-1][i] = 0
 	}
 }
 

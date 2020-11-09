@@ -19,11 +19,13 @@ var selectionY int
 var copyBuffer = 0
 var selectedTile = 0
 var currentLayer = 0
-var activeObjs *EditorObject
+var baseTextureIndex = 0
+var activeObjsIndex = -1
 
 var drawOnlyCurrentLayer = false
 var drawUi = false
 var activeTool = Pencil
+var placedObjects []PlacedEditorObject = make([]PlacedEditorObject, 0)
 
 const(
 	IconOffsetX = 2
@@ -315,8 +317,8 @@ func (e *Editor) handleInputs() error {
 		} else if e.objectGridIsVisible() && e.objectGrid.Contains(image.Point{cx, cy}) {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 				obj := e.objectGrid.Select(cx, cy)
-				if obj != nil {
-					activeObjs = obj
+				if obj != -1 {
+					activeObjsIndex = obj
 				}
 			}
 		} else if i := e.containsIcon(cx, cy); i != NIcons {
@@ -370,11 +372,7 @@ func (e *Editor) handleMapInputs() {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
-		e.tileMap.Tiles = append(e.tileMap.Tiles, make([]int, len(e.tileMap.Tiles[0])))
-		for i := range e.tileMap.Tiles[len(e.tileMap.Tiles) - 1] {
-			e.tileMap.Tiles[len(e.tileMap.Tiles)-1][i] = -1
-		}
-		e.tileMap.Collision = append(e.tileMap.Collision, make([]bool, len(e.tileMap.Collision[0])))
+		e.tileMap.AppendLayer()
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
@@ -408,11 +406,10 @@ func (e *Editor) handleMapMouseInputs() {
 		} else {
 			e.SelectTileFromMouse(cx, cy)
 			if e.selectedTileIsValid() {
-				if activeTool == Object {
-					e.tileMap.InsertObject(activeObjs, selectedTile, currentLayer)
-				} else if activeTool == Pencil {
+				if activeTool == Pencil {
 					i := e.grid.GetIndex()
 					e.tileMap.Tiles[currentLayer][selectedTile] = i
+					e.tileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
 				}
 			}
 		}
@@ -420,6 +417,16 @@ func (e *Editor) handleMapMouseInputs() {
 		x, y, origin := e.resize.Release()
 		if origin != -1 {
 			e.tileMap.Resize(x, y, origin)
+		}
+	}
+
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) && activeTool == Object {
+		cx, cy := ebiten.CursorPosition();
+		e.SelectTileFromMouse(cx, cy)
+		if e.selectedTileIsValid() {
+			obj := &e.objectGrid.objs[activeObjsIndex]
+			e.tileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects)
+			fmt.Println(placedObjects)
 		}
 	}
 
@@ -521,7 +528,13 @@ func (e *Editor) fillObjectGrid(dir string) {
 		}
 	}
 
-	fmt.Println(objs)
+	for i := range e.tileMap.Textures {
+		if e.tileMap.Textures[i] == "base.png" {
+			baseTextureIndex = i
+		}
+	}
+
+	//fmt.Println(objs)
 	e.objectGrid = NewObjectGrid(&e.tileMap, objs)
 }
 

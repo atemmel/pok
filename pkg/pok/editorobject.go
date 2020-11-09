@@ -10,8 +10,14 @@ type EditorObject struct {
 	Texture string
 	X, Y int
 	W, H int
+	Z []int
 
 	textureIndex int
+}
+
+type PlacedEditorObject struct {
+	X, Y int
+	Index int
 }
 
 func ReadAllObjects(directory string) ([]EditorObject, error) {
