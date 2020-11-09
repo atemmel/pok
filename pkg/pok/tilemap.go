@@ -138,17 +138,25 @@ func (t *TileMap) SaveToFile(path string) error {
 
 //TODO: This does not work properly
 func (t *TileMap) InsertObject(obj *EditorObject, i, z int) {
+	row := i / t.Width
+	col := i % t.Width
+
 	for y := 0; y != obj.H; y++ {
-		wy := obj.Y * t.Width + y
-		if wy < 0 || wy >= t.Height {
+		gy := row + y
+		if gy < 0 || gy >= t.Height {
 			continue
 		}
-		ty := obj.Y * t.nTilesX[obj.textureIndex] + y
+
+		wy := gy * t.Width
+		ty := (obj.Y + y) * t.nTilesX[obj.textureIndex]
+
 		for x := 0; x != obj.W; x++ {
-			wx := obj.X + x
-			if wy < 0 || wy >= t.Width {
+			gx := col + x
+			if gx < 0 || gx >= t.Width {
 				continue
 			}
+
+			wx := gx
 			tx := obj.X + x
 
 			tile := ty + tx
@@ -308,7 +316,6 @@ func CreateTileMap(width int, height int, textures []string) TileMap {
 
 	imgs := make([]*ebiten.Image, len(textures))
 	for i := range imgs {
-		//img, _, err := ebitenutil.NewImageFromFile("./resources/images/base.png", ebiten.FilterDefault)
 		img, _, err := ebitenutil.NewImageFromFile("./resources/images/overworld/" + textures[i], ebiten.FilterDefault)
 		if err != nil {
 			panic(err)
