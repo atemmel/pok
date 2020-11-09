@@ -55,7 +55,6 @@ func (t *TileMap) GetEntryWithId(id int) int {
 	return -1
 }
 
-// TODO: This function should only take one argument
 func (t *TileMap) Draw(rend *Renderer) {
 
 	for j := range t.Tiles {
@@ -108,7 +107,6 @@ func (t *TileMap) OpenFile(path string) error {
 
 	imgs := make([]*ebiten.Image, len(t.Textures))
 	for i := range imgs {
-		//img, _, err := ebitenutil.NewImageFromFile("./resources/images/base.png", ebiten.FilterDefault)
 		img, _, err := ebitenutil.NewImageFromFile("./resources/images/overworld/" + t.Textures[i], ebiten.FilterDefault)
 		if err != nil {
 			panic(err)
@@ -139,6 +137,15 @@ func (t *TileMap) SaveToFile(path string) error {
 func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObjects *[]PlacedEditorObject) {
 	row := i / t.Width
 	col := i % t.Width
+
+	existingObjectIndex := HasPlacedObjectAt(*placedObjects, col, row)
+	if existingObjectIndex != -1 {
+		t.EraseObject((*placedObjects)[existingObjectIndex], obj)
+
+		// Erase from placedObjects
+		(*placedObjects)[existingObjectIndex] = (*placedObjects)[len(*placedObjects) - 1]
+		*placedObjects = (*placedObjects)[:len(*placedObjects) - 1]
+	}
 
 	// Get max depth
 	maxZ := 0
@@ -190,16 +197,43 @@ func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObje
 	}
 
 	p := PlacedEditorObject{
-		col, row,
+		col, row, z,
 		objIndex,
 	}
 
 	*placedObjects = append(*placedObjects, p)
 }
 
-//TODO: More code here
-func (t *TileMap) EraseObject(placedObjects *[]PlacedEditorObject) {
-	
+func (t *TileMap) EraseObject(pob PlacedEditorObject, obj * EditorObject) {
+	zIndex := 0
+
+	for y := 0; y != obj.H; y++ {
+		gy := pob.Y + y
+		if gy < 0 || gy >= t.Height {
+			continue
+		}
+
+		gy = gy * t.Width
+
+		for x := 0; x != obj.W; x++ {
+			gx := pob.X + x
+			if gx < 0 || gx >= t.Width {
+				continue
+			}
+
+			index := gy + gx
+			depth := pob.Z + obj.Z[zIndex]
+
+			t.Tiles[depth][index] = -1
+			t.TextureIndicies[depth][index] = 0
+
+			if (y > 0 || obj.H == 1) && (x > 0 || obj.W == 1) {
+				t.Collision[pob.Z][index] = false
+			}
+
+			zIndex++
+		}
+	}
 }
 
 func (t *TileMap) AppendLayer() {

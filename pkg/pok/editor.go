@@ -56,6 +56,7 @@ type Editor struct {
 	objectGrid ObjectGrid
 	selection *ebiten.Image
 	collisionMarker *ebiten.Image
+	deleteableMarker *ebiten.Image
 	exitMarker *ebiten.Image
 	icons *ebiten.Image
 	activeFile string
@@ -74,24 +75,15 @@ func NewEditor() *Editor {
 	es.dialog = NewDialogBox()
 	es.dieOnNextTick = false
 
-	es.selection, err = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	if err != nil {
-		panic(err)
-	}
-
-	es.collisionMarker, err = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	if err != nil {
-		panic(err)
-	}
-
-	es.exitMarker, err = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	if err != nil {
-		panic(err)
-	}
+	es.selection, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
+	es.collisionMarker, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
+	es.exitMarker, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
+	es.deleteableMarker, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
 
 	selectionClr := color.RGBA{255, 0, 0, 255}
 	collisionClr := color.RGBA{255, 0, 255, 255}
 	exitClr := color.RGBA{0, 0, 255, 255}
+	deleteableClr := color.RGBA{150, 0, 0, 255}
 
 	for p := 0; p < es.selection.Bounds().Max.X; p++ {
 		es.selection.Set(p, 0, selectionClr)
@@ -112,6 +104,12 @@ func NewEditor() *Editor {
 	for p := 0; p < 4; p++ {
 		for q := 0; q < 4; q++ {
 			es.exitMarker.Set(p + 14, q, exitClr)
+		}
+	}
+
+	for p := 0; p < 4; p++ {
+		for q := 0; q < 4; q++ {
+			es.deleteableMarker.Set(p + 6, q + 6, deleteableClr)
 		}
 	}
 
@@ -144,14 +142,14 @@ func (e *Editor) Update(screen *ebiten.Image) error {
 
 func (e *Editor) Draw(screen *ebiten.Image) {
 	e.tileMap.Draw(&e.rend)
-	if drawUi {
+	if drawUi && e.activeFile != "" {
 		e.DrawTileMapDetail()
 		e.resize.Draw(&e.rend)
 	}
 	e.rend.Display(screen)
 	e.dialog.Draw(screen)
 
-	if drawUi {
+	if drawUi && e.activeFile != "" {
 		if e.gridIsVisible() {
 			e.grid.Draw(screen)
 		} else if e.objectGridIsVisible() {
@@ -205,6 +203,19 @@ func (e *Editor) DrawTileMapDetail() {
 				float64(e.tileMap.Exits[i].Y * TileSize),
 				100,
 			})
+		}
+
+		if activeTool == Eraser {
+			for i := range placedObjects {
+				e.rend.Draw(&RenderTarget{
+					&ebiten.DrawImageOptions{},
+					e.deleteableMarker,
+					nil,
+					float64(placedObjects[i].X * TileSize),
+					float64(placedObjects[i].Y * TileSize),
+					100,
+				})
+			}
 		}
 
 		e.rend.Draw(&RenderTarget{
@@ -410,6 +421,20 @@ func (e *Editor) handleMapMouseInputs() {
 					i := e.grid.GetIndex()
 					e.tileMap.Tiles[currentLayer][selectedTile] = i
 					e.tileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
+				} else if activeTool == Eraser {
+					if ebiten.IsKeyPressed(ebiten.KeyShift) {
+						col := selectedTile % e.tileMap.Width
+						row := selectedTile / e.tileMap.Width
+						i := HasPlacedObjectAt(placedObjects, col, row)
+						if i != -1 {
+							e.tileMap.EraseObject(placedObjects[i], &e.objectGrid.objs[placedObjects[i].Index])
+							placedObjects[i] = placedObjects[len(placedObjects) - 1]
+							placedObjects = placedObjects[:len(placedObjects) - 1]
+						}
+					} else {
+						e.tileMap.Tiles[currentLayer][selectedTile] = -1
+						e.tileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
+					}
 				}
 			}
 		}

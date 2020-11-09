@@ -1,7 +1,6 @@
 package pok
 
 import (
-	"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"image"
 	"image/color"
@@ -45,8 +44,6 @@ func NewObjectGrid(tileMap *TileMap, objs []EditorObject) ObjectGrid {
 		x += w
 		oldh = h
 	}
-
-	fmt.Println(rects)
 
 	return ObjectGrid{
 		objs,

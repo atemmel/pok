@@ -16,7 +16,7 @@ type EditorObject struct {
 }
 
 type PlacedEditorObject struct {
-	X, Y int
+	X, Y, Z int
 	Index int
 }
 
@@ -47,4 +47,13 @@ func ReadAllObjects(directory string) ([]EditorObject, error) {
 	}
 
 	return objs, nil
+}
+
+func HasPlacedObjectAt(pobs []PlacedEditorObject, x, y int) int {
+	for i := range pobs {
+		if pobs[i].X == x && pobs[i].Y == y {
+			return i
+		}
+	}
+	return -1
 }
