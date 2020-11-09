@@ -36,7 +36,8 @@ const(
 	Eraser = 1
 	Object = 2
 	Bucket = 3
-	NIcons = 4
+	Link = 4
+	NIcons = 5
 
 )
 
@@ -45,6 +46,7 @@ var ToolNames = [NIcons]string{
 	"Eraser",
 	"Object",
 	"Bucket",
+	"Link",
 }
 
 type Editor struct {
