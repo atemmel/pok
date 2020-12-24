@@ -392,6 +392,14 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 	}
 }
 
+func (t *TileMap) PlaceEntry(entry Entry) {
+	t.Entries = append(t.Entries, entry)
+}
+
+func (t *TileMap) PlaceExit(exit Exit) {
+	t.Exits = append(t.Exits, exit)
+}
+
 func CreateTileMap(width int, height int, textures []string) TileMap {
 
 	imgs := make([]*ebiten.Image, len(textures))

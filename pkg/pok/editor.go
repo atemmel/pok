@@ -447,13 +447,32 @@ func (e *Editor) handleMapMouseInputs() {
 		}
 	}
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) && activeTool == Object {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) {
 		cx, cy := ebiten.CursorPosition();
 		e.SelectTileFromMouse(cx, cy)
-		if e.selectedTileIsValid() {
-			obj := &e.objectGrid.objs[activeObjsIndex]
-			e.tileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects)
-			fmt.Println(placedObjects)
+		switch activeTool {
+			case Object:
+				if e.selectedTileIsValid() {
+					obj := &e.objectGrid.objs[activeObjsIndex]
+					e.tileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects)
+					fmt.Println(placedObjects)
+				}
+			case Link:
+				if e.selectedTileIsValid() {
+					// Open dialog
+					e.dialog.Hidden = false
+					e.tw.Start("Which file does this exit link to?", func(str string) {
+						//e := Exit{}
+						if str == "" {
+							e.dialog.Hidden = true
+							return
+						}
+
+						e.tw.Start("Which id does this link have?", func(str string) {
+							e.dialog.Hidden = true
+						})
+					})
+				}
 		}
 	}
 
