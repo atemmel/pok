@@ -11,6 +11,7 @@ import (
 	"image"
 	"image/color"
 	"io/ioutil"
+	"strconv"
 	"strings"
 )
 
@@ -461,16 +462,32 @@ func (e *Editor) handleMapMouseInputs() {
 				if e.selectedTileIsValid() {
 					// Open dialog
 					e.dialog.Hidden = false
-					e.tw.Start("Which file does this exit link to?", func(str string) {
-						//e := Exit{}
+					e.tw.Start("Which file does this tile link to?", func(str string) {
+						exit := Exit{}
 						if str == "" {
 							e.dialog.Hidden = true
 							return
 						}
 
+						exit.Target = str
+
 						e.tw.Start("Which id does this link have?", func(str string) {
 							e.dialog.Hidden = true
+							if str == "" {
+								return
+							}
+
+							id, err := strconv.Atoi(str)
+							if err != nil {
+								return
+							}
+
+							exit.Id = id
+							exit.X = selectedTile % e.tileMap.Width
+							exit.Y = selectedTile / e.tileMap.Height
+							e.tileMap.PlaceExit(exit)
 						})
+
 					})
 				}
 		}
