@@ -15,6 +15,7 @@ type Resize struct {
 	outlined *ebiten.Image
 	filled *ebiten.Image
 	tileMap *TileMap
+	offset *Vec2
 	holding [4]bool
 	holdStart Corner
 	holdEnd Corner
@@ -34,7 +35,7 @@ const (
 	BotRightCorner = 3
 )
 
-func NewResize(tileMap *TileMap) Resize {
+func NewResize(tileMap *TileMap, offset *Vec2) Resize {
 	if tileMap == nil {
 		panic("TileMap was nil :/")
 	}
@@ -46,6 +47,7 @@ func NewResize(tileMap *TileMap) Resize {
 		img,
 		img2,
 		tileMap,
+		offset,
 		[4]bool{
 			false, false, false, false,
 		},
@@ -155,8 +157,8 @@ func (r *Resize) Draw(rend *Renderer) {
 			&ebiten.DrawImageOptions{},
 			target,
 			nil,
-			corners[i].x,
-			corners[i].y,
+			corners[i].x + r.offset.X,
+			corners[i].y + r.offset.Y,
 			100,
 		})
 	}
@@ -182,8 +184,8 @@ func (r *Resize) tryClick(px, py int, cam *Camera) bool {
 	py += int(cam.Y)
 
 	for i := range corners {
-		cx := corners[i].x + float64(r.outlined.Bounds().Max.X / 2)
-		cy := corners[i].y + float64(r.outlined.Bounds().Max.X / 2)
+		cx := corners[i].x + float64(r.outlined.Bounds().Max.X / 2) + r.offset.X
+		cy := corners[i].y + float64(r.outlined.Bounds().Max.X / 2) + r.offset.Y
 
 		b := circleIntersect(float64(px), float64(py), cx, cy, DragRadius)
 		r.holding[i] = b

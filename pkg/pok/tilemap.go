@@ -56,7 +56,10 @@ func (t *TileMap) GetEntryWithId(id int) int {
 }
 
 func (t *TileMap) Draw(rend *Renderer) {
+	t.DrawWithOffset(rend, 0, 0)
+}
 
+func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 	for j := range t.Tiles {
 		if drawOnlyCurrentLayer && j != currentLayer {
 			continue
@@ -87,8 +90,8 @@ func (t *TileMap) Draw(rend *Renderer) {
 				opt,
 				img,
 				&rect,
-				x,
-				y,
+				x + offsetX,
+				y + offsetY,
 				uint32(j * 2),
 			})
 		}
@@ -400,7 +403,7 @@ func (t *TileMap) PlaceExit(exit Exit) {
 	t.Exits = append(t.Exits, exit)
 }
 
-func CreateTileMap(width int, height int, textures []string) TileMap {
+func CreateTileMap(width int, height int, textures []string) *TileMap {
 
 	imgs := make([]*ebiten.Image, len(textures))
 	for i := range imgs {
@@ -426,7 +429,7 @@ func CreateTileMap(width int, height int, textures []string) TileMap {
 	ind := make([][]int, 1)
 	ind[0] = make([]int, width * height)
 
-	tiles := TileMap{
+	tiles := &TileMap{
 		tex,
 		col,
 		ind,

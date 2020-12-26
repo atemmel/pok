@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"math"
 )
 
 var selectionX int
@@ -50,9 +51,17 @@ var ToolNames = [NIcons]string{
 	"Link",
 }
 
+type Vec2 struct {
+	X, Y float64
+}
+
 type Editor struct {
-	tileMap TileMap
-	lastSavedTileMap TileMap
+	tileMaps []TileMap
+	tileMapOffsets  []Vec2
+	activeTileMapIndex int
+
+	activeTileMap *TileMap
+	lastSavedTileMaps []TileMap
 	rend Renderer
 	dialog DialogBox
 	grid Grid
@@ -120,12 +129,14 @@ func NewEditor() *Editor {
 
 	es.clickStartX = -1
 	es.clickStartY = -1
-	es.resize = NewResize(&es.tileMap)
 
 	es.icons, _, err = ebitenutil.NewImageFromFile("./editorresources/images/editoricons.png", ebiten.FilterDefault)
 	if err != nil {
 		panic(err)
 	}
+
+	es.tileMaps = make([]TileMap, 0)
+	es.tileMapOffsets = make([]Vec2, 0)
 
 	//TODO: Make constant
 	//basedir := "editorresources/overworldobjects/"
@@ -144,7 +155,11 @@ func (e *Editor) Update(screen *ebiten.Image) error {
 }
 
 func (e *Editor) Draw(screen *ebiten.Image) {
-	e.tileMap.Draw(&e.rend)
+	//e.acteTileMap.Draw(&e.rend)
+	for i := range e.tileMaps {
+		offset := e.tileMapOffsets[i]
+		e.tileMaps[i].DrawWithOffset(&e.rend, offset.X, offset.Y)
+	}
 	if drawUi && e.activeFile != "" {
 		e.DrawTileMapDetail()
 		e.resize.Draw(&e.rend)
@@ -175,15 +190,15 @@ zoom: %d%%
 }
 
 func (e *Editor) DrawTileMapDetail() {
-	for j := range e.tileMap.Collision {
+	for j := range e.activeTileMap.Collision {
 		if drawOnlyCurrentLayer && j != currentLayer {
 			continue
 		}
-		for i := range e.tileMap.Collision[j] {
-			x := float64(i % e.tileMap.Width) * TileSize
-			y := float64(i / e.tileMap.Width) * TileSize
+		for i := range e.activeTileMap.Collision[j] {
+			x := float64(i % e.activeTileMap.Width) * TileSize
+			y := float64(i / e.activeTileMap.Width) * TileSize
 
-			if currentLayer == j && e.tileMap.Collision[j][i] {
+			if currentLayer == j && e.activeTileMap.Collision[j][i] {
 				e.rend.Draw(&RenderTarget{
 					&ebiten.DrawImageOptions{},
 					e.collisionMarker,
@@ -197,13 +212,13 @@ func (e *Editor) DrawTileMapDetail() {
 	}
 
 	if drawUi {
-		for i := range e.tileMap.Exits {
+		for i := range e.activeTileMap.Exits {
 			e.rend.Draw(&RenderTarget{
 				&ebiten.DrawImageOptions{},
 				e.exitMarker,
 				nil,
-				float64(e.tileMap.Exits[i].X * TileSize),
-				float64(e.tileMap.Exits[i].Y * TileSize),
+				float64(e.activeTileMap.Exits[i].X * TileSize),
+				float64(e.activeTileMap.Exits[i].Y * TileSize),
 				100,
 			})
 		}
@@ -221,25 +236,31 @@ func (e *Editor) DrawTileMapDetail() {
 			}
 		}
 
+		offset := e.tileMapOffsets[e.activeTileMapIndex]
 		e.rend.Draw(&RenderTarget{
 			&ebiten.DrawImageOptions{},
 			e.selection,
 			nil,
-			float64(selectionX * TileSize),
-			float64(selectionY * TileSize),
+			float64(selectionX * TileSize) + offset.X,
+			float64(selectionY * TileSize) + offset.Y,
 			100,
 		})
 	}
 }
 
 func (e *Editor) SelectTileFromMouse(cx, cy int) {
-	cx += int(e.rend.Cam.X)
-	cy += int(e.rend.Cam.Y)
+	offset := e.tileMapOffsets[e.activeTileMapIndex]
+	ds := 1 / (e.rend.Cam.Scale)
+	cx = int(float64(cx) * ds + e.rend.Cam.X)
+	cy = int(float64(cy) * ds + e.rend.Cam.Y)
+	cx -= int(offset.X)
+	cy -= int(offset.Y)
+
 	cx -= cx % TileSize
 	cy -= cy % TileSize
 	selectionX = cx / TileSize
 	selectionY = cy / TileSize
-	selectedTile =  selectionX + selectionY * e.tileMap.Width
+	selectedTile =  selectionX + selectionY * e.activeTileMap.Width
 }
 
 func (e *Editor) loadFile() {
@@ -251,45 +272,62 @@ func (e *Editor) loadFile() {
 		}
 
 		e.nextFile = str
-		err := e.tileMap.OpenFile(str);
+		tm := &TileMap{}
+		err := tm.OpenFile(str);
 		if err != nil {
 			e.dialog.Hidden = false
 			e.tw.Start("Could not open file " + e.tw.Input + ". Create new file? (y/n):", func(str string) {
 				e.dialog.Hidden = true
 				if str == "" || str == "y" || str == "Y" {
 					// create new file
-					e.activeFile = e.nextFile
-					drawUi = true
-					e.tileMap = CreateTileMap(2, 2, listPngs("resources/images/overworld/"))
-					e.grid = NewGrid(e.tileMap.images[0])
-					e.fillObjectGrid("editorresources/overworldobjects/")
+					tm = CreateTileMap(2, 2, listPngs("resources/images/overworld/"))
+					e.updateEditorWithNewTileMap(tm)
 					return
 				}
 
 			})
 		} else {
-			e.activeFile = e.nextFile
-			drawUi = true
-			e.grid = NewGrid(e.tileMap.images[0])
-			e.fillObjectGrid("editorresources/overworldobjects/")
+			e.updateEditorWithNewTileMap(tm)
 		}
 	})
 }
 
+func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
+	e.appendTileMap(tileMap)
+	e.activeFile = e.nextFile
+	drawUi = true
+	e.grid = NewGrid(tileMap.images[0])
+	e.fillObjectGrid("editorresources/overworldobjects/")
+	e.resize = NewResize(e.activeTileMap, &e.tileMapOffsets[len(e.tileMapOffsets) - 1])
+}
+
+func (e *Editor) appendTileMap(tileMap *TileMap) {
+	e.lastSavedTileMaps = append(e.lastSavedTileMaps, TileMap{})
+	e.tileMaps = append(e.tileMaps, *tileMap)
+	e.tileMapOffsets = append(e.tileMapOffsets, Vec2{0, 0})
+	e.activeTileMap = &e.tileMaps[len(e.tileMaps)-1]
+}
+
 func (e *Editor) saveFile() {
-	err := e.tileMap.SaveToFile(e.activeFile)
+	err := e.activeTileMap.SaveToFile(e.activeFile)
 	if err != nil {
 		e.dialog.Hidden = false
 		e.tw.Start("Could not save file " + err.Error(), func(str string) {
 			e.dialog.Hidden = true
 		})
 	}
-	e.lastSavedTileMap = e.tileMap
+
+	copy(e.lastSavedTileMaps, e.tileMaps)
 }
 
 func (e *Editor) hasSaved() bool {
-	opt := cmpopts.IgnoreFields(e.tileMap, "images", "nTilesX")
-	return cmp.Equal(e.lastSavedTileMap, e.tileMap, opt)
+	for i := range e.tileMaps {
+		opt := cmpopts.IgnoreFields(e.tileMaps[i], "images", "nTilesX")
+		if !cmp.Equal(e.lastSavedTileMaps[i], e.tileMaps[i], opt) {
+			return false
+		}
+	}
+	return true
 }
 
 func (e *Editor) unsavedWorkDialog() {
@@ -317,6 +355,10 @@ func (e *Editor) handleInputs() error {
 
 	if e.activeFile != "" {
 		cx, cy := ebiten.CursorPosition()
+		index := e.getTileMapIndexAtCoord(cx, cy)
+		if index != -1 {
+			e.setActiveTileMap(index)
+		}
 		if e.gridIsVisible() && e.grid.Contains(image.Point{cx, cy}) {
 			_, sy := ebiten.Wheel()
 			if sy < 0 {
@@ -363,18 +405,18 @@ func (e *Editor) handleInputs() error {
 func (e *Editor) handleMapInputs() {
 	if ebiten.IsKeyPressed(ebiten.KeyC) {
 		if e.selectedTileIsValid() {
-			copyBuffer = e.tileMap.Tiles[currentLayer][selectedTile]
+			copyBuffer = e.activeTileMap.Tiles[currentLayer][selectedTile]
 		}
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyV) {
 		if e.selectedTileIsValid() {
-			e.tileMap.Tiles[currentLayer][selectedTile] = copyBuffer
+			e.activeTileMap.Tiles[currentLayer][selectedTile] = copyBuffer
 		}
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyMinus) {	// Plus
-		if currentLayer + 1 < len(e.tileMap.Tiles) {
+		if currentLayer + 1 < len(e.activeTileMap.Tiles) {
 			currentLayer++
 		}
 	}
@@ -386,13 +428,13 @@ func (e *Editor) handleMapInputs() {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
-		e.tileMap.AppendLayer()
+		e.activeTileMap.AppendLayer()
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
-		if(len(e.tileMap.Tiles) > 1) {
-			e.tileMap.Tiles = e.tileMap.Tiles[:len(e.tileMap.Tiles)-1]
-			e.tileMap.Collision = e.tileMap.Collision[:len(e.tileMap.Collision)-1]
+		if(len(e.activeTileMap.Tiles) > 1) {
+			e.activeTileMap.Tiles = e.activeTileMap.Tiles[:len(e.activeTileMap.Tiles)-1]
+			e.activeTileMap.Collision = e.activeTileMap.Collision[:len(e.activeTileMap.Collision)-1]
 		}
 	}
 
@@ -403,40 +445,44 @@ func (e *Editor) handleMapInputs() {
 
 func (e *Editor) handleMapMouseInputs() {
 	_, dy := ebiten.Wheel()
-	if dy != 0. && e.selectedTileIsValid() {
+	if dy != 0. {
 		if dy < 0 {
-			//e.tileMap.Tiles[currentLayer][selectedTile]--
-			e.rend.Cam.Scale -= 0.1
+			e.rend.ZoomToCenter(e.rend.Cam.Scale - 0.1)
 		} else {
-			//e.tileMap.Tiles[currentLayer][selectedTile]++
-			e.rend.Cam.Scale += 0.1
+			e.rend.ZoomToCenter(e.rend.Cam.Scale + 0.1)
 		}
 	}
 
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 		cx, cy := ebiten.CursorPosition();
-		if e.resize.IsHolding() || e.resize.tryClick(cx, cy, &e.rend.Cam) {
+		e.resize.tryClick(cx, cy, &e.rend.Cam)
+	}
+
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) && !ebiten.IsKeyPressed(ebiten.KeyShift) {
+		cx, cy := ebiten.CursorPosition();
+		//if !e.isAlreadyClicking() && (e.resize.IsHolding() || e.resize.tryClick(cx, cy, &e.rend.Cam)) {
+		if !e.isAlreadyClicking() && e.resize.IsHolding() {
 			e.resize.Hold()
 		} else {
 			e.SelectTileFromMouse(cx, cy)
 			if e.selectedTileIsValid() {
 				if activeTool == Pencil {
 					i := e.grid.GetIndex()
-					e.tileMap.Tiles[currentLayer][selectedTile] = i
-					e.tileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
+					e.activeTileMap.Tiles[currentLayer][selectedTile] = i
+					e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
 				} else if activeTool == Eraser {
 					if ebiten.IsKeyPressed(ebiten.KeyShift) {
-						col := selectedTile % e.tileMap.Width
-						row := selectedTile / e.tileMap.Width
+						col := selectedTile % e.activeTileMap.Width
+						row := selectedTile / e.activeTileMap.Width
 						i := HasPlacedObjectAt(placedObjects, col, row)
 						if i != -1 {
-							e.tileMap.EraseObject(placedObjects[i], &e.objectGrid.objs[placedObjects[i].Index])
+							e.activeTileMap.EraseObject(placedObjects[i], &e.objectGrid.objs[placedObjects[i].Index])
 							placedObjects[i] = placedObjects[len(placedObjects) - 1]
 							placedObjects = placedObjects[:len(placedObjects) - 1]
 						}
 					} else {
-						e.tileMap.Tiles[currentLayer][selectedTile] = -1
-						e.tileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
+						e.activeTileMap.Tiles[currentLayer][selectedTile] = -1
+						e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
 					}
 				}
 			}
@@ -444,7 +490,7 @@ func (e *Editor) handleMapMouseInputs() {
 	} else {
 		x, y, origin := e.resize.Release()
 		if origin != -1 {
-			e.tileMap.Resize(x, y, origin)
+			e.activeTileMap.Resize(x, y, origin)
 		}
 	}
 
@@ -455,7 +501,7 @@ func (e *Editor) handleMapMouseInputs() {
 			case Object:
 				if e.selectedTileIsValid() {
 					obj := &e.objectGrid.objs[activeObjsIndex]
-					e.tileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects)
+					e.activeTileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects)
 					fmt.Println(placedObjects)
 				}
 			case Link:
@@ -483,9 +529,9 @@ func (e *Editor) handleMapMouseInputs() {
 							}
 
 							exit.Id = id
-							exit.X = selectedTile % e.tileMap.Width
-							exit.Y = selectedTile / e.tileMap.Height
-							e.tileMap.PlaceExit(exit)
+							exit.X = selectedTile % e.activeTileMap.Width
+							exit.Y = selectedTile / e.activeTileMap.Height
+							e.activeTileMap.PlaceExit(exit)
 						})
 
 					})
@@ -497,18 +543,18 @@ func (e *Editor) handleMapMouseInputs() {
 		cx, cy := ebiten.CursorPosition();
 		e.SelectTileFromMouse(cx, cy)
 		if e.selectedTileIsValid() {
-			e.tileMap.Collision[currentLayer][selectedTile] = !e.tileMap.Collision[currentLayer][selectedTile]
+			e.activeTileMap.Collision[currentLayer][selectedTile] = !e.activeTileMap.Collision[currentLayer][selectedTile]
 		}
 	}
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) || (ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && ebiten.IsKeyPressed(ebiten.KeyControl)) {
 		cx, cy := ebiten.CursorPosition();
-		if(e.clickStartX == -1 && e.clickStartY == -1) {
+		if !e.isAlreadyClicking() {
 			e.clickStartY = float64(cy)
 			e.clickStartX = float64(cx)
 		} else {
-			e.rend.Cam.X -= (float64(cx) - e.clickStartX)
-			e.rend.Cam.Y -= (float64(cy) - e.clickStartY)
+			e.rend.Cam.X -= (float64(cx) - e.clickStartX) / e.rend.Cam.Scale
+			e.rend.Cam.Y -= (float64(cy) - e.clickStartY) / e.rend.Cam.Scale
 			e.clickStartX = float64(cx)
 			e.clickStartY = float64(cy)
 		}
@@ -529,14 +575,39 @@ func (e *Editor) handleMapMouseInputs() {
 			}
 		}
 		*/
+	} else if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && ebiten.IsKeyPressed(ebiten.KeyShift) {
+		cx, cy := ebiten.CursorPosition();
+		if !e.isAlreadyClicking() {
+			e.clickStartY = float64(cy)
+			e.clickStartX = float64(cx)
+		} else {
+			index := len(e.tileMaps) - 1
+			offset := &e.tileMapOffsets[index]
+			offset.X += (float64(cx) - e.clickStartX) / e.rend.Cam.Scale
+			offset.Y += (float64(cy) - e.clickStartY) / e.rend.Cam.Scale
+			e.clickStartX = float64(cx)
+			e.clickStartY = float64(cy)
+		}
 	} else {
 		e.clickStartX = -1
 		e.clickStartY = -1
 	}
+
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButton(0)) {
+		offset := &e.tileMapOffsets[e.activeTileMapIndex]
+		offset.X = math.Round(offset.X / TileSize) * TileSize
+		offset.Y = math.Round(offset.Y / TileSize) * TileSize
+	}
+}
+
+func (e *Editor) isAlreadyClicking() bool {
+	return e.clickStartX != -1 && e.clickStartY != -1
 }
 
 func (e *Editor) selectedTileIsValid() bool {
-	return 0 <= selectedTile && selectedTile < len(e.tileMap.Tiles[currentLayer])
+	return 0 <= selectedTile && selectedTile < len(e.activeTileMap.Tiles[currentLayer])
+	//cx, cy := ebiten.CursorPosition()
+	//return e.getTileMapIndexAtCoord(cx, cy) != -1
 }
 
 func (e *Editor) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -584,21 +655,42 @@ func (e *Editor) fillObjectGrid(dir string) {
 	}
 
 	for i := range objs {
-		for j := range e.tileMap.Textures {
-			if e.tileMap.Textures[j] == objs[i].Texture {
+		for j := range e.activeTileMap.Textures {
+			if e.activeTileMap.Textures[j] == objs[i].Texture {
 				objs[i].textureIndex = j
 			}
 		}
 	}
 
-	for i := range e.tileMap.Textures {
-		if e.tileMap.Textures[i] == "base.png" {
+	for i := range e.activeTileMap.Textures {
+		if e.activeTileMap.Textures[i] == "base.png" {
 			baseTextureIndex = i
 		}
 	}
 
 	//fmt.Println(objs)
-	e.objectGrid = NewObjectGrid(&e.tileMap, objs)
+	e.objectGrid = NewObjectGrid(e.activeTileMap, objs)
+}
+
+func (e *Editor) setActiveTileMap(index int) {
+	e.activeTileMap = &e.tileMaps[index]
+	e.activeTileMapIndex = index
+}
+
+func (e *Editor) getTileMapIndexAtCoord(cx, cy int) int {
+	p := image.Point{cx, cy}
+	for i := range e.tileMaps {
+		w := int(float64(e.tileMaps[i].Width * TileSize) * e.rend.Cam.Scale)
+		h := int(float64(e.tileMaps[i].Height * TileSize) * e.rend.Cam.Scale)
+		x := int(e.tileMapOffsets[i].X - e.rend.Cam.X)
+		y := int(e.tileMapOffsets[i].Y - e.rend.Cam.Y)
+
+		r := image.Rect(x, y, x + w, y + h)
+		if p.In(r) {
+			return i
+		}
+	}
+	return -1
 }
 
 func listPngs(dir string) []string {

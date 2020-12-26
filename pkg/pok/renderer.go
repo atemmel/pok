@@ -36,9 +36,18 @@ func (do DrawOrder) Less(i, j int) bool {
 type Camera struct {
 	X float64
 	Y float64
-	W int
-	H int
+	W float64
+	H float64
 	Scale float64
+}
+
+func (c *Camera) AsRect() image.Rectangle {
+	return image.Rect(
+		int(c.X),
+		int(c.Y),
+		int(c.X + c.W),
+		int(c.Y + c.H),
+	)
 }
 
 type Renderer struct {
@@ -52,7 +61,7 @@ func NewRenderer(screenWidth, screenHeight int, scale float64) Renderer {
 	return Renderer {
 		img,
 		make([]RenderTarget, 0),
-		Camera{0, 0, screenWidth, screenHeight, scale},
+		Camera{0, 0, float64(screenWidth), float64(screenHeight), scale},
 	}
 }
 
@@ -81,7 +90,6 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(r.Cam.Scale, r.Cam.Scale)
-	op.GeoM.Translate((float64(r.Cam.W) - float64(r.Cam.W) * r.Cam.Scale) / 2 , (float64(r.Cam.H) - float64(r.Cam.H) * r.Cam.Scale) / 2)
 	screen.DrawImage(r.dest, op)
 	r.targets = r.targets[:0]
 }
@@ -91,7 +99,7 @@ func (r *Renderer) prepareRenderTargets() {
 }
 
 func (r *Renderer) cullRenderTargets() {
-	rect := image.Rect(int(r.Cam.X), int(r.Cam.Y), int(r.Cam.X) + r.Cam.W, int(r.Cam.Y) + r.Cam.H)
+	rect := r.Cam.AsRect()
 	for i := 0; i < len(r.targets); i++ {
 		prospect := image.Rect(
 			int(r.targets[i].X),
@@ -117,4 +125,23 @@ func (r *Renderer) cullRenderTargets() {
 
 func (r *Renderer) clear() {
 	r.dest.Fill(color.Black)
+}
+
+func (r *Renderer) ZoomToPoint(scale, x, y float64) {
+	// undo prior scale (this assumes that the previous call contains the same x and y)
+	factor := 1 - 1/r.Cam.Scale
+	r.Cam.X -= (factor - 1) * x
+	r.Cam.Y -= (factor - 1) * y
+
+	// apply new scale
+	r.Cam.Scale = scale
+	factor = 1 - 1/r.Cam.Scale
+	r.Cam.X += (factor - 1) * x
+	r.Cam.Y += (factor - 1) * y
+}
+
+func (r *Renderer) ZoomToCenter(scale float64) {
+	x := DisplaySizeX / 2.0
+	y := DisplaySizeY / 2.0
+	r.ZoomToPoint(scale, x, y)
 }
