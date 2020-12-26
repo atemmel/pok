@@ -498,6 +498,15 @@ func (e *Editor) handleMapMouseInputs() {
 		x, y, origin := e.resize.Release()
 		if origin != -1 {
 			e.activeTileMap.Resize(x, y, origin)
+			fmt.Println(x ,y)
+
+			if origin == TopLeftCorner || origin == TopRightCorner {
+				e.tileMapOffsets[e.activeTileMapIndex].Y -= float64(y * TileSize)
+			}
+
+			if origin == TopLeftCorner || origin == BotLeftCorner {
+				e.tileMapOffsets[e.activeTileMapIndex].X -= float64(x * TileSize)
+			}
 		}
 	}
 
