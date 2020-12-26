@@ -155,7 +155,6 @@ func (e *Editor) Update(screen *ebiten.Image) error {
 }
 
 func (e *Editor) Draw(screen *ebiten.Image) {
-	//e.acteTileMap.Draw(&e.rend)
 	for i := range e.tileMaps {
 		offset := e.tileMapOffsets[i]
 		e.tileMaps[i].DrawWithOffset(&e.rend, offset.X, offset.Y)
@@ -250,9 +249,9 @@ func (e *Editor) DrawTileMapDetail() {
 
 func (e *Editor) SelectTileFromMouse(cx, cy int) {
 	offset := e.tileMapOffsets[e.activeTileMapIndex]
-	ds := 1 / (e.rend.Cam.Scale)
-	cx = int(float64(cx) * ds + e.rend.Cam.X)
-	cy = int(float64(cy) * ds + e.rend.Cam.Y)
+	cx, cy = e.TransformPointToCam(cx, cy)
+	cx += int(e.rend.Cam.X)
+	cy += int(e.rend.Cam.Y)
 	cx -= int(offset.X)
 	cy -= int(offset.Y)
 
@@ -261,6 +260,13 @@ func (e *Editor) SelectTileFromMouse(cx, cy int) {
 	selectionX = cx / TileSize
 	selectionY = cy / TileSize
 	selectedTile =  selectionX + selectionY * e.activeTileMap.Width
+}
+
+func (e *Editor) TransformPointToCam(cx, cy int) (int, int) {
+	ds := 1 / (e.rend.Cam.Scale)
+	cx = int(float64(cx) * ds)
+	cy = int(float64(cy) * ds)
+	return cx, cy
 }
 
 func (e *Editor) loadFile() {
@@ -455,6 +461,7 @@ func (e *Editor) handleMapMouseInputs() {
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 		cx, cy := ebiten.CursorPosition();
+		cx, cy = e.TransformPointToCam(cx, cy)
 		e.resize.tryClick(cx, cy, &e.rend.Cam)
 	}
 
