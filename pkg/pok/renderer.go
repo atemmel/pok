@@ -1,7 +1,9 @@
 package pok
 
 import (
+	//"fmt"
 	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"image"
 	"image/color"
 	"sort"
@@ -14,6 +16,11 @@ type RenderTarget struct {
 	X float64
 	Y float64
 	Z uint32
+}
+
+type DebugLine struct {
+	X1, Y1, X2, Y2 float64
+	Clr color.Color
 }
 
 type DrawOrder []RenderTarget
@@ -53,6 +60,7 @@ func (c *Camera) AsRect() image.Rectangle {
 type Renderer struct {
 	dest *ebiten.Image
 	targets []RenderTarget
+	debugLines []DebugLine
 	Cam Camera
 }
 
@@ -61,6 +69,7 @@ func NewRenderer(screenWidth, screenHeight int, scale float64) Renderer {
 	return Renderer {
 		img,
 		make([]RenderTarget, 0),
+		make([]DebugLine, 0),
 		Camera{0, 0, float64(screenWidth), float64(screenHeight), scale},
 	}
 }
@@ -72,6 +81,10 @@ func (r *Renderer) LookAt(x float64, y float64) {
 
 func (r *Renderer) Draw(target *RenderTarget) {
 	r.targets = append(r.targets, *target)
+}
+
+func (r *Renderer) DrawLine(line DebugLine) {
+	r.debugLines = append(r.debugLines, line)
 }
 
 func (r *Renderer) Display(screen *ebiten.Image) {
@@ -88,10 +101,20 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 		}
 	}
 
+	for _, d := range r.debugLines {
+		x1 := float64(d.X1) - r.Cam.X
+		y1 := float64(d.Y1) - r.Cam.Y
+		x2 := float64(d.X2) - r.Cam.X
+		y2 := float64(d.Y2) - r.Cam.Y
+		//fmt.Println(x1, y1, x2, y2)
+		ebitenutil.DrawLine(r.dest, x1, y1, x2, y2, d.Clr)
+	}
+
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(r.Cam.Scale, r.Cam.Scale)
 	screen.DrawImage(r.dest, op)
 	r.targets = r.targets[:0]
+	r.debugLines = r.debugLines[:0]
 }
 
 func (r *Renderer) prepareRenderTargets() {
@@ -119,6 +142,18 @@ func (r *Renderer) cullRenderTargets() {
 		if !rect.Overlaps(prospect) {
 			r.targets[i] = r.targets[len(r.targets) - 1] // Copy last element
 			r.targets = r.targets[:len(r.targets) - 1]	// Pop back
+			i--
+		}
+	}
+
+	for i := 0; i < len(r.debugLines); i++ {
+		prospectA := image.Point{int(r.debugLines[i].X1), int(r.debugLines[i].Y1)}
+		prospectB := image.Point{int(r.debugLines[i].X2), int(r.debugLines[i].Y2)}
+
+		if !prospectA.In(rect) && !prospectB.In(rect) {
+			r.debugLines[i] = r.debugLines[len(r.debugLines) - 1]
+			r.debugLines = r.debugLines[:len(r.debugLines) - 1]
+			i--
 		}
 	}
 }
