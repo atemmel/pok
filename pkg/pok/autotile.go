@@ -121,7 +121,7 @@ func DecideTileIndicies(neighbors [][]int, ati *AutoTileInfo) int {
 			} else if neighbors[2][0] != Unused || neighbors[2][2] != Unused {
 				if neighbors[0][0] == Unused {
 					return ati.CurveUpperLeft
-				} else if neighbors[0][2] == Unused{
+				} else if neighbors[0][2] == Unused {
 					return ati.CurveUpperRight
 				}
 			}
