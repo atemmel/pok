@@ -12,6 +12,7 @@ import (
 	"image/color"
 	"io/ioutil"
 	//"strconv"
+	"log"
 	"strings"
 	"math"
 )
@@ -23,6 +24,7 @@ var selectedTile = 0
 var currentLayer = 0
 var baseTextureIndex = 0
 var activeObjsIndex = -1
+var activeAtiIndex = -1
 
 var drawOnlyCurrentLayer = false
 var drawUi = false
@@ -45,7 +47,8 @@ const(
 	Object = 2
 	Bucket = 3
 	Link = 4
-	NIcons = 5
+	AutoTile = 5
+	NIcons = 6
 
 )
 
@@ -55,6 +58,7 @@ var ToolNames = [NIcons]string{
 	"Object",
 	"Bucket",
 	"Link",
+	"Autotile",
 }
 
 type Vec2 struct {
@@ -83,6 +87,8 @@ type Editor struct {
 	clickStartX float64
 	clickStartY float64
 	resizers []Resize
+	autoTileInfo []AutoTileInfo
+	autoTileGrid AutoTileGrid
 	dieOnNextTick bool
 }
 
@@ -181,6 +187,8 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 			e.grid.Draw(screen)
 		} else if e.objectGridIsVisible() {
 			e.objectGrid.Draw(screen)
+		} else if e.autoTileGridIsVisible() {
+			e.autoTileGrid.Draw(screen)
 		}
 		e.drawIcons(screen)
 	}
@@ -314,6 +322,12 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	drawUi = true
 	e.grid = NewGrid(tileMap.images[0])
 	e.fillObjectGrid("editorresources/overworldobjects/")
+	var err error
+	e.autoTileInfo, err = ReadAllAutoTileInfo("editorresources/autotileinfo/")
+	e.autoTileGrid = NewAutoTileGrid(tileMap.images[0], tileMap.nTilesX[0], e.autoTileInfo)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (e *Editor) appendTileMap(tileMap *TileMap) {
@@ -388,8 +402,18 @@ func (e *Editor) handleInputs() error {
 				e.grid.Scroll(ScrollUp)
 			}
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
-				cx, cy := ebiten.CursorPosition()
+				//cx, cy := ebiten.CursorPosition()
 				e.grid.Select(cx, cy)
+			}
+		} else if e.autoTileGridIsVisible() && e.autoTileGrid.Contains(image.Point{cx, cy}) {
+			_, sy := ebiten.Wheel()
+			if sy < 0 {
+				e.autoTileGrid.Scroll(ScrollDown)
+			} else if sy > 0 {
+				e.autoTileGrid.Scroll(ScrollUp)
+			}
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
+				e.autoTileGrid.Select(cx, cy)
 			}
 		} else if e.objectGridIsVisible() && e.objectGrid.Contains(image.Point{cx, cy}) {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
@@ -482,7 +506,6 @@ func (e *Editor) handleMapMouseInputs() {
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) {
 		cx, cy := ebiten.CursorPosition();
-		//if !e.isAlreadyClicking() && (e.resize.IsHolding() || e.resize.tryClick(cx, cy, &e.rend.Cam)) {
 		if !e.isAlreadyClicking() && e.resizers[e.activeTileMapIndex].IsHolding() {
 			e.resizers[e.activeTileMapIndex].Hold()
 		} else {
@@ -506,6 +529,13 @@ func (e *Editor) handleMapMouseInputs() {
 						e.activeTileMap.Tiles[currentLayer][selectedTile] = -1
 						e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
 					}
+				} else if activeTool == AutoTile {
+					//TODO: This
+					neighbors := BuildNeighbors(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex)
+					ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
+					resultingTile := DecideTileIndicies(neighbors, ati)
+					e.activeTileMap.Tiles[currentLayer][selectedTile] = resultingTile
+					e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
 				}
 			}
 		}
@@ -618,6 +648,10 @@ func (e *Editor) gridIsVisible() bool {
 
 func (e *Editor) objectGridIsVisible() bool {
 	return activeTool == Object
+}
+
+func (e *Editor) autoTileGridIsVisible() bool {
+	return activeTool == AutoTile
 }
 
 func (e *Editor) drawIcons(screen *ebiten.Image) {
@@ -876,7 +910,8 @@ func (e *Editor) removeLinkFromEntry(tileMapIndex, entryIndex int) {
 func listPngs(dir string) []string {
 	dirs, err := ioutil.ReadDir(dir)
 	if err != nil {
-		panic(err)
+		log.Println("Could not open dir", dir)
+		return make([]string, 0)
 	}
 
 	valid := make([]string, 0)
