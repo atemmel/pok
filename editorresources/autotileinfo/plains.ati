@@ -1,15 +1,15 @@
 {
-	"UpperLeft": 17,
-	"Upper": 18,
-	"UpperRight": 19,
+	"UpperLeft": 16,
+	"Upper": 17,
+	"UpperRight": 18,
 	"Left": 24,
 	"Center": 25,
 	"Right": 26, 
 	"LowerLeft": 32,
 	"Lower": 33,
 	"LowerRight": 34,
-	"CurveUpperLeft": 20,
-	"CurveUpperRight": 21,
+	"CurveUpperLeft": 19,
+	"CurveUpperRight": 20,
 	"CurveLowerLeft": 27,
 	"CurveLowerRight": 28
 }

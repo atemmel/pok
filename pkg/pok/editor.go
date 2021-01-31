@@ -531,8 +531,8 @@ func (e *Editor) handleMapMouseInputs() {
 					}
 				} else if activeTool == AutoTile {
 					//TODO: This
-					neighbors := BuildNeighbors(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex)
 					ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
+					neighbors := BuildNeighbors(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
 					resultingTile := DecideTileIndicies(neighbors, ati)
 					e.activeTileMap.Tiles[currentLayer][selectedTile] = resultingTile
 					e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex

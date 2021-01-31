@@ -25,6 +25,10 @@ type AutoTileInfo struct {
 	CurveLowerRight int
 }
 
+func (ati *AutoTileInfo) HasIndex(index int) bool {
+	return ati.UpperLeft == index || ati.Upper == index || ati.UpperRight == index || ati.Left == index || ati.Center == index || ati.Right == index || ati.LowerLeft == index || ati.Lower == index || ati.LowerRight == index || ati.CurveUpperLeft == index || ati.CurveUpperRight == index || ati.CurveLowerLeft == index || ati.CurveLowerRight == index
+}
+
 func ReadAllAutoTileInfo(directory string) ([]AutoTileInfo, error) {
 	dirs, err := ioutil.ReadDir(directory)
 	if err != nil {
@@ -55,7 +59,7 @@ func ReadAllAutoTileInfo(directory string) ([]AutoTileInfo, error) {
 	return atis, nil
 }
 
-func BuildNeighbors(tileMap *TileMap, tile, depth, texture int) [][]int {
+func BuildNeighbors(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInfo) [][]int {
 	mat := make([][]int, 0)
 	xStart := tile % tileMap.Width
 	yStart := tile / tileMap.Width
@@ -75,7 +79,7 @@ func BuildNeighbors(tileMap *TileMap, tile, depth, texture int) [][]int {
 			index := y * tileMap.Width + x
 
 			// Given a texture match, provide exact texture index
-			if tileMap.TextureIndicies[depth][index] == texture {
+			if tileMap.TextureIndicies[depth][index] == texture && ati.HasIndex(tileMap.Tiles[depth][index]) {
 				row = append(row, tileMap.Tiles[depth][index])
 			} else {	// Otherwise, explicitly state the disinterest in this tile
 				row = append(row, Unused)
@@ -91,7 +95,36 @@ func BuildNeighbors(tileMap *TileMap, tile, depth, texture int) [][]int {
 }
 
 func DecideTileIndicies(neighbors [][]int, ati *AutoTileInfo) int {
-	//TODO: Actually decide tile indices
+	// If something directly above and below
+	if neighbors[0][1] != Unused && neighbors[2][1] != Unused {
+		if neighbors[1][0] == Unused && neighbors[1][2] != Unused {
+			return ati.Left
+		}
 
-	return ati.UpperRight
+		if neighbors[1][2] == Unused && neighbors[1][0] != Unused {
+			return ati.Right
+		}
+	}
+
+	// If nothing above but something below
+	if neighbors[0][1] == Unused && neighbors[2][1] != Unused {
+		// If something to right but nothing to the left
+		if neighbors[1][2] != Unused && neighbors[1][0] == Unused {
+			return ati.UpperLeft
+		} else if neighbors[1][2] == Unused && neighbors[1][0] != Unused {
+			return ati.UpperRight
+		}
+		return ati.Upper
+	}
+
+	if neighbors[2][1] == Unused {
+		if neighbors[1][2] != Unused && neighbors[1][0] == Unused {
+			return ati.LowerLeft
+		} else if neighbors[1][2] == Unused && neighbors[1][0] != Unused {
+			return ati.LowerRight
+		}
+		return ati.Lower
+	}
+
+	return ati.Center
 }
