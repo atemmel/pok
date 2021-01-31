@@ -101,10 +101,13 @@ func DecideTileIndicies(neighbors [][]int, ati *AutoTileInfo) int {
 
 	// If something directly above and below
 	if neighbors[0][1] != Unused && neighbors[2][1] != Unused {
+
+		// If nothing to the left and something to the right
 		if neighbors[1][0] == Unused && neighbors[1][2] != Unused {
 			return ati.Left
 		}
 
+		// If nothing to the right and something to the left
 		if neighbors[1][2] == Unused && neighbors[1][0] != Unused {
 			return ati.Right
 		}
