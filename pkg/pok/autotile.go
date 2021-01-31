@@ -65,14 +65,17 @@ func BuildNeighbors(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInf
 	yStart := tile / tileMap.Width
 
 	for i := -1; i < 2; i++ {
+		row := make([]int, 0)
 		y := yStart + i
 		if y < 0 || y >= tileMap.Height {
+			row := append(row, Unused, Unused, Unused)
+			mat = append(mat, row)
 			continue
 		}
-		row := make([]int, 0)
 		for j := -1; j < 2; j++ {
 			x := xStart + j
 			if x < 0 || x >= tileMap.Width {
+				row = append(row, Unused)
 				continue
 			}
 
@@ -95,6 +98,7 @@ func BuildNeighbors(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInf
 }
 
 func DecideTileIndicies(neighbors [][]int, ati *AutoTileInfo) int {
+
 	// If something directly above and below
 	if neighbors[0][1] != Unused && neighbors[2][1] != Unused {
 		if neighbors[1][0] == Unused && neighbors[1][2] != Unused {
@@ -103,6 +107,24 @@ func DecideTileIndicies(neighbors [][]int, ati *AutoTileInfo) int {
 
 		if neighbors[1][2] == Unused && neighbors[1][0] != Unused {
 			return ati.Right
+		}
+
+		// If something directly left and right
+		if neighbors[1][2] != Unused && neighbors[1][0] != Unused {
+			// If something in upper corners
+			if neighbors[0][0] != Unused && neighbors[0][2] != Unused {
+				if neighbors[2][0] == Unused {
+					return ati.CurveLowerLeft
+				} else if neighbors[2][2] == Unused {
+					return ati.CurveLowerRight
+				}
+			} else if neighbors[2][0] != Unused || neighbors[2][2] != Unused {
+				if neighbors[0][0] == Unused {
+					return ati.CurveUpperLeft
+				} else if neighbors[0][2] == Unused{
+					return ati.CurveUpperRight
+				}
+			}
 		}
 	}
 
