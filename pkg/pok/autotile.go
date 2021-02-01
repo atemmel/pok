@@ -97,7 +97,37 @@ func BuildNeighbors(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInf
 	return mat
 }
 
-func DecideTileIndicies(neighbors [][]int, ati *AutoTileInfo) int {
+func DecideTileIndicies(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInfo) {
+	neighbors := BuildNeighbors(tileMap, tile, depth, texture, ati)
+	xStart := tile % tileMap.Width - 1
+	yStart := tile / tileMap.Width - 1
+
+	ripple := func(x, y int) {
+		newTile := y * tileMap.Width + x
+		newNeighbors := BuildNeighbors(tileMap, newTile, depth, texture, ati)
+		newIndex := DecideTileIndex(newNeighbors, ati)
+		tileMap.Tiles[depth][newTile] = newIndex
+		tileMap.TextureIndicies[depth][newTile] = texture
+	}
+
+	tileMap.Tiles[depth][tile] = ati.Center
+	tileMap.TextureIndicies[depth][tile] = texture
+
+	for i := range neighbors {
+		for j := range neighbors[i] {
+			if neighbors[i][j] != Unused {
+				x := xStart + j
+				y := yStart + i
+				ripple(x, y)
+			}
+		}
+	}
+
+	neighbors = BuildNeighbors(tileMap, tile, depth, texture, ati)
+	tileMap.Tiles[depth][tile] = DecideTileIndex(neighbors, ati)
+}
+
+func DecideTileIndex(neighbors [][]int, ati *AutoTileInfo) int {
 
 	// If something directly above and below
 	if neighbors[0][1] != Unused && neighbors[2][1] != Unused {
