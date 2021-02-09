@@ -1,0 +1,15 @@
+{
+	"UpperLeft": 40,
+	"Upper": 41,
+	"UpperRight": 42,
+	"Left": 48,
+	"Center": 49,
+	"Right": 50, 
+	"LowerLeft": 56,
+	"Lower": 57,
+	"LowerRight": 58,
+	"CurveUpperLeft": 51,
+	"CurveUpperRight": 52,
+	"CurveLowerLeft": 59,
+	"CurveLowerRight": 60
+}
