@@ -671,7 +671,7 @@ func (e *Editor) containsIcon(x, y int) int {
 	p := image.Point{x, y}
 
 	for i := 0; i < NIcons; i++ {
-		r := image.Rect(IconOffsetX, IconOffsetY + i * h, w, IconOffsetY + i * h + h)
+		r := image.Rect(IconOffsetX, IconOffsetY + i * (h + IconPadding), w, IconOffsetY + i * (h + IconPadding) + h)
 		if p.In(r) {
 			return i
 		}
