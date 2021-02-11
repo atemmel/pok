@@ -403,6 +403,10 @@ func (t *TileMap) PlaceExit(exit Exit) {
 	t.Exits = append(t.Exits, exit)
 }
 
+func (t *TileMap) Within(x, y int) bool {
+	return x < t.Width && x >= 0 && y < t.Height && y >= 0
+}
+
 func CreateTileMap(width int, height int, textures []string) *TileMap {
 
 	imgs := make([]*ebiten.Image, len(textures))

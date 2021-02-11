@@ -48,7 +48,8 @@ const(
 	Bucket = 3
 	Link = 4
 	AutoTile = 5
-	NIcons = 6
+	Tree = 6
+	NIcons = 7
 
 )
 
@@ -59,6 +60,7 @@ var ToolNames = [NIcons]string{
 	"Bucket",
 	"Link",
 	"Autotile",
+	"Tree",
 }
 
 type Vec2 struct {
@@ -531,11 +533,9 @@ func (e *Editor) handleMapMouseInputs() {
 					}
 				} else if activeTool == AutoTile {
 					ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
-					//neighbors := BuildNeighbors(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
-					//resultingTile := DecideTileIndicies(neighbors, ati)
-					//e.activeTileMap.Tiles[currentLayer][selectedTile] = resultingTile
-					//e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
 					DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
+				} else if activeTool == Tree {
+					
 				}
 			}
 		}
