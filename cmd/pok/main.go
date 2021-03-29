@@ -12,12 +12,12 @@ var fileToOpen string
 
 func init() {
 	flag.BoolVar(&isServing, "serve", false, "Run as game server")
-	flag.StringVar(&fileToOpen, "path", "", "Path of file to load")
 	flag.Parse()
 	if isServing {
 		server := pok.NewServer()
 		server.Serve()
 	}
+	fileToOpen = flag.Arg(0)
 }
 
 func main() {
@@ -29,7 +29,6 @@ func main() {
 		fmt.Println("File to open not specified :/")
 		return
 	}
-
 	var err error
 
 	ebiten.SetWindowSize(pok.WindowSizeX, pok.WindowSizeY)
@@ -38,8 +37,8 @@ func main() {
 
 	game := pok.CreateGame()
 
-	//game.Load(pok.TileMapDir + "old.json", 0)
 	game.Load(fileToOpen, 0)
+
 	game.Client = pok.CreateClient()
 	game.Audio = pok.NewAudio()
 

@@ -52,7 +52,7 @@ func (g *Game) TileIsOccupied(x int, y int, z int) bool {
 	}
 
 	for _, p := range g.Client.playerMap.players {
-		if p.X == x && p.Y == y {
+		if p.Char.X == x && p.Char.Y == y {
 			return true
 		}
 	}
@@ -85,10 +85,15 @@ func (g *Game) Load(str string, entrypoint int) {
 	selectedTile = 0
 	g.Player.Location = str
 	index := g.Ows.tileMap.GetEntryWithId(entrypoint)
-	g.Player.X = g.Ows.tileMap.Entries[index].X
-	g.Player.Y = g.Ows.tileMap.Entries[index].Y
-	g.Player.Gx = float64(g.Player.X * TileSize)
-	g.Player.Gy = float64(g.Player.Y * TileSize)
+	if index >= 0 {
+		g.Player.Char.X = g.Ows.tileMap.Entries[index].X
+		g.Player.Char.Y = g.Ows.tileMap.Entries[index].Y
+	} else {
+		g.Player.Char.X = 0
+		g.Player.Char.Y = 0
+	}
+	g.Player.Char.Gx = float64(g.Player.Char.X * TileSize)
+	g.Player.Char.Gy = float64(g.Player.Char.Y * TileSize)
 	g.Rend = NewRenderer(DisplaySizeX,
 		DisplaySizeY,
 		2,
@@ -106,14 +111,14 @@ func (g *Game) Save() {
 func (g *Game) DrawPlayer(player *Player) {
 	playerOpt := &ebiten.DrawImageOptions{}
 
-	x := player.Gx + playerOffsetX
-	y := player.Gy + playerOffsetY
+	x := player.Char.Gx + playerOffsetX
+	y := player.Char.Gy + playerOffsetY
 
 	playerRect := image.Rect(
-		player.Tx,
-		player.Ty,
-		player.Tx + (TileSize * 2),
-		player.Ty + (TileSize * 2),
+		player.Char.Tx,
+		player.Char.Ty,
+		player.Char.Tx + (TileSize * 2),
+		player.Char.Ty + (TileSize * 2),
 	)
 
 	g.Rend.Draw(&RenderTarget{

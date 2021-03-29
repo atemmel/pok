@@ -23,7 +23,7 @@ var copyBuffer = 0
 var selectedTile = 0
 var currentLayer = 0
 var baseTextureIndex = 0
-var activeObjsIndex = -1
+var activeObjsIndex = 0
 var activeAtiIndex = -1
 
 var drawOnlyCurrentLayer = false
@@ -31,6 +31,7 @@ var drawUi = false
 var activeTool = Pencil
 var placedObjects [][]PlacedEditorObject = make([][]PlacedEditorObject, 0)
 var linkBegin *LinkData
+var npcImages []*ebiten.Image = make([]*ebiten.Image, 0)
 
 type LinkData struct {
 	X, Y int
@@ -41,16 +42,19 @@ const(
 	IconOffsetX = 2
 	IconOffsetY = 70
 	IconPadding = 2
+)
 
-	Pencil = 0
-	Eraser = 1
-	Object = 2
-	Bucket = 3
-	Link = 4
-	AutoTile = 5
-	Tree = 6
-	NIcons = 7
-
+// Tools
+const(
+	Pencil = iota
+	Eraser
+	Object
+	Bucket
+	Link
+	AutoTile
+	Tree
+	PlaceNpc
+	NIcons
 )
 
 var ToolNames = [NIcons]string{
@@ -61,6 +65,7 @@ var ToolNames = [NIcons]string{
 	"Link",
 	"Autotile",
 	"Tree",
+	"Npc",
 }
 
 type Vec2 struct {
@@ -151,6 +156,9 @@ func NewEditor() *Editor {
 
 	es.tileMaps = make([]*TileMap, 0)
 	es.tileMapOffsets = make([]*Vec2, 0)
+
+	npcStrs := listPngs("resources/images/characters")
+	npcImages = loadImages(npcStrs)
 
 	//TODO: Make constant
 	//basedir := "editorresources/overworldobjects/"
@@ -359,7 +367,7 @@ func (e *Editor) saveFile() {
 
 func (e *Editor) hasSaved() bool {
 	for i := range e.tileMaps {
-		opt := cmpopts.IgnoreFields(*e.tileMaps[i], "images", "nTilesX")
+		opt := cmpopts.IgnoreFields(*e.tileMaps[i], "images", "nTilesX", "npcImages", "npcImagesStrings", "npcs")
 		if !cmp.Equal(*e.lastSavedTileMaps[i], *e.tileMaps[i], opt) {
 			return false
 		}
@@ -535,7 +543,7 @@ func (e *Editor) handleMapMouseInputs() {
 					ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
 					DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
 				} else if activeTool == Tree {
-					
+					//TODO: perform tree logic
 				}
 			}
 		}
@@ -563,7 +571,6 @@ func (e *Editor) handleMapMouseInputs() {
 				if e.selectedTileIsValid() {
 					obj := &e.objectGrid.objs[activeObjsIndex]
 					e.activeTileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
-					//fmt.Println(placedObjects[e.activeTileMapIndex])
 				}
 			case Link:
 				if e.selectedTileIsValid() {
@@ -671,7 +678,13 @@ func (e *Editor) containsIcon(x, y int) int {
 	p := image.Point{x, y}
 
 	for i := 0; i < NIcons; i++ {
-		r := image.Rect(IconOffsetX, IconOffsetY + i * (h + IconPadding), w, IconOffsetY + i * (h + IconPadding) + h)
+		x1 := IconOffsetX
+		y1 := IconOffsetY + i * (h + IconPadding)
+
+		x2 := x1 + w
+		y2 := y1 + h
+
+		r := image.Rect(x1, y1, x2, y2)
 		if p.In(r) {
 			return i
 		}
@@ -922,4 +935,18 @@ func listPngs(dir string) []string {
 		valid = append(valid, dirs[i].Name())
 	}
 	return valid
+}
+
+func loadImages(images []string) []*ebiten.Image {
+	imgs := make([]*ebiten.Image, 0, len(images))
+
+	for _, s := range images {
+		img, _, err := ebitenutil.NewImageFromFile(s, ebiten.FilterDefault)
+		if err != nil {
+			log.Println("Could not load image", s)
+		}
+		imgs = append(imgs, img)
+	}
+
+	return imgs
 }

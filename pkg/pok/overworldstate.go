@@ -60,10 +60,10 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		return errors.New("")	//TODO Gotta be a better way to do this
 	}
 
-	if !g.Player.isWalking && holdingSprint() {
-		g.Player.isRunning = true
+	if !g.Player.Char.isWalking && holdingSprint() {
+		g.Player.Char.isRunning = true
 	} else {
-		g.Player.isRunning = false
+		g.Player.Char.isRunning = false
 	}
 
 	if movingUp() {
@@ -122,14 +122,14 @@ player.id: %d
 currentLayer: %d
 drawOnlyCurrentLayer: %t
 selectedTexture: %d`,
-			g.Player.X, g.Player.Y, g.Player.Id, currentLayer,
+			g.Player.Char.X, g.Player.Char.Y, g.Player.Id, currentLayer,
 			drawOnlyCurrentLayer, o.tileMap.Tiles[currentLayer][selectedTile]) )
 	}
 }
 
 func (g *Game) CenterRendererOnPlayer() {
 	g.Rend.LookAt(
-		g.Player.Gx - DisplaySizeX / 2 + TileSize / 2,
-		g.Player.Gy - DisplaySizeY / 2 + TileSize / 2,
+		g.Player.Char.Gx - DisplaySizeX / 4 + TileSize / 2,
+		g.Player.Char.Gy - DisplaySizeY / 4 + TileSize / 2,
 	)
 }

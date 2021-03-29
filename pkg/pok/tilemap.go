@@ -32,9 +32,14 @@ type TileMap struct {
 	Entries []Entry
 	Width int
 	Height int
+	NpcInfo []NpcInfo
 
 	images []*ebiten.Image
 	nTilesX []int
+
+	npcImages []*ebiten.Image
+	npcImagesStrings []string
+	npcs []Npc
 }
 
 func (t *TileMap) HasExitAt(x, y, z int) int {
@@ -442,8 +447,12 @@ func CreateTileMap(width int, height int, textures []string) *TileMap {
 		make([]Entry, 0),
 		width,
 		height,
+		make([]NpcInfo, 0),
 		imgs,
 		nTilesX,
+		make([]*ebiten.Image, 0),
+		make([]string, 0),
+		make([]Npc, 0),
 	}
 	return tiles
 }
