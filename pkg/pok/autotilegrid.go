@@ -24,7 +24,7 @@ func NewAutoTileGrid(tileSet *ebiten.Image, nTilesX int, atis []AutoTileInfo) Au
 		img.DrawImage(tileSet.SubImage(rect).(*ebiten.Image), opt)
 	}
 
-	grid := NewGrid(img)
+	grid := NewGrid(img, TileSize)
 	return AutoTileGrid{
 		grid,
 	}

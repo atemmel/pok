@@ -34,7 +34,7 @@ func NewObjectGrid(tileMap *TileMap, objs []EditorObject) ObjectGrid {
 		w := objs[i].W * TileSize
 		h := objs[i].H * TileSize
 
-		if x + w >= nItemsPerRow * TileSize {
+		if x + w >= 8 * TileSize {
 			x = 0
 			y += oldh
 		}
@@ -54,7 +54,7 @@ func NewObjectGrid(tileMap *TileMap, objs []EditorObject) ObjectGrid {
 		0,
 		0,
 		maxDepth,
-		image.Rect(xGridPos, yGridPos, xGridPos + TileSize * nItemsPerRow, yGridPos + TileSize * columnLen),
+		image.Rect(xGridPos, yGridPos, xGridPos + TileSize * 8, yGridPos + TileSize * columnLen),
 	}
 }
 

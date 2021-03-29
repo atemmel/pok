@@ -31,7 +31,6 @@ var drawUi = false
 var activeTool = Pencil
 var placedObjects [][]PlacedEditorObject = make([][]PlacedEditorObject, 0)
 var linkBegin *LinkData
-var npcImages []*ebiten.Image = make([]*ebiten.Image, 0)
 
 type LinkData struct {
 	X, Y int
@@ -96,6 +95,8 @@ type Editor struct {
 	resizers []Resize
 	autoTileInfo []AutoTileInfo
 	autoTileGrid AutoTileGrid
+	npcImages []*ebiten.Image
+	npcGrid NpcGrid
 	dieOnNextTick bool
 }
 
@@ -158,7 +159,11 @@ func NewEditor() *Editor {
 	es.tileMapOffsets = make([]*Vec2, 0)
 
 	npcStrs := listPngs("resources/images/characters")
-	npcImages = loadImages(npcStrs)
+	for i := range npcStrs {
+		npcStrs[i] = "resources/images/characters/" + npcStrs[i]
+	}
+	es.npcImages = loadImages(npcStrs)
+	es.npcGrid = NewNpcGrid(es.npcImages)
 
 	//TODO: Make constant
 	//basedir := "editorresources/overworldobjects/"
@@ -199,6 +204,8 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 			e.objectGrid.Draw(screen)
 		} else if e.autoTileGridIsVisible() {
 			e.autoTileGrid.Draw(screen)
+		} else if e.npcGridIsVisible() {
+			e.npcGrid.Draw(screen)
 		}
 		e.drawIcons(screen)
 	}
@@ -330,7 +337,7 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	e.appendTileMap(tileMap)
 	e.activeFiles = append(e.activeFiles, e.nextFile)
 	drawUi = true
-	e.grid = NewGrid(tileMap.images[0])
+	e.grid = NewGrid(tileMap.images[0], TileSize)
 	e.fillObjectGrid("editorresources/overworldobjects/")
 	var err error
 	e.autoTileInfo, err = ReadAllAutoTileInfo("editorresources/autotileinfo/")
@@ -424,6 +431,16 @@ func (e *Editor) handleInputs() error {
 			}
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 				e.autoTileGrid.Select(cx, cy)
+			}
+		} else if e.npcGridIsVisible() && e.npcGrid.Contains(image.Point{cx, cy}) {
+			_, sy := ebiten.Wheel()
+			if sy < 0 {
+				e.npcGrid.Scroll(ScrollDown)
+			} else if sy > 0 {
+				e.npcGrid.Scroll(ScrollUp)
+			}
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
+				e.npcGrid.Select(cx, cy)
 			}
 		} else if e.objectGridIsVisible() && e.objectGrid.Contains(image.Point{cx, cy}) {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
@@ -659,6 +676,10 @@ func (e *Editor) objectGridIsVisible() bool {
 
 func (e *Editor) autoTileGridIsVisible() bool {
 	return activeTool == AutoTile
+}
+
+func (e *Editor) npcGridIsVisible() bool {
+	return activeTool == PlaceNpc
 }
 
 func (e *Editor) drawIcons(screen *ebiten.Image) {
