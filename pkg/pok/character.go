@@ -39,7 +39,7 @@ const(
 func (c *Character) Draw(img *ebiten.Image, rend *Renderer) {
 	charOpt := &ebiten.DrawImageOptions{}
 
-	x := c.Gx + NpcOffsetX
+	x := c.Gx + NpcOffsetX + 0.5
 	y := c.Gy + NpcOffsetY
 
 	playerRect := image.Rect(

@@ -13,7 +13,7 @@ type Player struct {
 
 const(
 	playerMaxCycle = 8
-	playerOffsetX = 6 - TileSize
+	playerOffsetX = 6 - TileSize + 0.5
 	playerOffsetY = 0 - TileSize
 )
 
