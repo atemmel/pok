@@ -96,6 +96,7 @@ type Editor struct {
 	autoTileInfo []AutoTileInfo
 	autoTileGrid AutoTileGrid
 	npcImages []*ebiten.Image
+	npcImagesStrings []string
 	npcGrid NpcGrid
 	dieOnNextTick bool
 }
@@ -158,11 +159,11 @@ func NewEditor() *Editor {
 	es.tileMaps = make([]*TileMap, 0)
 	es.tileMapOffsets = make([]*Vec2, 0)
 
-	npcStrs := listPngs("resources/images/characters")
-	for i := range npcStrs {
-		npcStrs[i] = "resources/images/characters/" + npcStrs[i]
+	es.npcImagesStrings = listPngs("resources/images/characters")
+	for i := range es.npcImagesStrings {
+		es.npcImagesStrings[i] = "resources/images/characters/" + es.npcImagesStrings[i]
 	}
-	es.npcImages = loadImages(npcStrs)
+	es.npcImages = loadImages(es.npcImagesStrings)
 	es.npcGrid = NewNpcGrid(es.npcImages)
 
 	//TODO: Make constant
@@ -561,6 +562,8 @@ func (e *Editor) handleMapMouseInputs() {
 					DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
 				} else if activeTool == Tree {
 					//TODO: perform tree logic
+				} else if activeTool == PlaceNpc {
+					e.tryPlaceNpc()
 				}
 			}
 		}
@@ -763,6 +766,23 @@ func (e *Editor) switchActiveTool(newTool int) {
 	linkBegin = nil
 }
 
+func (e *Editor) npcAtPosition(x, y int) bool {
+	if e.activeTileMap == nil {
+		return true
+	}
+
+	for i := range e.activeTileMap.NpcInfo {
+		otherX := e.activeTileMap.NpcInfo[i].X
+		otherY := e.activeTileMap.NpcInfo[i].Y
+
+		if x == otherX && y == otherY {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (e *Editor) tryConnectTileMaps(start, end *LinkData) {
 	if !e.validateLink(start) || !e.validateLink(end) {
 		// abort
@@ -938,6 +958,31 @@ func (e *Editor) removeLinkFromEntry(tileMapIndex, entryIndex int) {
 				break
 			}
 		}
+	}
+}
+
+func (e *Editor) tryPlaceNpc() {
+	x := selectedTile % e.activeTileMap.Width
+	y := selectedTile / e.activeTileMap.Width
+	if !e.npcAtPosition(x, y) {
+		i := e.npcGrid.GetIndex()
+		e.dialog.Hidden = false
+		e.tw.Start("Enter name of dialogue file:", func (str string) {
+			e.dialog.Hidden = true
+			if str == "" {
+				return
+			}
+
+			ni := &NpcInfo{
+				e.npcImagesStrings[i],
+				str,
+				x,
+				y,
+				currentLayer,
+			}
+
+			e.activeTileMap.PlaceNpc(ni)
+		})
 	}
 }
 

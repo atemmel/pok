@@ -1,5 +1,10 @@
 package pok
 
+import(
+	"github.com/hajimehoshi/ebiten"
+	"image"
+)
+
 type Direction int
 
 type Character struct {
@@ -30,3 +35,26 @@ const(
 	WalkVelocity = 1
 	RunVelocity = 2
 )
+
+func (c *Character) Draw(img *ebiten.Image, rend *Renderer) {
+	charOpt := &ebiten.DrawImageOptions{}
+
+	x := c.Gx + NpcOffsetX
+	y := c.Gy + NpcOffsetY
+
+	playerRect := image.Rect(
+		c.Tx,
+		c.Ty,
+		c.Tx + (TileSize * 2),
+		c.Ty + (TileSize * 2),
+	)
+
+	rend.Draw(&RenderTarget{
+		charOpt,
+		img,
+		&playerRect,
+		x,
+		y,
+		3,
+	})
+}

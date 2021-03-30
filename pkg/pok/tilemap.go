@@ -64,6 +64,14 @@ func (t *TileMap) Draw(rend *Renderer) {
 	t.DrawWithOffset(rend, 0, 0)
 }
 
+func (t *TileMap) drawNpcs(rend *Renderer) {
+	for i := range t.npcs {
+		index := t.npcs[i].NpcTextureIndex
+		img := t.npcImages[index]
+		t.npcs[i].Char.Draw(img, rend)
+	}
+}
+
 func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 	for j := range t.Tiles {
 		if drawOnlyCurrentLayer && j != currentLayer {
@@ -101,6 +109,8 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			})
 		}
 	}
+
+	t.drawNpcs(rend)
 }
 
 func (t *TileMap) OpenFile(path string) error {
@@ -130,6 +140,8 @@ func (t *TileMap) OpenFile(path string) error {
 
 	t.images = imgs
 	t.nTilesX = nTilesX
+
+	err = t.createNpcs()
 
 	return nil
 }
@@ -408,6 +420,11 @@ func (t *TileMap) PlaceExit(exit Exit) {
 	t.Exits = append(t.Exits, exit)
 }
 
+func (t *TileMap) PlaceNpc(ni *NpcInfo) {
+	t.NpcInfo = append(t.NpcInfo, *ni)
+	t.npcs = append(t.npcs, BuildNpcFromNpcInfo(t, ni))
+}
+
 func (t *TileMap) Within(x, y int) bool {
 	return x < t.Width && x >= 0 && y < t.Height && y >= 0
 }
@@ -455,4 +472,37 @@ func CreateTileMap(width int, height int, textures []string) *TileMap {
 		make([]Npc, 0),
 	}
 	return tiles
+}
+
+func (t *TileMap) createNpcs() error {
+	for i := range t.NpcInfo {
+		j := 0
+
+		// find texture dupe
+		for j = range t.npcImagesStrings {
+			if  t.NpcInfo[i].Texture == t.npcImagesStrings[j] {
+				break
+			}
+		}
+
+		// none found
+		if j == len(t.npcImagesStrings) {
+			str := t.NpcInfo[i].Texture
+			img, _, err := ebitenutil.NewImageFromFile(str, ebiten.FilterDefault)
+			if err != nil {
+				return err
+			}
+
+			// insert
+			t.npcImages = append(t.npcImages, img)
+			t.npcImagesStrings = append(t.npcImagesStrings, str)
+		}
+	}
+
+	for i := range t.NpcInfo {
+		npc := BuildNpcFromNpcInfo(t, &t.NpcInfo[i])
+		t.npcs = append(t.npcs, npc)
+	}
+
+	return nil
 }

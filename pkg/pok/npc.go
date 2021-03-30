@@ -8,23 +8,31 @@ import(
 //TODO: Expand functionality later
 type Npc struct {
 	Char Character
-	Dialogue string
 	NpcTextureIndex int
 }
 
 type NpcInfo struct {
 	Texture string
-	Dialogue string
-	X, Y int
-
+	DialoguePath string
+	X, Y, Z int
 }
+
+const(
+	NpcOffsetX = -8
+	NpcOffsetY = -14
+)
 
 func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 	npc := Npc{
 		Character{},
-		info.Dialogue,
 		-1,
 	}
+
+	npc.Char.Gx = float64(info.X) * TileSize
+	npc.Char.Gy = float64(info.Y) * TileSize
+
+	npc.Char.X = info.X
+	npc.Char.Y = info.Y
 
 	for i, s := range t.npcImagesStrings {
 		if info.Texture == s {

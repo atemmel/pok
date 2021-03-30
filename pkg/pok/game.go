@@ -57,6 +57,13 @@ func (g *Game) TileIsOccupied(x int, y int, z int) bool {
 		}
 	}
 
+	for i := range g.Ows.tileMap.npcs {
+		c := &g.Ows.tileMap.npcs[i].Char
+		if c.X == x && c.Y == y && c.Z == z {
+			return true
+		}
+	}
+
 	return false
 }
 
