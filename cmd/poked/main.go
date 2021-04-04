@@ -6,6 +6,8 @@ import (
 )
 
 func main() {
+	log := "editorerror.log"
+	pok.InitAssert(&log, true)
 	ed := pok.NewEditor()
 
 	ebiten.SetWindowSize(pok.WindowSizeX, pok.WindowSizeY)
