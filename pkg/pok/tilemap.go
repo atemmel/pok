@@ -271,6 +271,8 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 		return
 	}
 
+	ndx, ndy := dx, dy
+
 	insertCol := func(x int) {
 		//fmt.Println("Inserting col")
 		if x == t.Width - 1 {
@@ -408,6 +410,43 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 			t.Entries = t.Entries[:len(t.Entries) - 1]
 		}
 	}
+
+	if origin == BotLeftCorner || origin == BotRightCorner {
+		ndy = 0
+	}
+
+	if origin == BotRightCorner || origin == TopRightCorner {
+		ndx = 0
+	}
+
+	t.moveNpcs(ndx, ndy)
+}
+
+func (t *TileMap) moveNpcs(dx, dy int) {
+	for i := range t.npcs {
+		nx, ny := t.npcs[i].Char.X + dx, t.npcs[i].Char.Y + dy
+
+		if nx < 0 {
+			dx += nx
+		} else if nx >= t.Width {
+			dx += t.Width - nx - 1
+		}
+
+		if ny < 0 {
+			dy += ny
+		} else if ny >= t.Height {
+			dy += t.Height - ny - 1
+		}
+
+		t.npcs[i].Char.Gx += float64(dx * TileSize)
+		t.npcs[i].Char.Gy += float64(dy * TileSize)
+
+		t.npcs[i].Char.X += dx
+		t.npcs[i].Char.Y += dy
+
+		t.NpcInfo[i].X += dx
+		t.NpcInfo[i].Y += dy
+	}
 }
 
 func (t *TileMap) PlaceEntry(entry Entry) {
@@ -471,29 +510,6 @@ func CreateTileMap(width int, height int, textures []string) *TileMap {
 }
 
 func (t *TileMap) createNpcs() error {
-	for i := range t.NpcInfo {
-		j := 0
-
-		// find texture dupe
-		for j = range t.npcImagesStrings {
-			if  t.NpcInfo[i].Texture == t.npcImagesStrings[j] {
-				break
-			}
-		}
-
-		// none found
-		if j == len(t.npcImagesStrings) {
-			str := t.NpcInfo[i].Texture
-			img, _, err := ebitenutil.NewImageFromFile(str, ebiten.FilterDefault)
-			if err != nil {
-				return err
-			}
-
-			// insert
-			t.npcImages = append(t.npcImages, img)
-			t.npcImagesStrings = append(t.npcImagesStrings, str)
-		}
-	}
 
 	for i := range t.NpcInfo {
 		npc := BuildNpcFromNpcInfo(t, &t.NpcInfo[i])

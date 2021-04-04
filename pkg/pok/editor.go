@@ -9,15 +9,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sqweek/dialog"
+	"io/ioutil"
 	"image"
 	"image/color"
-	"io/ioutil"
-	//"strconv"
 	"log"
-    "path/filepath"
-	"strings"
 	"math"
 	"os"
+    "path/filepath"
+	"strings"
 )
 
 var selectionX int
@@ -159,10 +158,7 @@ func NewEditor() *Editor {
 	es.tileMapOffsets = make([]*Vec2, 0)
 
 	es.npcImagesStrings = listPngs(CharacterImagesDir)
-	for i := range es.npcImagesStrings {
-		es.npcImagesStrings[i] = CharacterImagesDir + es.npcImagesStrings[i]
-	}
-	es.npcImages = loadImages(es.npcImagesStrings)
+	es.npcImages = loadImages(es.npcImagesStrings, CharacterImagesDir)
 	es.npcGrid = NewNpcGrid(es.npcImages)
 
 	return es;
@@ -333,11 +329,9 @@ func (e *Editor) newFile() {
 }
 
 func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
-	fmt.Println(e.nextFile)
 	e.appendTileMap(tileMap)
 	e.activeFullFiles = append(e.activeFiles, e.nextFile)
 	e.activeFiles = append(e.activeFiles, filepath.Base(e.nextFile))
-	fmt.Println(e.nextFile, filepath.Base(e.nextFile))
 	drawUi = true
 	e.grid = NewGrid(tileMap.images[0], TileSize)
 	e.fillObjectGrid(OverworldObjectsDir)
@@ -562,8 +556,6 @@ func (e *Editor) handleMapMouseInputs() {
 					DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
 				} else if activeTool == Tree {
 					//TODO: perform tree logic
-				} else if activeTool == PlaceNpc {
-					e.tryPlaceNpc()
 				}
 			}
 		}
@@ -610,6 +602,8 @@ func (e *Editor) handleMapMouseInputs() {
 						linkBegin = nil
 					}
 				}
+			case PlaceNpc:
+				e.tryPlaceNpc()
 		}
 	}
 
@@ -1002,11 +996,11 @@ func listPngs(dir string) []string {
 	return valid
 }
 
-func loadImages(images []string) []*ebiten.Image {
+func loadImages(images []string, base string) []*ebiten.Image {
 	imgs := make([]*ebiten.Image, 0, len(images))
 
 	for _, s := range images {
-		img, _, err := ebitenutil.NewImageFromFile(s, ebiten.FilterDefault)
+		img, _, err := ebitenutil.NewImageFromFile(base + s, ebiten.FilterDefault)
 		if err != nil {
 			log.Println("Could not load image", s)
 		}

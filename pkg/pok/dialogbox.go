@@ -12,7 +12,8 @@ import (
 
 const (
 	textXDelta = 12
-	textYDelta = 17
+	//textYDelta = 17
+	textYDelta = 21
 	maxLetters = 44
 )
 
@@ -65,10 +66,16 @@ func NewDialogBox() DialogBox {
 
 func (d *DialogBox) SetString(str string) {
 	result := str
-	if(len(str) > maxLetters) {
+	hasBreak := false
+	for i := range str {
+		if str[i] == '\n' {
+			hasBreak = true
+		}
+	}
+	if !hasBreak && len(str) > maxLetters {
 		index := maxLetters
 		for i := maxLetters; i > 0; i-- {
-			if result[i] == ' ' || result[i] == '\n' {
+			if result[i] == ' ' {
 				index = i
 				break
 			}

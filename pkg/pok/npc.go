@@ -1,7 +1,6 @@
 package pok
 
 import(
-	"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 )
@@ -45,8 +44,7 @@ func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 	}
 
 	if npc.NpcTextureIndex == -1 {
-		fmt.Println(info.Texture)
-		texture, _, err := ebitenutil.NewImageFromFile(info.Texture, ebiten.FilterDefault)
+		texture, _, err := ebitenutil.NewImageFromFile(CharacterImagesDir + info.Texture, ebiten.FilterDefault)
 
 		Assert(err)
 
