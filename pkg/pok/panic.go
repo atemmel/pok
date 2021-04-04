@@ -48,6 +48,6 @@ func Assert(condition error) {
 	dialog.Message("Assertion reached: %s", condition.Error()).Title("Game error").Error()
 
 	if dieOnAssert {
-		os.Exit(1)
+		panic(condition)
 	}
 }

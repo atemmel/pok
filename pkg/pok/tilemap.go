@@ -64,11 +64,11 @@ func (t *TileMap) Draw(rend *Renderer) {
 	t.DrawWithOffset(rend, 0, 0)
 }
 
-func (t *TileMap) drawNpcs(rend *Renderer) {
+func (t *TileMap) drawNpcs(rend *Renderer, offsetX, offsetY float64) {
 	for i := range t.npcs {
 		index := t.npcs[i].NpcTextureIndex
 		img := t.npcImages[index]
-		t.npcs[i].Char.Draw(img, rend)
+		t.npcs[i].Char.Draw(img, rend, offsetX, offsetY)
 	}
 }
 
@@ -110,7 +110,7 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 		}
 	}
 
-	t.drawNpcs(rend)
+	t.drawNpcs(rend, offsetX, offsetY)
 }
 
 func (t *TileMap) OpenFile(path string) error {

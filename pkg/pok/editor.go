@@ -8,13 +8,16 @@ import (
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/sqweek/dialog"
 	"image"
 	"image/color"
 	"io/ioutil"
 	//"strconv"
 	"log"
+    "path/filepath"
 	"strings"
 	"math"
+	"os"
 )
 
 var selectionX int
@@ -79,7 +82,6 @@ type Editor struct {
 	activeTileMap *TileMap
 	lastSavedTileMaps []*TileMap
 	rend Renderer
-	dialog DialogBox
 	grid Grid
 	objectGrid ObjectGrid
 	selection *ebiten.Image
@@ -88,8 +90,8 @@ type Editor struct {
 	exitMarker *ebiten.Image
 	icons *ebiten.Image
 	activeFiles []string
+	activeFullFiles []string
 	nextFile string
-	tw Typewriter
 	clickStartX float64
 	clickStartY float64
 	resizers []Resize
@@ -105,8 +107,6 @@ func NewEditor() *Editor {
 	var err error
 	es := &Editor{}
 
-	es.dialog = NewDialogBox()
-	es.dialog.speed = TextInstant
 	es.dieOnNextTick = false
 
 	es.selection, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
@@ -169,12 +169,6 @@ func NewEditor() *Editor {
 }
 
 func (e *Editor) Update(screen *ebiten.Image) error {
-	e.dialog.Update()
-	if e.tw.Active {
-		e.tw.HandleInputs();
-		e.dialog.SetString(e.tw.GetDisplayString());
-		return nil
-	}
 	err := e.handleInputs()
 	return err
 }
@@ -187,13 +181,11 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	if drawUi && len(e.activeFiles) != 0 {
 		e.drawLinksFromActiveTileMap()
 		e.DrawTileMapDetail()
-		//e.resizers[e.activeTileMapIndex].Draw(&e.rend)
 		for i := range e.resizers {
 			e.resizers[i].Draw(&e.rend)
 		}
 	}
 	e.rend.Display(screen)
-	e.dialog.Draw(screen)
 
 	if drawUi && len(e.activeFiles) != 0 {
 		if e.gridIsVisible() {
@@ -303,37 +295,49 @@ func (e *Editor) TransformPointToCam(cx, cy int) (int, int) {
 }
 
 func (e *Editor) loadFile() {
-	e.dialog.Hidden = false
-	e.tw.Start("Enter name of file to open:\n", func(str string) {
-		e.dialog.Hidden = true
-		if str == "" {
-			return
-		}
 
-		e.nextFile = str
-		tm := &TileMap{}
-		err := tm.OpenFile(str);
-		if err != nil {
-			e.dialog.Hidden = false
-			e.tw.Start("Could not open file " + e.tw.Input + ". Create new file? (y/n):", func(str string) {
-				e.dialog.Hidden = true
-				if str == "" || str == "y" || str == "Y" {
-					// create new file
-					tm = CreateTileMap(2, 2, listPngs(TileMapImagesDir))
-					e.updateEditorWithNewTileMap(tm)
-					return
-				}
+	file, err := dialog.File().Title("Open map").Filter("All Files", "*").Load()
+	if err != nil && file == ""{
+		return
+	} else if err != nil {
+		dialog.Message("Could not open file: %s", file).Title("Error").Error()
+		return
+	}
 
-			})
-		} else {
+	e.nextFile = file
+	tm := &TileMap{}
+	err = tm.OpenFile(file)
+	if err != nil {
+		doNewFile := dialog.Message("Could not open file %s. Create new file?").Title("Create new file?").YesNo()
+		if doNewFile {
+			tm = CreateTileMap(2, 2, listPngs(TileMapImagesDir))
 			e.updateEditorWithNewTileMap(tm)
 		}
-	})
+	} else {
+		e.updateEditorWithNewTileMap(tm)
+	}
+}
+
+func (e *Editor) newFile() {
+	file, err := dialog.File().Title("Name new map").Filter("All Files", "*").Save()
+	if err != nil && file == ""{
+		return
+	} else if err != nil {
+		dialog.Message("Could not open file: %s", file).Title("Error").Error()
+		return
+	}
+
+	tm := CreateTileMap(2, 2, listPngs(TileMapImagesDir))
+	e.nextFile = file
+	e.updateEditorWithNewTileMap(tm)
 }
 
 func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
+	fmt.Println(e.nextFile)
 	e.appendTileMap(tileMap)
-	e.activeFiles = append(e.activeFiles, e.nextFile)
+	e.activeFullFiles = append(e.activeFiles, e.nextFile)
+	e.activeFiles = append(e.activeFiles, filepath.Base(e.nextFile))
+	fmt.Println(e.nextFile, filepath.Base(e.nextFile))
 	drawUi = true
 	e.grid = NewGrid(tileMap.images[0], TileSize)
 	e.fillObjectGrid(OverworldObjectsDir)
@@ -350,15 +354,15 @@ func (e *Editor) appendTileMap(tileMap *TileMap) {
 	e.tileMapOffsets = append(e.tileMapOffsets, &Vec2{0, 0})
 	e.activeTileMap = e.tileMaps[len(e.tileMaps)-1]
 	e.resizers = append(e.resizers, NewResize(e.tileMaps[len(e.tileMaps)-1], e.tileMapOffsets[len(e.tileMapOffsets) - 1]))
+	tileMap.npcImages = e.npcImages
+	tileMap.npcImagesStrings = e.npcImagesStrings
 }
 
 func (e *Editor) saveFile() {
-	err := e.activeTileMap.SaveToFile(e.activeFiles[e.activeTileMapIndex])
+	err := e.activeTileMap.SaveToFile(e.activeFullFiles[e.activeTileMapIndex])
 	if err != nil {
-		e.dialog.Hidden = false
-		e.tw.Start("Could not save file " + err.Error(), func(str string) {
-			e.dialog.Hidden = true
-		})
+		dialog.Message("Could not save file %s, %s", e.activeFullFiles[e.activeTileMapIndex], err.Error()).Title("Error").Error()
+		return
 	}
 
 	//TODO: Rethink this, save each file individually or all at once?
@@ -377,15 +381,12 @@ func (e *Editor) hasSaved() bool {
 	}
 	return true
 }
-
 func (e *Editor) unsavedWorkDialog() {
-	e.dialog.Hidden = false
-	e.tw.Start("You have unsaved work. Are you sure you want to exit?:", func(str string) {
-		e.dialog.Hidden = true
-		if str == "y" || str == "Y" {
-			e.dieOnNextTick = true
-		}
-	})
+	//TODO: Refactor
+	shouldDie := dialog.Message("You have unsaved work. Are you sure you want to exit?").Title("Unsaved work").YesNo()
+	if shouldDie {
+		os.Exit(0)
+	}
 }
 
 func (e *Editor) handleInputs() error {
@@ -461,6 +462,10 @@ func (e *Editor) handleInputs() error {
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
 		e.loadFile()
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyN) {
+		e.newFile()
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
@@ -959,23 +964,24 @@ func (e *Editor) tryPlaceNpc() {
 	y := selectedTile / e.activeTileMap.Width
 	if !e.npcAtPosition(x, y) {
 		i := e.npcGrid.GetIndex()
-		e.dialog.Hidden = false
-		e.tw.Start("Enter name of dialogue file:", func (str string) {
-			e.dialog.Hidden = true
-			if str == "" {
-				return
-			}
+		file, err := dialog.File().Title("Select NPC dialog file").Filter("All Files", "*").Load()
+		if err != nil && file == ""{
+			return
+		} else if err != nil {
+			dialog.Message("Could not open file: %s", file).Title("Error").Error()
+			return
+		}
 
-			ni := &NpcInfo{
-				e.npcImagesStrings[i],
-				str,
-				x,
-				y,
-				currentLayer,
-			}
+		file = filepath.Base(file)
+		ni := &NpcInfo{
+			e.npcImagesStrings[i],
+			file,
+			x,
+			y,
+			currentLayer,
+		}
 
-			e.activeTileMap.PlaceNpc(ni)
-		})
+		e.activeTileMap.PlaceNpc(ni)
 	}
 }
 

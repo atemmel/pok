@@ -13,7 +13,6 @@ type Dialog struct {
 
 func ReadDialogFromFile(path string) Dialog {
 	data, err := ioutil.ReadFile(path)
-	Assert(err)
 	if err != nil {
 		return Dialog{
 			"Could not load: '" + path + "'",
@@ -22,7 +21,6 @@ func ReadDialogFromFile(path string) Dialog {
 
 	var dialog Dialog
 	err = json.Unmarshal(data, &dialog)
-	Assert(err)
 	if err != nil {
 		return Dialog{
 			"Could not parse: '" + path + "'",

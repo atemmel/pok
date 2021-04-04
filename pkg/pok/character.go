@@ -38,11 +38,11 @@ const(
 	RunVelocity = 2
 )
 
-func (c *Character) Draw(img *ebiten.Image, rend *Renderer) {
+func (c *Character) Draw(img *ebiten.Image, rend *Renderer, offsetX, offsetY float64) {
 	charOpt := &ebiten.DrawImageOptions{}
 
-	x := c.Gx + NpcOffsetX
-	y := c.Gy + NpcOffsetY
+	x := c.Gx + NpcOffsetX + offsetX
+	y := c.Gy + NpcOffsetY + offsetY
 
 	playerRect := image.Rect(
 		c.Tx,

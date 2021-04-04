@@ -8,7 +8,7 @@ const (
 	WindowSizeX = DisplaySizeX * 2
 	WindowSizeY = DisplaySizeY * 2
 
-	ResourceDir = "./resources/"
+	ResourceDir = "resources/"
 	TileMapDir =   ResourceDir + "tilemaps/"
 	ImagesDir = ResourceDir + "images/"
 	FontsDir = ResourceDir + "fonts/"
