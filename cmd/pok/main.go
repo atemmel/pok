@@ -7,15 +7,22 @@ import (
 	"github.com/hajimehoshi/ebiten"
 )
 
+var LogFileName string = "error.log"
+
+var onlineEnabled = false
 var isServing = false
 var fileToOpen string
 
 func init() {
+	pok.InitAssert(&LogFileName, false)
 	flag.BoolVar(&isServing, "serve", false, "Run as game server")
 	flag.Parse()
-	if isServing {
-		server := pok.NewServer()
-		server.Serve()
+
+	if onlineEnabled {
+		if isServing {
+			server := pok.NewServer()
+			server.Serve()
+		}
 	}
 	fileToOpen = flag.Arg(0)
 }
@@ -26,34 +33,36 @@ func main() {
 	}
 
 	if fileToOpen == "" {
-		fmt.Println("File to open not specified :/")
+		fmt.Println("File to open not specified, lacks command line argument")
 		return
 	}
-	var err error
 
 	ebiten.SetWindowSize(pok.WindowSizeX, pok.WindowSizeY)
-	ebiten.SetWindowTitle("Title")
+	ebiten.SetWindowTitle("pok")
 	ebiten.SetWindowResizable(true)
 
 	game := pok.CreateGame()
 
 	game.Load(fileToOpen, 0)
-
-	game.Client = pok.CreateClient()
+	defer game.Save()
 	game.Audio = pok.NewAudio()
-
 	game.PlayAudio()
 
-	game.Player.Id = game.Client.Connect()
-	if game.Client.Active {
-		game.Player.Connected = true
-		go game.Client.ReadPlayer()
+	if onlineEnabled {
+		game.Client = pok.CreateClient()
+		connect := func() {
+			game.Player.Id = game.Client.Connect()
+			if game.Client.Active {
+				game.Player.Connected = true
+				go game.Client.ReadPlayer()
+			}
+		}
+
+		go connect()
+		defer game.Client.Disconnect()
 	}
 
-	defer game.Client.Disconnect()
-	defer game.Save()
-
-	if err = ebiten.RunGame(game); err != nil {
+	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
 	}
 }

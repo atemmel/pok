@@ -11,14 +11,10 @@ type Dialog struct {
 	Dialog string
 }
 
-var PanicOnFailToLoad = false
-
 func ReadDialogFromFile(path string) Dialog {
 	data, err := ioutil.ReadFile(path)
+	Assert(err)
 	if err != nil {
-		if PanicOnFailToLoad {
-			panic(err)
-		}
 		return Dialog{
 			"Could not load: '" + path + "'",
 		}
@@ -26,10 +22,8 @@ func ReadDialogFromFile(path string) Dialog {
 
 	var dialog Dialog
 	err = json.Unmarshal(data, &dialog)
+	Assert(err)
 	if err != nil {
-		if PanicOnFailToLoad {
-			panic(err)
-		}
 		return Dialog{
 			"Could not parse: '" + path + "'",
 		}

@@ -126,9 +126,7 @@ func (t *TileMap) OpenFile(path string) error {
 	imgs := make([]*ebiten.Image, len(t.Textures))
 	for i := range imgs {
 		img, _, err := ebitenutil.NewImageFromFile(TileMapImagesDir + t.Textures[i], ebiten.FilterDefault)
-		if err != nil {
-			panic(err)
-		}
+		Assert(err)
 		imgs[i] = img
 	}
 
@@ -434,9 +432,7 @@ func CreateTileMap(width int, height int, textures []string) *TileMap {
 	imgs := make([]*ebiten.Image, len(textures))
 	for i := range imgs {
 		img, _, err := ebitenutil.NewImageFromFile(TileMapImagesDir + textures[i], ebiten.FilterDefault)
-		if err != nil {
-			panic(err)
-		}
+		Assert(err)
 		imgs[i] = img
 	}
 

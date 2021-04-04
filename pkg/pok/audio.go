@@ -31,34 +31,20 @@ func (a *Audio) PlayDoor() {
 
 func NewAudio() Audio {
 	ctx, err := audio.NewContext(44100)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 	src, err := loadMp3(ctx, AudioDir + "apple.mp3")
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 	loop := audio.NewInfiniteLoop(src, src.Length() - 2500000)
 	player, err := audio.NewPlayer(ctx, loop)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 	src, err = loadMp3(ctx, AudioDir + "thud.mp3")
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 	thud, err := audio.NewPlayer(ctx, src)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 	src, err = loadMp3(ctx, AudioDir + "door.mp3")
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 	door, err := audio.NewPlayer(ctx, src)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 
 	player.SetVolume(volume)
 	thud.SetVolume(volume)

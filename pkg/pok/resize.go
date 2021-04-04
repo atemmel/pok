@@ -4,6 +4,7 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"image/color"
 	"math"
+	"errors"
 )
 
 type Corner struct {
@@ -37,7 +38,7 @@ const (
 
 func NewResize(tileMap *TileMap, offset *Vec2) Resize {
 	if tileMap == nil {
-		panic("TileMap was nil :/")
+		Assert(errors.New("tileMap was nil :/"))
 	}
 	img, _ := ebiten.NewImage(32, 32, ebiten.FilterDefault)
 	img2, _ := ebiten.NewImage(32, 32, ebiten.FilterDefault)

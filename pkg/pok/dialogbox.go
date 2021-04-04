@@ -40,14 +40,10 @@ type DialogBox struct {
 
 func NewDialogBox() DialogBox {
 	data, err := ioutil.ReadFile(FontsDir + "pokemon_pixel_font.ttf")
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 
 	tt, err := truetype.Parse(data)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 
 	db := DialogBox{}
 
@@ -59,9 +55,7 @@ func NewDialogBox() DialogBox {
 	})
 
 	db.box, _, err = ebitenutil.NewImageFromFile(ImagesDir + "dialog1.png", ebiten.FilterDefault);
-	if err != nil {
-		panic(err);
-	}
+	Assert(err)
 
 	db.Hidden = true
 	db.speed = TextNormal

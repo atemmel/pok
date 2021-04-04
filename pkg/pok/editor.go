@@ -153,9 +153,7 @@ func NewEditor() *Editor {
 	es.clickStartY = -1
 
 	es.icons, _, err = ebitenutil.NewImageFromFile(EditorImagesDir + "editoricons.png", ebiten.FilterDefault)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 
 	es.tileMaps = make([]*TileMap, 0)
 	es.tileMapOffsets = make([]*Vec2, 0)
@@ -342,9 +340,7 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	var err error
 	e.autoTileInfo, err = ReadAllAutoTileInfo(AutotileInfoDir)
 	e.autoTileGrid = NewAutoTileGrid(tileMap.images[0], tileMap.nTilesX[0], e.autoTileInfo)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 }
 
 func (e *Editor) appendTileMap(tileMap *TileMap) {
@@ -718,9 +714,7 @@ func (e *Editor) containsIcon(x, y int) int {
 
 func (e *Editor) fillObjectGrid(dir string) {
 	objs, err := ReadAllObjects(dir)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 
 	for i := range objs {
 		for j := range e.activeTileMap.Textures {

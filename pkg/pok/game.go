@@ -85,9 +85,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func (g *Game) Load(str string, entrypoint int) {
 	err := g.Ows.tileMap.OpenFile(str)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 	currentLayer = 0
 	selectedTile = 0
 	g.Player.Location = str

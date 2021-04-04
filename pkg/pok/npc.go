@@ -46,9 +46,7 @@ func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 	if npc.NpcTextureIndex == -1 {
 		texture, _, err := ebitenutil.NewImageFromFile(info.Texture, ebiten.FilterDefault)
 
-		if err != nil {
-			panic(err)
-		}
+		Assert(err)
 
 		npc.NpcTextureIndex = len(t.npcImages)
 		t.npcImages = append(t.npcImages, texture)

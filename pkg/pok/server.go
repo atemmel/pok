@@ -44,14 +44,9 @@ func (s *Server) Serve() {
 	var err error
 	log.Println("Starting server...")
 	s.conf, err = ReadServerConfig()
-	if err != nil {
-		log.Println("Could not read server config!")
-		panic(err)
-	}
+	Assert(err)
 	s.listener, err = net.Listen("tcp", s.conf.Url + ":" + s.conf.Port)
-	if err != nil {
-		panic(err)
-	}
+	Assert(err)
 
 	log.Println("Server is now running")
 
