@@ -106,7 +106,7 @@ func NewEditor() *Editor {
 	es := &Editor{}
 
 	es.dialog = NewDialogBox()
-	es.dialog.speed = Instant
+	es.dialog.speed = TextInstant
 	es.dieOnNextTick = false
 
 	es.selection, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
@@ -152,7 +152,7 @@ func NewEditor() *Editor {
 	es.clickStartX = -1
 	es.clickStartY = -1
 
-	es.icons, _, err = ebitenutil.NewImageFromFile("./editorresources/images/editoricons.png", ebiten.FilterDefault)
+	es.icons, _, err = ebitenutil.NewImageFromFile(EditorImagesDir + "editoricons.png", ebiten.FilterDefault)
 	if err != nil {
 		panic(err)
 	}
@@ -160,15 +160,12 @@ func NewEditor() *Editor {
 	es.tileMaps = make([]*TileMap, 0)
 	es.tileMapOffsets = make([]*Vec2, 0)
 
-	es.npcImagesStrings = listPngs("resources/images/characters")
+	es.npcImagesStrings = listPngs(CharacterImagesDir)
 	for i := range es.npcImagesStrings {
-		es.npcImagesStrings[i] = "resources/images/characters/" + es.npcImagesStrings[i]
+		es.npcImagesStrings[i] = CharacterImagesDir + es.npcImagesStrings[i]
 	}
 	es.npcImages = loadImages(es.npcImagesStrings)
 	es.npcGrid = NewNpcGrid(es.npcImages)
-
-	//TODO: Make constant
-	//basedir := "editorresources/overworldobjects/"
 
 	return es;
 }
@@ -324,7 +321,7 @@ func (e *Editor) loadFile() {
 				e.dialog.Hidden = true
 				if str == "" || str == "y" || str == "Y" {
 					// create new file
-					tm = CreateTileMap(2, 2, listPngs("resources/images/overworld/"))
+					tm = CreateTileMap(2, 2, listPngs(TileMapImagesDir))
 					e.updateEditorWithNewTileMap(tm)
 					return
 				}
@@ -341,9 +338,9 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	e.activeFiles = append(e.activeFiles, e.nextFile)
 	drawUi = true
 	e.grid = NewGrid(tileMap.images[0], TileSize)
-	e.fillObjectGrid("editorresources/overworldobjects/")
+	e.fillObjectGrid(OverworldObjectsDir)
 	var err error
-	e.autoTileInfo, err = ReadAllAutoTileInfo("editorresources/autotileinfo/")
+	e.autoTileInfo, err = ReadAllAutoTileInfo(AutotileInfoDir)
 	e.autoTileGrid = NewAutoTileGrid(tileMap.images[0], tileMap.nTilesX[0], e.autoTileInfo)
 	if err != nil {
 		panic(err)

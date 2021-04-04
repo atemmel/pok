@@ -26,7 +26,7 @@ const(
 func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 	npc := Npc{
 		Character{},
-		ReadDialogFromFile("resources/dialogues/" + info.DialogPath),
+		ReadDialogFromFile(DialogDir + info.DialogPath),
 		-1,
 	}
 

@@ -34,7 +34,7 @@ func NewAudio() Audio {
 	if err != nil {
 		panic(err)
 	}
-	src, err := loadMp3(ctx, "resources/audio/apple.mp3")
+	src, err := loadMp3(ctx, AudioDir + "apple.mp3")
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +43,7 @@ func NewAudio() Audio {
 	if err != nil {
 		panic(err)
 	}
-	src, err = loadMp3(ctx, "resources/audio/thud.mp3")
+	src, err = loadMp3(ctx, AudioDir + "thud.mp3")
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +51,7 @@ func NewAudio() Audio {
 	if err != nil {
 		panic(err)
 	}
-	src, err = loadMp3(ctx, "resources/audio/door.mp3")
+	src, err = loadMp3(ctx, AudioDir + "door.mp3")
 	if err != nil {
 		panic(err)
 	}

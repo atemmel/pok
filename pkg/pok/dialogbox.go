@@ -17,10 +17,10 @@ const (
 )
 
 const (
-	Slow = iota
-	Normal
-	Fast
-	Instant
+	TextSlow = iota
+	TextNormal
+	TextFast
+	TextInstant
 )
 
 var (
@@ -39,7 +39,7 @@ type DialogBox struct {
 }
 
 func NewDialogBox() DialogBox {
-	data, err := ioutil.ReadFile("./resources/pokemon_pixel_font.ttf")
+	data, err := ioutil.ReadFile(FontsDir + "pokemon_pixel_font.ttf")
 	if err != nil {
 		panic(err)
 	}
@@ -58,14 +58,13 @@ func NewDialogBox() DialogBox {
 		Hinting: font.HintingFull,
 	})
 
-	db.box, _, err = ebitenutil.NewImageFromFile("./resources/images/dialog1.png", ebiten.FilterDefault);
+	db.box, _, err = ebitenutil.NewImageFromFile(ImagesDir + "dialog1.png", ebiten.FilterDefault);
 	if err != nil {
 		panic(err);
 	}
 
-	//db.SetString("Lorem ipsum dolor sit amet, lorem ipsum dolor sit amet")
 	db.Hidden = true
-	db.speed = Normal
+	db.speed = TextNormal
 
 	return db
 }
@@ -84,7 +83,7 @@ func (d *DialogBox) SetString(str string) {
 	}
 
 	d.ticks = 0
-	if d.speed == Instant {
+	if d.speed == TextInstant {
 		d.dispStr = result
 	} else {
 		d.dispStr = ""
@@ -99,20 +98,18 @@ func (d *DialogBox) IsDone() bool {
 func (d *DialogBox) Update() {
 	if !d.Hidden && !d.IsDone() {
 		switch d.speed {
-			case Slow:
+			case TextSlow:
 				if d.ticks >= 3 {
 					d.nextChar()
 				}
-			case Normal:
+			case TextNormal:
 				if d.ticks >= 2 {
 					d.nextChar()
 				}
-			case Fast:
+			case TextFast:
 				if d.ticks >= 1 {
 					d.nextChar()
 				}
-			case Instant:
-				d.dispStr = d.fullStr
 		}
 		d.ticks++
 	}

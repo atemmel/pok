@@ -21,7 +21,8 @@ func CreateGame() *Game {
 	g := &Game{}
 	g.As = &g.Ows
 	var err error
-	playerImg, _, err = ebitenutil.NewImageFromFile("./resources/images/lucas.png", ebiten.FilterDefault)
+	//TODO: Replace with regular character sprite
+	playerImg, _, err = ebitenutil.NewImageFromFile(ImagesDir + "lucas.png", ebiten.FilterDefault)
 	g.Dialog = NewDialogBox()
 	if err != nil {
 		log.Fatal(err)
