@@ -106,6 +106,7 @@ func NewEditor() *Editor {
 	es := &Editor{}
 
 	es.dialog = NewDialogBox()
+	es.dialog.speed = Instant
 	es.dieOnNextTick = false
 
 	es.selection, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
@@ -173,6 +174,7 @@ func NewEditor() *Editor {
 }
 
 func (e *Editor) Update(screen *ebiten.Image) error {
+	e.dialog.Update()
 	if e.tw.Active {
 		e.tw.HandleInputs();
 		e.dialog.SetString(e.tw.GetDisplayString());

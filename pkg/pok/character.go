@@ -24,13 +24,15 @@ type Character struct {
 	velocity float64
 }
 
-const(
-	Static Direction = 0
-	Down Direction = 1
-	Left Direction = 2
-	Right Direction = 3
-	Up Direction = 4
+const (
+	Static Direction = iota
+	Down
+	Left
+	Right
+	Up
+)
 
+const(
 	TurnCheckLimit = 5	// in frames
 	WalkVelocity = 1
 	RunVelocity = 2
@@ -57,4 +59,19 @@ func (c *Character) Draw(img *ebiten.Image, rend *Renderer) {
 		y,
 		3,
 	})
+}
+
+func (c *Character) SetDirection(dir Direction) {
+	switch dir {
+		case Down:
+			c.Ty = 0 * TileSize
+		case Left:
+			c.Ty = 2 * TileSize
+		case Right:
+			c.Ty = 4 * TileSize
+		case Up:
+			c.Ty = 6 * TileSize
+	}
+
+	c.dir = dir
 }

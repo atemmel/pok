@@ -8,12 +8,13 @@ import(
 //TODO: Expand functionality later
 type Npc struct {
 	Char Character
+	Dialog Dialog
 	NpcTextureIndex int
 }
 
 type NpcInfo struct {
 	Texture string
-	DialoguePath string
+	DialogPath string
 	X, Y, Z int
 }
 
@@ -25,6 +26,7 @@ const(
 func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 	npc := Npc{
 		Character{},
+		ReadDialogFromFile("resources/dialogues/" + info.DialogPath),
 		-1,
 	}
 

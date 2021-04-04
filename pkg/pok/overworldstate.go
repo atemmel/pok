@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/hajimehoshi/ebiten/inpututil"
 )
 
 var playerImg *ebiten.Image
@@ -55,11 +56,80 @@ func holdingSprint() bool {
 	return ebiten.IsKeyPressed(ebiten.KeyShift) || ebiten.IsGamepadButtonPressed(0, ebiten.GamepadButton1)
 }
 
+func pressedInteract() bool {
+	return inpututil.IsKeyJustPressed(ebiten.KeyZ) || inpututil.IsKeyJustPressed(ebiten.KeyE)
+}
+
+func (o *OverworldState) tryInteract(g *Game) {
+	if g.Player.Char.isWalking || g.Player.Char.isRunning {
+		return
+	}
+
+	x, y := g.Player.Char.X, g.Player.Char.Y
+
+	switch g.Player.Char.dir {
+		case Up:
+			y--
+		case Down:
+			y++
+		case Left:
+			x--
+		case Right:
+			x++
+	}
+
+	for i := range o.tileMap.npcs {
+		npc := &(o.tileMap.npcs[i].Char)
+		if npc.X == x && npc.Y == y {
+			o.talkWith(g, i)
+			break
+		}
+	}
+}
+
+func (o *OverworldState) talkWith(g *Game, npcIndex int) {
+	char := &(o.tileMap.npcs[npcIndex].Char)
+	dx, dy := g.Player.Char.X - char.X, g.Player.Char.Y - char.Y
+	dir := Static
+
+	if dx == 1 {
+		dir = Right
+	} else if dx == -1 {
+		dir = Left
+	} else if dy == 1 {
+		dir = Down
+	} else if dy == -1 {
+		dir = Up
+	}
+
+	char.SetDirection(dir)
+	//g.Dialog.SetString("gaming gaming gaming gaming, " + fmt.Sprint(npcIndex))
+	g.Dialog.SetString(o.tileMap.npcs[npcIndex].Dialog.Dialog)
+	//g.Dialog.SetString("Lorem ipsum dolor sit amet, lorem ipsum dolor sit amet, lorem ipsum, dolor sit amet gaming schmaming game game gamo")
+	g.Dialog.Hidden = false
+}
+
 func (o *OverworldState) GetInputs(g *Game) error {
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
 		return errors.New("")	//TODO Gotta be a better way to do this
 	}
 
+	if g.Dialog.Hidden {
+		o.CheckMovementInputs(g)
+	} else {
+		o.CheckDialogInputs(g)
+	}
+
+	if ebiten.IsKeyPressed(ebiten.Key1) {
+		g.Rend.Cam.Scale += 0.1
+	} else if ebiten.IsKeyPressed(ebiten.Key2) {
+		g.Rend.Cam.Scale -= 0.1
+	}
+
+	return nil
+}
+
+func (o *OverworldState) CheckMovementInputs(g *Game) {
 	if !g.Player.Char.isWalking && holdingSprint() {
 		g.Player.Char.isRunning = true
 	} else {
@@ -78,13 +148,19 @@ func (o *OverworldState) GetInputs(g *Game) error {
 		g.Player.TryStep(Static, g)
 	}
 
-	if ebiten.IsKeyPressed(ebiten.Key1) {
-		g.Rend.Cam.Scale += 0.1
-	} else if ebiten.IsKeyPressed(ebiten.Key2) {
-		g.Rend.Cam.Scale -= 0.1
+	if pressedInteract() {
+		o.tryInteract(g)
 	}
 
-	return nil
+}
+
+func (o *OverworldState) CheckDialogInputs(g *Game) {
+	g.Player.TryStep(Static, g)
+	if g.Dialog.IsDone() {
+		if pressedInteract() {
+			g.Dialog.Hidden = true
+		}
+	}
 }
 
 func (o *OverworldState) Update(g *Game) error {
@@ -93,6 +169,8 @@ func (o *OverworldState) Update(g *Game) error {
 	if g.Client.Active {
 		g.Client.WritePlayer(&g.Player)
 	}
+
+	g.Dialog.Update()
 
 	return nil
 }
@@ -125,6 +203,8 @@ selectedTexture: %d`,
 			g.Player.Char.X, g.Player.Char.Y, g.Player.Id, currentLayer,
 			drawOnlyCurrentLayer, o.tileMap.Tiles[currentLayer][selectedTile]) )
 	}
+
+	g.Dialog.Draw(screen)
 }
 
 func (g *Game) CenterRendererOnPlayer() {

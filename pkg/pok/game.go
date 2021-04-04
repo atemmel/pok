@@ -1,11 +1,8 @@
 package pok
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
-	"io/ioutil"
 	"image"
 	"log"
 )
@@ -17,6 +14,7 @@ type Game struct {
 	Client Client
 	Rend Renderer
 	Audio Audio
+	Dialog DialogBox
 }
 
 func CreateGame() *Game {
@@ -24,6 +22,7 @@ func CreateGame() *Game {
 	g.As = &g.Ows
 	var err error
 	playerImg, _, err = ebitenutil.NewImageFromFile("./resources/images/lucas.png", ebiten.FilterDefault)
+	g.Dialog = NewDialogBox()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,11 +107,13 @@ func (g *Game) Load(str string, entrypoint int) {
 }
 
 func (g *Game) Save() {
+	/*
 	bytes, err := json.Marshal(g.Ows.tileMap)
 	if err != nil {
 		fmt.Println(err)
 	}
 	ioutil.WriteFile(g.Player.Location, bytes, 0644)
+	*/
 }
 
 func (g *Game) DrawPlayer(player *Player) {
