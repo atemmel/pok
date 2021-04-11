@@ -15,41 +15,50 @@ func init() {
 	files = flag.Args()
 }
 
+func ptr(value int) *int {
+	return &value
+}
+
 func outputDummy(str string) {
-	postBranchB := &pok.DialogData{
-		"Donezo!",
-		nil,
-	}
 
-	postBranchA := &pok.MultipleChoiceDialogData{
-		"This is a multiple choice dialog",
-		[]string{ "Red", "Blue", "Green" },
-		[]pok.DialogNode{
-			&pok.DialogData{
-				"You chose Red!",
-				postBranchB,
-			},
-			&pok.DialogData{ "You chose Blue!", postBranchB },
-			&pok.DialogData{ "You chose Green!", postBranchB },
-		},
-	}
-
-	root := &pok.DialogData{
-		"This is a basic dialog.",
-		&pok.BinaryDialogData{
+	tree := pok.DialogTree{
+		&pok.BinaryDialogNode{
 			"This is a yes/no dialog",
-			&pok.DialogData{
-				"You chose yes!",
-				postBranchA,
-			},
-			&pok.DialogData{
-				"You chose no!",
-				postBranchB,
-			},
+			ptr(1),
+			ptr(2),
+		},
+		&pok.DialogNode{
+			"You chose yes!",
+			ptr(4),
+		},
+		&pok.DialogNode{
+			"You chose no!",
+			ptr(3),
+		},
+		&pok.DialogNode{
+			"Donezo!",
+			nil,
+		},
+		&pok.ChoiceDialogNode{
+			"This is a multiple choice dialog",
+			[]string{ "Red", "Blue", "Green" },
+			[]*int{ ptr(5), ptr(6), ptr(7) },
+		},
+		&pok.DialogNode{
+			"You chose Red!",
+			ptr(3),
+		},
+		&pok.DialogNode{
+			"You chose Blue!",
+			ptr(3),
+		},
+		&pok.DialogNode{
+			"You chose Green!",
+			ptr(3),
 		},
 	}
 
-	bytes, err := json.MarshalIndent(root, "", "\t")
+	bytes, err := json.MarshalIndent(tree, "", "\t")
 	if err != nil {
 		panic(err)
 	}
@@ -63,14 +72,16 @@ func validateFile(str string) {
 		panic(err)
 	}
 
-	var node pok.DialogNode = &pok.DialogData{}
-	fmt.Println(node)
-	err = json.Unmarshal(bytes, node)
+	tree := &pok.DialogTree{}
+	err = json.Unmarshal(bytes, tree)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(node)
+	fmt.Println(tree)
+
+	printer := pok.DialogTreePrinter{}
+	printer.Print(tree)
 }
 
 func main() {
