@@ -1,7 +1,6 @@
 package pok
 
 import(
-	"fmt"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -14,7 +13,6 @@ type DialogTreeVisitor interface {
 }
 
 type DialogNodeInterface interface {
-	Child() *int
 	Visit(DialogTreeVisitor)
 }
 
@@ -45,36 +43,16 @@ type DialogNode struct {
 	Next *int
 }
 
-func (d *DialogNode) Child() *int {
-	return nil
-}
-
 func (d *DialogNode) Visit(visitor DialogTreeVisitor) {
 	visitor.VisitDialog(d)
-}
-
-func (d *BinaryDialogNode) Child() *int {
-	return nil
 }
 
 func (b *BinaryDialogNode) Visit(visitor DialogTreeVisitor) {
 	visitor.VisitBinary(b)
 }
 
-func (d *ChoiceDialogNode) Child() *int {
-	return nil
-}
-
 func (c *ChoiceDialogNode) Visit(visitor DialogTreeVisitor) {
 	visitor.VisitChoice(c)
-}
-
-func (d *DialogBranchNode) Child() *int {
-	return nil
-}
-
-func (d *DialogEffectNode) Child() *int {
-	return nil
 }
 
 type DialogTree []DialogNodeInterface
@@ -91,78 +69,6 @@ type BinaryDialogNodeData BinaryDialogNode
 type ChoiceDialogNodeData ChoiceDialogNode
 
 type DialogTreeData []DialogTreeNodeData
-
-type DialogTreePrinter struct {
-	depth uint
-	tree *DialogTree
-}
-
-func (p *DialogTreePrinter) Print(tree *DialogTree) {
-	p.tree = tree
-	p.depth = 0
-
-	if len(*p.tree) < 1 {
-		return
-	}
-
-	p.visit(0)
-}
-
-func (p *DialogTreePrinter) pad() {
-	for i := uint(0); i < p.depth; i++ {
-		fmt.Print("  ")
-	}
-}
-
-func (p *DialogTreePrinter) visit(index int) {
-	(*p.tree)[index].Visit(p)
-}
-
-func (p *DialogTreePrinter) end() {
-	p.pad()
-	fmt.Println(nil)
-}
-
-func (p *DialogTreePrinter) VisitDialog(d *DialogNode) {
-	p.pad()
-	fmt.Println(d.Dialog)
-	if d.Next != nil {
-		p.depth++
-		p.visit(*d.Next)
-		p.depth--
-	}
-}
-
-func (p *DialogTreePrinter) VisitBinary(b *BinaryDialogNode) {
-	p.pad()
-	fmt.Println(b.Dialog)
-	p.depth++
-	if b.True != nil {
-		p.visit(*b.True)
-	} else {
-		p.end()
-	}
-	if b.False != nil {
-		p.visit(*b.False)
-	} else {
-		p.end()
-	}
-	p.depth--
-}
-
-func (p *DialogTreePrinter) VisitChoice(c *ChoiceDialogNode) {
-	p.pad()
-	fmt.Println(c.Dialog, ":", c.Choices)
-	p.depth++
-	for _, ptr := range c.Results {
-		if ptr != nil {
-			p.visit(*ptr)
-		} else {
-			p.end()
-		}
-	}
-	p.depth--
-}
 
 func (d *DialogNode) MarshalJSON() ([]byte, error) {
 	diag := DialogNodeData{
