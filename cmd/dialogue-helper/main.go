@@ -23,38 +23,38 @@ func outputDummy(str string) {
 
 	tree := pok.DialogTree{
 		&pok.BinaryDialogNode{
-			"This is a yes/no dialog",
-			ptr(1),
-			ptr(2),
+			Dialog: "This is a yes/no dialog",
+			True: ptr(1),
+			False: ptr(2),
 		},
 		&pok.DialogNode{
-			"You chose yes!",
-			ptr(4),
+			Dialog:"You chose yes!",
+			Next: ptr(4),
 		},
 		&pok.DialogNode{
-			"You chose no!",
-			ptr(3),
+			Dialog: "You chose no!",
+			Next: ptr(3),
 		},
 		&pok.DialogNode{
-			"Donezo!",
-			nil,
+			Dialog: "Donezo!",
+			Next: nil,
 		},
 		&pok.ChoiceDialogNode{
-			"This is a multiple choice dialog",
-			[]string{ "Red", "Blue", "Green" },
-			[]*int{ ptr(5), ptr(6), ptr(7) },
+			Dialog: "This is a multiple choice dialog",
+			Choices: []string{ "Red", "Blue", "Green" },
+			Results: []*int{ ptr(5), ptr(6), ptr(7) },
 		},
 		&pok.DialogNode{
-			"You chose Red!",
-			ptr(3),
+			Dialog: "You chose Red!",
+			Next: ptr(3),
 		},
 		&pok.DialogNode{
-			"You chose Blue!",
-			ptr(3),
+			Dialog: "You chose Blue!",
+			Next: ptr(3),
 		},
 		&pok.DialogNode{
-			"You chose Green!",
-			ptr(3),
+			Dialog: "You chose Green!",
+			Next: ptr(3),
 		},
 	}
 
