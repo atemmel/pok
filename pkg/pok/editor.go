@@ -304,7 +304,7 @@ func (e *Editor) loadFile() {
 	tm := &TileMap{}
 	err = tm.OpenFile(file)
 	if err != nil {
-		doNewFile := dialog.Message("Could not open file %s. Create new file?").Title("Create new file?").YesNo()
+		doNewFile := dialog.Message("Could not open file %s. Create new file?", file).Title("Create new file?").YesNo()
 		if doNewFile {
 			tm = CreateTileMap(2, 2, listPngs(TileMapImagesDir))
 			e.updateEditorWithNewTileMap(tm)
