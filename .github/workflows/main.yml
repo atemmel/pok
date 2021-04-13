@@ -39,8 +39,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Calc coverage
+        # extend this to general algorithms contained within pok && poked
         run: |
-          go test -v -covermode=count -coverprofile=coverage.out ./...
+          go test -v -covermode=count -coverprofile=coverage.out ./cmd/dialog-helper/*.go
       - name: Convert coverage.out to coverage.lcov
         uses: jandelgado/gcov2lcov-action@v1.0.6
       - name: Coveralls
