@@ -12,12 +12,10 @@ import (
 )
 
 var files []string
-var doValidate bool
+var doValidate *bool
 
 func init() {
-	flag.BoolVar(&doValidate, "validate", false, "Validate files to be correct JSON")
-	flag.Parse()
-	files = flag.Args()
+	doValidate = flag.Bool("validate", false, "Validates files to be correct JSON")
 }
 
 func ptr(value int) *int {
@@ -100,9 +98,9 @@ func transpileToDialogJson(path string) pok.DialogTree {
 func genFilename(original string, extension string) string {
 	other := original
 	if i := strings.Index(original, "."); i != -1 {
-		other = other[:i] + ".dialog"
+		other = other[:i] + extension
 	} else {
-		other += ".dialog"
+		other += extension
 	}
 	return other
 }
@@ -126,8 +124,10 @@ func validateLines(lines string) error {
 }
 
 func main() {
+	flag.Parse()
+	files = flag.Args()
 	if files != nil && len(files) > 0 {
-		if doValidate {
+		if *doValidate {
 			for _, s := range files {
 				validateFile(s)
 			}
