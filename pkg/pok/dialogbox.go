@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/dialog"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/text"
@@ -71,9 +72,9 @@ func (d *DialogBox) SetString(str string) {
 			hasBreak = true
 		}
 	}
-	if !hasBreak && len(str) > MaxLetters {
-		index := MaxLetters
-		for i := MaxLetters; i > 0; i-- {
+	if !hasBreak && len(str) > dialog.MaxLetters {
+		index := dialog.MaxLetters
+		for i := dialog.MaxLetters; i > 0; i-- {
 			if result[i] == ' ' {
 				index = i
 				break

@@ -1,3 +1,1 @@
-{
-	"Dialog": "This world of ours is a crude one.\nIn a word, it is incomplete."
-}
+[{"Type":"Dialog","Data":{"Dialog":"This is example dialog!\r\nVery cool!\r","Next":1}},{"Type":"Dialog","Data":{"Dialog":"Very very cooler!\r\nMassive gaming in fact\r","Next":2}},{"Type":"Dialog","Data":{"Dialog":"Big gaming\r\n","Next":null}}]

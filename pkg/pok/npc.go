@@ -1,6 +1,7 @@
 package pok
 
 import(
+	"github.com/atemmel/pok/pkg/dialog"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 )
@@ -8,7 +9,7 @@ import(
 //TODO: Expand functionality later
 type Npc struct {
 	Char Character
-	Dialog Dialog
+	Dialog *dialog.DialogTree
 	NpcTextureIndex int
 }
 
@@ -24,9 +25,11 @@ const(
 )
 
 func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
+	tree, err := dialog.ReadDialogTreeFromFile(DialogDir + info.DialogPath)
+	Assert(err)
 	npc := Npc{
 		Character{},
-		ReadDialogFromFile(DialogDir + info.DialogPath),
+		tree,
 		-1,
 	}
 

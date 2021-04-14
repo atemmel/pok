@@ -169,40 +169,17 @@ func (dt *DialogTree) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-type Dialog struct {
-	Dialog string
-}
-
-func ReadDialogTreeFromFile(path string) DialogTree {
+func ReadDialogTreeFromFile(path string) (*DialogTree, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
 
-	var tree DialogTree
-	err = json.Unmarshal(data, &tree)
+	tree := &DialogTree{}
+	err = json.Unmarshal(data, tree)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return tree
-}
-
-func ReadDialogFromFile(path string) Dialog {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return Dialog{
-			"Could not load: '" + path + "'",
-		}
-	}
-
-	var dialog Dialog
-	err = json.Unmarshal(data, &dialog)
-	if err != nil {
-		return Dialog{
-			"Could not parse: '" + path + "'",
-		}
-	}
-
-	return dialog
+	return tree, nil
 }

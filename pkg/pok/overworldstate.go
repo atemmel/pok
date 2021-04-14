@@ -3,6 +3,7 @@ package pok
 import (
 	"errors"
 	"fmt"
+	"github.com/atemmel/pok/pkg/dialog"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
@@ -18,6 +19,7 @@ type GameState interface {
 
 type OverworldState struct {
 	tileMap TileMap
+	collector dialog.DialogTreeCollector
 }
 
 func gamepadUp() bool {
@@ -103,9 +105,14 @@ func (o *OverworldState) talkWith(g *Game, npcIndex int) {
 	}
 
 	char.SetDirection(dir)
-	//g.Dialog.SetString("gaming gaming gaming gaming, " + fmt.Sprint(npcIndex))
-	g.Dialog.SetString(o.tileMap.npcs[npcIndex].Dialog.Dialog)
-	//g.Dialog.SetString("Lorem ipsum dolor sit amet, lorem ipsum dolor sit amet, lorem ipsum, dolor sit amet gaming schmaming game game gamo")
+	tree := o.tileMap.npcs[npcIndex].Dialog
+	o.collector = dialog.MakeDialogTreeCollector(tree)
+	result := o.collector.CollectOnce()
+	if result != nil {
+		g.Dialog.SetString(result.Dialog)
+	} else {
+		g.Dialog.SetString("Result was nil and shouldn't be >:(")
+	}
 	g.Dialog.Hidden = false
 }
 
@@ -158,7 +165,12 @@ func (o *OverworldState) CheckDialogInputs(g *Game) {
 	g.Player.TryStep(Static, g)
 	if g.Dialog.IsDone() {
 		if pressedInteract() {
-			g.Dialog.Hidden = true
+			result := o.collector.CollectOnce()
+			if result == nil {
+				g.Dialog.Hidden = true
+			} else {
+				g.Dialog.SetString(result.Dialog)
+			}
 		}
 	}
 }
