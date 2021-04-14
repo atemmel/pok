@@ -14,7 +14,6 @@ const (
 	textXDelta = 12
 	//textYDelta = 17
 	textYDelta = 21
-	MaxLetters = 44
 )
 
 const (

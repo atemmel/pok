@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/atemmel/pok/pkg/pok"
+	"github.com/atemmel/pok/pkg/dialog"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -28,7 +28,7 @@ func validateFile(str string) {
 		panic(err)
 	}
 
-	tree := &pok.DialogTree{}
+	tree := &dialog.DialogTree{}
 	err = json.Unmarshal(bytes, tree)
 	if err != nil {
 		panic(err)
@@ -36,11 +36,11 @@ func validateFile(str string) {
 
 	fmt.Println(tree)
 
-	printer := pok.DialogTreePrinter{}
+	printer := dialog.DialogTreePrinter{}
 	printer.Print(tree)
 }
 
-func transpileToDialogJson(path string) pok.DialogTree {
+func transpileToDialogJson(path string) dialog.DialogTree {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
@@ -52,15 +52,15 @@ func transpileToDialogJson(path string) pok.DialogTree {
 		panic(err)
 	}
 
-	tree := make(pok.DialogTree, 0)
+	tree := make(dialog.DialogTree, 0)
 	checkpoint := 0
 	outerCheckpoint := 0
 	nodeNo := 0
 	foundNewline := false
 
-	mknode := func(i int) *pok.DialogNode {
+	mknode := func(i int) *dialog.DialogNode {
 		nodeNo++
-		return &pok.DialogNode{
+		return &dialog.DialogNode{
 			Dialog: str[checkpoint:i],
 			Next: ptr(nodeNo),
 		}
@@ -81,12 +81,12 @@ func transpileToDialogJson(path string) pok.DialogTree {
 
 	if foundNewline { // uneven line count
 		tree = append(tree,
-			&pok.DialogNode{
+			&dialog.DialogNode{
 				Dialog: str[checkpoint:],
 				Next: nil,
 			})
 	} else {	// even line count
-		tree[len(tree)-1] = &pok.DialogNode{
+		tree[len(tree)-1] = &dialog.DialogNode{
 			Dialog: str[outerCheckpoint:],
 			Next: nil,
 		}
@@ -109,7 +109,7 @@ func validateLines(lines string) error {
 	counter := 0
 	lineNo := 1
 	for i := range lines {
-		if counter > pok.MaxLetters {
+		if counter > dialog.MaxLetters {
 			return errors.New("Too long line encountered on line " + strconv.Itoa(lineNo))
 		}
 

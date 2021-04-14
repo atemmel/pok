@@ -1,4 +1,4 @@
-package pok
+package dialog
 
 import(
 	"fmt"

@@ -1,9 +1,13 @@
-package pok
+package dialog
 
 import(
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+)
+
+const(
+	MaxLetters = 44
 )
 
 type DialogTreeVisitor interface {
