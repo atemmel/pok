@@ -4,7 +4,6 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"image"
-	"log"
 )
 
 type Game struct {
@@ -21,12 +20,12 @@ func CreateGame() *Game {
 	g := &Game{}
 	g.As = &g.Ows
 	var err error
-	//TODO: Replace with regular character sprite
-	playerImg, _, err = ebitenutil.NewImageFromFile(ImagesDir + "lucas.png", ebiten.FilterDefault)
+	playerImg, _, err = ebitenutil.NewImageFromFile(CharacterImagesDir + "trchar000.png", ebiten.FilterDefault)
+	Assert(err)
+	playerRunningImg, _, err = ebitenutil.NewImageFromFile(CharacterImagesDir + "boy_run.png", ebiten.FilterDefault)
+	Assert(err)
+	activePlayerImg = playerImg
 	g.Dialog = NewDialogBox()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	return g
 }
@@ -130,7 +129,7 @@ func (g *Game) DrawPlayer(player *Player) {
 
 	g.Rend.Draw(&RenderTarget{
 		playerOpt,
-		playerImg,
+		activePlayerImg,
 		&playerRect,
 		x,
 		y,

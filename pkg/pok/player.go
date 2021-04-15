@@ -13,8 +13,8 @@ type Player struct {
 
 const(
 	playerMaxCycle = 8
-	playerOffsetX = 6 - TileSize
-	playerOffsetY = 0 - TileSize
+	playerOffsetX = NpcOffsetX
+	playerOffsetY = NpcOffsetY
 )
 
 var turnCheck = 0
@@ -76,16 +76,19 @@ func (player *Player) Update(g *Game) {
 func (player *Player) Step(g *Game) {
 	player.Char.frames++
 	if player.Char.dir == Up {
-		player.Char.Ty = 34
+		//player.Char.Ty = 34
+		player.Char.Ty = 32 * 3
 		player.Char.Gy += -player.Char.velocity
 	} else if player.Char.dir == Down {
 		player.Char.Ty = 0
 		player.Char.Gy += player.Char.velocity
 	} else if player.Char.dir == Left {
-		player.Char.Ty = 34 * 2
+		//player.Char.Ty = 34 * 2
+		player.Char.Ty = 32
 		player.Char.Gx += -player.Char.velocity
 	} else if player.Char.dir == Right {
-		player.Char.Ty = 34 * 3
+		//player.Char.Ty = 34 * 3
+		player.Char.Ty = 32 * 2
 		player.Char.Gx += player.Char.velocity
 	}
 
@@ -115,28 +118,34 @@ func (player *Player) Animate() {
 }
 
 func (player *Player) NextAnim() {
-	player.Char.Tx += 34
-	if (player.Char.velocity <= WalkVelocity || !player.Char.isWalking) && player.Char.Tx >= 34 * 4 {
+	player.Char.Tx += 32
+	if (player.Char.velocity <= WalkVelocity || !player.Char.isWalking) && player.Char.Tx >= 32 * 4 {
 		player.Char.Tx = 0
 	} else if player.Char.velocity > WalkVelocity && player.Char.isWalking {
-		if player.Char.Tx < 170 {
-			player.Char.Tx += 170
+		if player.Char.Tx < 32 {
+			player.Char.Tx += 32
 		}
-		if player.Char.Tx >= 170 + 34 * 4 {
-			player.Char.Tx = 170
+		if player.Char.Tx >= 32 * 4 {
+			player.Char.Tx = 0
 		}
 	}
 }
 
 func (player *Player) ChangeAnim() {
+	if player.Char.isRunning {
+		activePlayerImg = playerRunningImg
+	} else {
+		activePlayerImg = playerImg
+	}
+
 	if player.Char.dir == Up {
-		player.Char.Ty = 34
+		player.Char.Ty = 32 * 3
 	} else if player.Char.dir == Down {
 		player.Char.Ty = 0
 	} else if player.Char.dir == Left {
-		player.Char.Ty = 34 * 2
+		player.Char.Ty = 32
 	} else if player.Char.dir == Right {
-		player.Char.Ty = 34 * 3
+		player.Char.Ty = 32 * 2
 	}
 }
 

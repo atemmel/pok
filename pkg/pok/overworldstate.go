@@ -10,6 +10,8 @@ import (
 )
 
 var playerImg *ebiten.Image
+var playerRunningImg *ebiten.Image
+var activePlayerImg *ebiten.Image
 
 type GameState interface {
 	GetInputs(g *Game) error
