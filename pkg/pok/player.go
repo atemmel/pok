@@ -81,41 +81,6 @@ func (player *Player) Update(g *Game) {
 	}
 }
 
-func (player *Player) Step(g *Game) {
-	/*
-	player.Char.frames++
-	if player.Char.dir == Up {
-		//player.Char.Ty = 34
-		player.Char.Ty = 32 * 3
-		player.Char.Gy += -player.Char.velocity
-	} else if player.Char.dir == Down {
-		player.Char.Ty = 0
-		player.Char.Gy += player.Char.velocity
-	} else if player.Char.dir == Left {
-		//player.Char.Ty = 34 * 2
-		player.Char.Ty = 32
-		player.Char.Gx += -player.Char.velocity
-	} else if player.Char.dir == Right {
-		//player.Char.Ty = 34 * 3
-		player.Char.Ty = 32 * 2
-		player.Char.Gx += player.Char.velocity
-	}
-
-	if player.Char.frames * int(player.Char.velocity) >= TileSize {
-		player.Char.isWalking = false
-		player.Char.frames = 0
-		if i := g.Ows.tileMap.HasExitAt(player.Char.X, player.Char.Y, player.Char.Z); i > -1 {
-			if g.Ows.tileMap.Exits[i].Target != "" {
-				img, _ := ebiten.NewImage(DisplaySizeX, DisplaySizeY, ebiten.FilterDefault);
-				g.As.Draw(g, img)
-				g.As = NewTransitionState(img, TileMapDir + g.Ows.tileMap.Exits[i].Target, g.Ows.tileMap.Exits[i].Id)
-				g.Audio.PlayDoor()
-			}
-		}
-	}
-	*/
-}
-
 func (player *Player) Animate() {
 	player.Char.Animate()
 }
