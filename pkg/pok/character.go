@@ -75,3 +75,71 @@ func (c *Character) SetDirection(dir Direction) {
 
 	c.dir = dir
 }
+
+//TODO: Extend later, leave Game param in for now
+func (c *Character) Update(g *Game) {
+	if !c.isWalking {
+		return
+	}
+
+	c.Animate()
+	c.Step()
+}
+
+func (c *Character) Step() {
+	c.frames++
+	if c.dir == Up {
+		//player.Char.Ty = 34
+		c.Ty = 32 * 3
+		c.Gy += -c.velocity
+	} else if c.dir == Down {
+		c.Ty = 0
+		c.Gy += c.velocity
+	} else if c.dir == Left {
+		//player.Char.Ty = 34 * 2
+		c.Ty = 32
+		c.Gx += -c.velocity
+	} else if c.dir == Right {
+		//player.Char.Ty = 34 * 3
+		c.Ty = 32 * 2
+		c.Gx += c.velocity
+	}
+}
+
+func (c *Character) Animate() {
+	if c.animationState % 8 == 0 {
+		c.NextAnim()
+	}
+
+	c.animationState++
+
+	if c.animationState == playerMaxCycle {
+		c.animationState = 0
+	}
+}
+
+func (c *Character) NextAnim() {
+	c.Tx += 32
+	if (c.velocity <= WalkVelocity || !c.isWalking) && c.Tx >= 32 * 4 {
+		c.Tx = 0
+	} else if c.velocity > WalkVelocity && c.isWalking {
+		if c.Tx < 32 {
+			c.Tx += 32
+		}
+		if c.Tx >= 32 * 4 {
+			c.Tx = 0
+		}
+	}
+}
+
+func (c *Character) UpdatePosition() {
+	if c.dir == Up {
+		c.Y--
+	} else if c.dir == Down {
+		c.Y++
+	} else if c.dir == Left {
+		c.X--
+	} else if c.dir == Right {
+		c.X++
+	}
+}

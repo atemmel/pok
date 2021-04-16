@@ -6,7 +6,10 @@ import(
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"io/ioutil"
 	"image"
+	"strings"
 )
+
+var debugLoadingEnabled bool = true
 
 type Exit struct {
 	Target string
@@ -116,7 +119,22 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 func (t *TileMap) OpenFile(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return err
+		if debugLoadingEnabled {
+			// We might wish to develop, and if so, we do this
+			if i := strings.LastIndex(path, "/"); i != -1 {
+				dbgPath := path[i+1:]
+				// Go assignment is acting up
+				var secondErr error
+				data, secondErr = ioutil.ReadFile(dbgPath)
+				if secondErr != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 	err = json.Unmarshal(data, t)
 	if err != nil {
@@ -467,7 +485,6 @@ func (t *TileMap) Within(x, y int) bool {
 }
 
 func CreateTileMap(width int, height int, textures []string) *TileMap {
-
 	imgs := make([]*ebiten.Image, len(textures))
 	for i := range imgs {
 		img, _, err := ebitenutil.NewImageFromFile(TileMapImagesDir + textures[i], ebiten.FilterDefault)
