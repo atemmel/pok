@@ -11,17 +11,12 @@ type Player struct {
 	Location string
 }
 
-const(
-	playerMaxCycle = 8
-	playerOffsetX = NpcOffsetX
-	playerOffsetY = NpcOffsetY
-)
-
+const turnCheckLimit = 5 // in frames
 var turnCheck = 0
 
 func (player *Player) TryStep(dir Direction, g *Game) {
 	if !player.Char.isWalking && dir == Static {
-		if turnCheck > 0 && turnCheck < TurnCheckLimit &&
+		if turnCheck > 0 && turnCheck < turnCheckLimit &&
 			player.Char.animationState == 0 {
 			player.Animate()
 		}
@@ -40,13 +35,13 @@ func (player *Player) TryStep(dir Direction, g *Game) {
 		}
 		player.Char.dir = dir
 		player.ChangeAnim()
-		if turnCheck >= TurnCheckLimit {
+		if turnCheck >= turnCheckLimit {
 			ox, oy := player.Char.X, player.Char.Y
 			player.Char.UpdatePosition()
 			if g.TileIsOccupied(player.Char.X, player.Char.Y, player.Char.Z) {
 				player.Char.X, player.Char.Y = ox, oy	// Restore position
 				// Thud noise
-				if player.Char.animationState == playerMaxCycle -1 {
+				if player.Char.animationState == characterMaxCycle -1 {
 					g.Audio.PlayThud()
 				}
 				player.Char.dir = dir

@@ -33,9 +33,9 @@ const (
 )
 
 const(
-	TurnCheckLimit = 5	// in frames
 	WalkVelocity = 1
 	RunVelocity = 2
+	characterMaxCycle = 8
 )
 
 func (c *Character) Draw(img *ebiten.Image, rend *Renderer, offsetX, offsetY float64) {
@@ -113,7 +113,7 @@ func (c *Character) Animate() {
 
 	c.animationState++
 
-	if c.animationState == playerMaxCycle {
+	if c.animationState == characterMaxCycle {
 		c.animationState = 0
 	}
 }
