@@ -157,6 +157,7 @@ func (t *TileMap) OpenFile(path string) error {
 	t.images = imgs
 	t.nTilesX = nTilesX
 
+	t.npcs = t.npcs[:0]
 	err = t.createNpcs()
 
 	return nil
