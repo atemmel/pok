@@ -200,6 +200,9 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	if len(e.activeFiles) == 0 {
 		debugStr += "(No files)"
 	} else {
+		if !e.hasSaved() {
+			debugStr += "*"
+		}
 		debugStr += e.activeFiles[e.activeTileMapIndex]
 	}
 	debugStr += fmt.Sprintf(`
@@ -311,6 +314,7 @@ func (e *Editor) loadFile() {
 		}
 	} else {
 		e.updateEditorWithNewTileMap(tm)
+		(*e.lastSavedTileMaps[len(e.lastSavedTileMaps)-1]) = *tm
 	}
 }
 
@@ -368,8 +372,9 @@ func (e *Editor) saveFile() {
 
 func (e *Editor) hasSaved() bool {
 	for i := range e.tileMaps {
-		opt := cmpopts.IgnoreFields(*e.tileMaps[i], "images", "nTilesX", "npcImages", "npcImagesStrings", "npcs")
-		if !cmp.Equal(*e.lastSavedTileMaps[i], *e.tileMaps[i], opt) {
+		opt := cmpopts.IgnoreUnexported(NpcInfo{}, TileMap{})
+		//opt := cmpopts.IgnoreFields(*e.tileMaps[i], "images", "nTilesX", "npcImages", "npcImagesStrings", "npcs", "NpcInfo.MovementInfo")
+		if !cmp.Equal(e.lastSavedTileMaps[i], e.tileMaps[i], opt) {
 			return false
 		}
 	}
@@ -393,6 +398,14 @@ func (e *Editor) handleInputs() error {
 			e.unsavedWorkDialog()
 		} else {
 			e.dieOnNextTick = true
+		}
+	}
+
+	if ebiten.IsKeyPressed(ebiten.KeyControl) {
+		if inpututil.IsKeyJustPressed(ebiten.KeyZ) {
+			PerformUndo(e)
+		} else if inpututil.IsKeyJustPressed(ebiten.KeyY) {
+			PerformRedo(e)
 		}
 	}
 
@@ -534,9 +547,7 @@ func (e *Editor) handleMapMouseInputs() {
 			e.SelectTileFromMouse(cx, cy)
 			if e.selectedTileIsValid() {
 				if activeTool == Pencil {
-					i := e.grid.GetIndex()
-					e.activeTileMap.Tiles[currentLayer][selectedTile] = i
-					e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
+					e.doPencil()
 				} else if activeTool == Eraser {
 					if ebiten.IsKeyPressed(ebiten.KeyShift) {
 						col := selectedTile % e.activeTileMap.Width
@@ -644,6 +655,11 @@ func (e *Editor) handleMapMouseInputs() {
 	}
 
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButton(0)) {
+		switch activeTool {
+			case Pencil:
+				e.postDoPencil()
+		}
+
 		offset := e.tileMapOffsets[e.activeTileMapIndex]
 		offset.X = math.Round(offset.X / TileSize) * TileSize
 		offset.Y = math.Round(offset.Y / TileSize) * TileSize
@@ -951,6 +967,33 @@ func (e *Editor) removeLinkFromEntry(tileMapIndex, entryIndex int) {
 			}
 		}
 	}
+}
+
+func (e *Editor) doPencil() {
+	oldTile := e.activeTileMap.Tiles[currentLayer][selectedTile]
+	oldTextureIndex := e.activeTileMap.TextureIndicies[currentLayer][selectedTile]
+	i := e.grid.GetIndex()
+
+	// no-op
+	if oldTile == i && oldTextureIndex == baseTextureIndex {
+		return
+	}
+
+	CurrentPencilDelta.indicies = append(CurrentPencilDelta.indicies, selectedTile)
+	CurrentPencilDelta.oldTiles = append(CurrentPencilDelta.oldTiles, oldTile)
+	CurrentPencilDelta.oldTextureIndicies = append(CurrentPencilDelta.oldTextureIndicies, oldTextureIndex)
+
+	e.activeTileMap.Tiles[currentLayer][selectedTile] = i
+	e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
+}
+
+func (e *Editor) postDoPencil() {
+	CurrentPencilDelta.z = currentLayer
+	CurrentPencilDelta.tileMapIndex = e.activeTileMapIndex
+	CurrentPencilDelta.newTile = e.grid.GetIndex()
+	CurrentPencilDelta.newTextureIndex = baseTextureIndex
+	UndoStack = append(UndoStack, CurrentPencilDelta)
+	CurrentPencilDelta = &PencilDelta{}
 }
 
 func (e *Editor) tryPlaceNpc() {
