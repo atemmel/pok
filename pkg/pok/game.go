@@ -63,6 +63,10 @@ func (g *Game) TileIsOccupied(x int, y int, z int) bool {
 		}
 	}
 
+	if g.Player.Char.X == x && g.Player.Char.Y == y && g.Player.Char.Z == z {
+		return true
+	}
+
 	return false
 }
 
@@ -114,11 +118,12 @@ func (g *Game) Save() {
 	*/
 }
 
+//TODO: Maybe throw away?
 func (g *Game) DrawPlayer(player *Player) {
 	playerOpt := &ebiten.DrawImageOptions{}
 
-	x := player.Char.Gx + playerOffsetX
-	y := player.Char.Gy + playerOffsetY
+	x := player.Char.Gx + NpcOffsetX
+	y := player.Char.Gy + NpcOffsetY
 
 	playerRect := image.Rect(
 		player.Char.Tx,

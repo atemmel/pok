@@ -21,6 +21,7 @@ type Character struct {
 	isRunning bool
 	frames int
 	animationState int
+	turnCheck int
 	velocity float64
 }
 
@@ -36,6 +37,7 @@ const(
 	WalkVelocity = 1
 	RunVelocity = 2
 	characterMaxCycle = 8
+	turnCheckLimit = 5 // in frames
 )
 
 func (c *Character) Draw(img *ebiten.Image, rend *Renderer, offsetX, offsetY float64) {
@@ -62,47 +64,56 @@ func (c *Character) Draw(img *ebiten.Image, rend *Renderer, offsetX, offsetY flo
 }
 
 func (c *Character) SetDirection(dir Direction) {
-	switch dir {
-		case Down:
-			c.Ty = 0 * TileSize
-		case Left:
-			c.Ty = 2 * TileSize
-		case Right:
-			c.Ty = 4 * TileSize
-		case Up:
-			c.Ty = 6 * TileSize
-	}
-
 	c.dir = dir
+	c.ChangeAnim()
+}
+
+func (c *Character) ChangeAnim() {
+	switch c.dir {
+		case Up:
+			c.Ty = 32 * 3
+		case Down:
+			c.Ty = 0
+		case Left:
+			c.Ty = 32
+		case Right:
+			c.Ty = 32 * 2
+	}
 }
 
 //TODO: Extend later, leave Game param in for now
-func (c *Character) Update(g *Game) {
+// Returns true if a step was just completed
+func (c *Character) Update(g *Game) bool {
 	if !c.isWalking {
-		return
+		return false
 	}
 
 	c.Animate()
 	c.Step()
+
+	if c.frames * int(c.velocity) >= TileSize {
+		c.frames = 0
+		return true
+	}
+
+	return false
 }
 
 func (c *Character) Step() {
 	c.frames++
-	if c.dir == Up {
-		//player.Char.Ty = 34
-		c.Ty = 32 * 3
-		c.Gy += -c.velocity
-	} else if c.dir == Down {
-		c.Ty = 0
-		c.Gy += c.velocity
-	} else if c.dir == Left {
-		//player.Char.Ty = 34 * 2
-		c.Ty = 32
-		c.Gx += -c.velocity
-	} else if c.dir == Right {
-		//player.Char.Ty = 34 * 3
-		c.Ty = 32 * 2
-		c.Gx += c.velocity
+	switch c.dir {
+		case Up:
+			c.Ty = 32 * 3
+			c.Gy += -c.velocity
+		case Down:
+			c.Ty = 0
+			c.Gy += c.velocity
+		case Left:
+			c.Ty = 32
+			c.Gx += -c.velocity
+		case Right:
+			c.Ty = 32 * 2
+			c.Gx += c.velocity
 	}
 }
 
@@ -133,13 +144,69 @@ func (c *Character) NextAnim() {
 }
 
 func (c *Character) UpdatePosition() {
-	if c.dir == Up {
-		c.Y--
-	} else if c.dir == Down {
-		c.Y++
-	} else if c.dir == Left {
-		c.X--
-	} else if c.dir == Right {
-		c.X++
+	switch c.dir {
+		case Up:
+			c.Y--
+		case Down:
+			c.Y++
+		case Left:
+			c.X--
+		case Right:
+			c.X++
 	}
+}
+
+func (c *Character) TryStep(dir Direction, g *Game) {
+	if !c.isWalking && dir == Static {
+		if c.turnCheck > 0 && c.turnCheck < turnCheckLimit && c.animationState == 0 {
+			c.Animate()
+		}
+		c.turnCheck = 0
+		if c.animationState != 0 {
+			c.Animate()
+		} else {
+			c.EndAnim()
+		}
+		return
+	}
+
+	if !c.isWalking {
+		if c.dir == dir {
+			c.turnCheck++
+		}
+		c.dir = dir
+		c.ChangeAnim()
+		if c.turnCheck >= turnCheckLimit {
+			// Save old position
+			ox, oy := c.X, c.Y
+			c.UpdatePosition()
+			// Save new position
+			nx, ny := c.X, c.Y
+			// Restore old position
+			c.X, c.Y = ox, oy
+			if g.TileIsOccupied(nx, ny, c.Z) {
+				// Thud noise
+				if c.animationState == characterMaxCycle -1 {
+					g.Audio.PlayThud()
+				}
+				c.dir = dir
+				c.Animate()
+				c.isWalking = false
+			} else {
+				// Accept new position
+				c.X, c.Y = nx, ny
+				if c.isRunning {
+					c.velocity = RunVelocity
+				} else {
+					c.velocity = WalkVelocity
+				}
+				c.isWalking = true
+			}
+		}
+	}
+}
+
+func (c *Character) EndAnim() {
+	c.animationState = 0
+	c.Tx = 0
 }

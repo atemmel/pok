@@ -967,12 +967,14 @@ func (e *Editor) tryPlaceNpc() {
 		}
 
 		file = filepath.Base(file)
+		//TODO: Implement NpcMovementInfo properly
 		ni := &NpcInfo{
 			e.npcImagesStrings[i],
 			file,
 			x,
 			y,
 			currentLayer,
+			NpcMovementInfo{},
 		}
 
 		e.activeTileMap.PlaceNpc(ni)

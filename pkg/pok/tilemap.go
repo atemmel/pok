@@ -67,6 +67,12 @@ func (t *TileMap) Draw(rend *Renderer) {
 	t.DrawWithOffset(rend, 0, 0)
 }
 
+func (t *TileMap) UpdateNpcs(g *Game) {
+	for i := range t.npcs {
+		t.npcs[i].Update(g)
+	}
+}
+
 func (t *TileMap) drawNpcs(rend *Renderer, offsetX, offsetY float64) {
 	for i := range t.npcs {
 		index := t.npcs[i].NpcTextureIndex

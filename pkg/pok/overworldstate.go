@@ -146,15 +146,15 @@ func (o *OverworldState) CheckMovementInputs(g *Game) {
 	}
 
 	if movingUp() {
-		g.Player.TryStep(Up, g)
+		g.Player.Char.TryStep(Up, g)
 	} else if movingDown() {
-		g.Player.TryStep(Down, g)
+		g.Player.Char.TryStep(Down, g)
 	} else if movingRight() {
-		g.Player.TryStep(Right, g)
+		g.Player.Char.TryStep(Right, g)
 	} else if movingLeft() {
-		g.Player.TryStep(Left, g)
+		g.Player.Char.TryStep(Left, g)
 	} else {
-		g.Player.TryStep(Static, g)
+		g.Player.Char.TryStep(Static, g)
 	}
 
 	if pressedInteract() {
@@ -164,7 +164,7 @@ func (o *OverworldState) CheckMovementInputs(g *Game) {
 }
 
 func (o *OverworldState) CheckDialogInputs(g *Game) {
-	g.Player.TryStep(Static, g)
+	g.Player.Char.TryStep(Static, g)
 	if g.Dialog.IsDone() {
 		if pressedInteract() {
 			result := o.collector.CollectOnce()
@@ -179,6 +179,7 @@ func (o *OverworldState) CheckDialogInputs(g *Game) {
 
 func (o *OverworldState) Update(g *Game) error {
 	g.Player.Update(g)
+	o.tileMap.UpdateNpcs(g)
 
 	if g.Client.Active {
 		g.Client.WritePlayer(&g.Player)

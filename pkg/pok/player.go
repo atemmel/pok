@@ -11,60 +11,17 @@ type Player struct {
 	Location string
 }
 
-const turnCheckLimit = 5 // in frames
-var turnCheck = 0
-
-func (player *Player) TryStep(dir Direction, g *Game) {
-	if !player.Char.isWalking && dir == Static {
-		if turnCheck > 0 && turnCheck < turnCheckLimit &&
-			player.Char.animationState == 0 {
-			player.Animate()
-		}
-		turnCheck = 0
-		if player.Char.animationState != 0 {
-			player.Animate()
-		} else {
-			player.EndAnim()
-		}
-		return
-	}
-
-	if !player.Char.isWalking {
-		if player.Char.dir == dir {
-			turnCheck++
-		}
-		player.Char.dir = dir
-		player.ChangeAnim()
-		if turnCheck >= turnCheckLimit {
-			ox, oy := player.Char.X, player.Char.Y
-			player.Char.UpdatePosition()
-			if g.TileIsOccupied(player.Char.X, player.Char.Y, player.Char.Z) {
-				player.Char.X, player.Char.Y = ox, oy	// Restore position
-				// Thud noise
-				if player.Char.animationState == characterMaxCycle -1 {
-					g.Audio.PlayThud()
-				}
-				player.Char.dir = dir
-				player.Animate()
-				player.Char.isWalking = false
-			} else {
-				if player.Char.isRunning {
-					player.Char.velocity = RunVelocity
-				} else {
-					player.Char.velocity = WalkVelocity
-				}
-				player.Char.isWalking = true
-			}
-		}
-	}
-}
-
 func (player *Player) Update(g *Game) {
-	player.Char.Update(g)
+	stepDone := player.Char.Update(g)
 
-	if player.Char.frames * int(player.Char.velocity) >= TileSize {
+	if player.Char.isWalking && player.Char.velocity > WalkVelocity {
+		activePlayerImg = playerRunningImg
+	} else {
+		activePlayerImg = playerImg
+	}
+
+	if stepDone {
 		player.Char.isWalking = false
-		player.Char.frames = 0
 		if i := g.Ows.tileMap.HasExitAt(player.Char.X, player.Char.Y, player.Char.Z); i > -1 {
 			if g.Ows.tileMap.Exits[i].Target != "" {
 				img, _ := ebiten.NewImage(DisplaySizeX, DisplaySizeY, ebiten.FilterDefault);
@@ -74,31 +31,4 @@ func (player *Player) Update(g *Game) {
 			}
 		}
 	}
-}
-
-func (player *Player) Animate() {
-	player.Char.Animate()
-}
-
-func (player *Player) ChangeAnim() {
-	if player.Char.isRunning {
-		activePlayerImg = playerRunningImg
-	} else {
-		activePlayerImg = playerImg
-	}
-
-	if player.Char.dir == Up {
-		player.Char.Ty = 32 * 3
-	} else if player.Char.dir == Down {
-		player.Char.Ty = 0
-	} else if player.Char.dir == Left {
-		player.Char.Ty = 32
-	} else if player.Char.dir == Right {
-		player.Char.Ty = 32 * 2
-	}
-}
-
-func (player *Player) EndAnim() {
-	player.Char.animationState = 0
-	player.Char.Tx = 0
 }

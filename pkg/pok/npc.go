@@ -11,12 +11,30 @@ type Npc struct {
 	Char Character
 	Dialog *dialog.DialogTree
 	NpcTextureIndex int
+	MovementInfo NpcMovementInfo
 }
 
 type NpcInfo struct {
 	Texture string
 	DialogPath string
 	X, Y, Z int
+	MovementInfo NpcMovementInfo
+}
+
+type NpcMovementStrategy int
+
+const(
+	Stay NpcMovementStrategy = iota
+	Loop
+	Rewind
+	Zone
+)
+
+type NpcMovementInfo struct {
+	Strategy NpcMovementStrategy
+	Commands []int
+	currentIndex int
+	rewindDirection int
 }
 
 const(
@@ -31,6 +49,7 @@ func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 		Character{},
 		tree,
 		-1,
+		info.MovementInfo,
 	}
 
 	npc.Char.Gx = float64(info.X) * TileSize
@@ -57,4 +76,27 @@ func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 	}
 
 	return npc
+}
+
+func (npc* Npc) Update(g *Game) {
+	switch npc.MovementInfo.Strategy {
+		case Stay:
+			return
+		case Loop:
+			npc.doLoopStrategy(g)
+	}
+}
+
+func (npc *Npc) doLoopStrategy(g *Game) {
+	currentIndex := &npc.MovementInfo.currentIndex
+	currentDir := Direction(npc.MovementInfo.Commands[*currentIndex])
+	npc.Char.TryStep(currentDir, g)
+	result := npc.Char.Update(g)
+	if result {
+		npc.Char.isWalking = false
+		*currentIndex++
+		if *currentIndex >= len(npc.MovementInfo.Commands) {
+			*currentIndex = 0
+		}
+	}
 }
