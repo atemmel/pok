@@ -34,7 +34,7 @@ type NpcMovementInfo struct {
 	Strategy NpcMovementStrategy
 	Commands []int
 	currentIndex int
-	rewindDirection int
+	rewindDirection bool
 }
 
 const(
@@ -84,6 +84,8 @@ func (npc* Npc) Update(g *Game) {
 			return
 		case Loop:
 			npc.doLoopStrategy(g)
+		case Rewind:
+			npc.doRewindStrategy(g)
 	}
 }
 
@@ -99,4 +101,33 @@ func (npc *Npc) doLoopStrategy(g *Game) {
 			*currentIndex = 0
 		}
 	}
+}
+
+func (npc *Npc) doRewindStrategy(g *Game) {
+	currentIndex := &npc.MovementInfo.currentIndex
+	currentDir := Direction(npc.MovementInfo.Commands[*currentIndex])
+	rewDir := &npc.MovementInfo.rewindDirection
+	if *rewDir {
+		currentDir = currentDir.Inverse()
+	}
+	npc.Char.TryStep(currentDir, g)
+	result := npc.Char.Update(g)
+	if result {
+		npc.Char.isWalking = false
+		// If not rewinding
+		if !*rewDir {
+			*currentIndex++
+			if *currentIndex >= len(npc.MovementInfo.Commands) {
+				*currentIndex--
+				*rewDir = true
+			}
+		} else {
+			*currentIndex--
+			if *currentIndex < 0 {
+				*currentIndex++
+				*rewDir = false
+			}
+		}
+	}
+
 }

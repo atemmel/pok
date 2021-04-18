@@ -33,6 +33,20 @@ const (
 	Up
 )
 
+func (dir *Direction) Inverse() Direction {
+	switch *dir {
+		case Down:
+			return Up
+		case Up:
+			return Down
+		case Left:
+			return Right
+		case Right:
+			return Left
+	}
+	return Static
+}
+
 const(
 	WalkVelocity = 1
 	RunVelocity = 2
