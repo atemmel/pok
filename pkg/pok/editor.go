@@ -549,6 +549,8 @@ func (e *Editor) handleMapMouseInputs() {
 				if activeTool == Pencil {
 					e.doPencil()
 				} else if activeTool == Eraser {
+					//TODO: Map to undo class
+					/*
 					if ebiten.IsKeyPressed(ebiten.KeyShift) {
 						col := selectedTile % e.activeTileMap.Width
 						row := selectedTile / e.activeTileMap.Width
@@ -558,10 +560,8 @@ func (e *Editor) handleMapMouseInputs() {
 							placedObjects[e.activeTileMapIndex][i] = placedObjects[e.activeTileMapIndex][len(placedObjects[e.activeTileMapIndex]) - 1]
 							placedObjects[e.activeTileMapIndex] = placedObjects[e.activeTileMapIndex][:len(placedObjects[e.activeTileMapIndex]) - 1]
 						}
-					} else {
-						e.activeTileMap.Tiles[currentLayer][selectedTile] = -1
-						e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
-					}
+					*/
+					e.doEraser()
 				} else if activeTool == AutoTile {
 					ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
 					DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
@@ -658,6 +658,8 @@ func (e *Editor) handleMapMouseInputs() {
 		switch activeTool {
 			case Pencil:
 				e.postDoPencil()
+			case Eraser:
+				e.postDoEraser()
 		}
 
 		offset := e.tileMapOffsets[e.activeTileMapIndex]
@@ -987,6 +989,23 @@ func (e *Editor) doPencil() {
 	e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
 }
 
+func (e *Editor) doEraser() {
+	oldTile := e.activeTileMap.Tiles[currentLayer][selectedTile]
+	oldTextureIndex := e.activeTileMap.TextureIndicies[currentLayer][selectedTile]
+
+	// no-op
+	if oldTile < 0 && oldTextureIndex == baseTextureIndex {
+		return
+	}
+
+	CurrentEraserDelta.indicies = append(CurrentEraserDelta.indicies, selectedTile)
+	CurrentEraserDelta.oldTiles = append(CurrentEraserDelta.oldTiles, oldTile)
+	CurrentEraserDelta.oldTextureIndicies = append(CurrentEraserDelta.oldTextureIndicies, oldTextureIndex)
+
+	e.activeTileMap.Tiles[currentLayer][selectedTile] = -1
+	e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
+}
+
 func (e *Editor) postDoPencil() {
 	CurrentPencilDelta.z = currentLayer
 	CurrentPencilDelta.tileMapIndex = e.activeTileMapIndex
@@ -994,6 +1013,14 @@ func (e *Editor) postDoPencil() {
 	CurrentPencilDelta.newTextureIndex = baseTextureIndex
 	UndoStack = append(UndoStack, CurrentPencilDelta)
 	CurrentPencilDelta = &PencilDelta{}
+}
+
+func (e *Editor) postDoEraser() {
+	CurrentEraserDelta.z = currentLayer
+	CurrentEraserDelta.tileMapIndex = e.activeTileMapIndex
+	CurrentEraserDelta.newTextureIndex = baseTextureIndex
+	UndoStack = append(UndoStack, CurrentEraserDelta)
+	CurrentEraserDelta = &EraserDelta{}
 }
 
 func (e *Editor) tryPlaceNpc() {
