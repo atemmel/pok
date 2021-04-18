@@ -1,12 +1,14 @@
 package pok
 
 import(
+	"errors"
 	"github.com/atemmel/pok/pkg/dialog"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"image"
+	"math/rand"
 )
 
-//TODO: Expand functionality later
 type Npc struct {
 	Char Character
 	Dialog *dialog.DialogTree
@@ -34,7 +36,14 @@ type NpcMovementInfo struct {
 	Strategy NpcMovementStrategy
 	Commands []int
 	currentIndex int
+	zoneFramesUntilNextStep int
 	rewindDirection bool
+}
+
+func SelectFramesUntilNextStep() int {
+	const Min = 60
+	const Max = 60 * 8
+	return rand.Intn(Max - Min) + Min
 }
 
 const(
@@ -45,6 +54,11 @@ const(
 func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 	tree, err := dialog.ReadDialogTreeFromFile(DialogDir + info.DialogPath)
 	Assert(err)
+
+	if info.MovementInfo.Strategy == Zone {
+		info.MovementInfo.zoneFramesUntilNextStep = SelectFramesUntilNextStep()
+	}
+
 	npc := Npc{
 		Character{},
 		tree,
@@ -86,6 +100,8 @@ func (npc* Npc) Update(g *Game) {
 			npc.doLoopStrategy(g)
 		case Rewind:
 			npc.doRewindStrategy(g)
+		case Zone:
+			npc.doZoneStrategy(g)
 	}
 }
 
@@ -129,5 +145,52 @@ func (npc *Npc) doRewindStrategy(g *Game) {
 			}
 		}
 	}
+}
 
+func (npc *Npc) doZoneStrategy(g *Game) {
+	npc.Char.TryStep(npc.Char.dir, g)
+	result := npc.Char.Update(g)
+
+	if result {
+		npc.Char.isWalking = false
+		npc.Char.dir = Static
+	}
+
+	frames := &npc.MovementInfo.zoneFramesUntilNextStep
+	*frames--
+	if *frames <= 0 {
+		if len(npc.MovementInfo.Commands) < 4 {
+			Assert(errors.New("Could not form rectangle from MovementInfo.Commands"))
+		}
+
+		x1 := npc.MovementInfo.Commands[0]
+		y1 := npc.MovementInfo.Commands[1]
+		x2 := npc.MovementInfo.Commands[2]
+		y2 := npc.MovementInfo.Commands[3]
+
+		ox, oy := npc.Char.X, npc.Char.Y
+		rect := image.Rect(x1, y1, x2 + 1, y2 + 1)
+
+		availableDirs := make([]Direction, 0, 4)
+
+		for _, dir := range []Direction{Up, Down, Left, Right} {
+			npc.Char.dir = dir
+			npc.Char.UpdatePosition()
+			nx, ny := npc.Char.X, npc.Char.Y
+			pt := image.Point{nx, ny}
+			npc.Char.X, npc.Char.Y = ox, oy
+
+			if pt.In(rect) && !g.TileIsOccupied(nx, ny, npc.Char.Z) {
+				availableDirs = append(availableDirs, dir)
+			}
+		}
+
+		if len(availableDirs) > 0 {
+			npc.Char.dir = availableDirs[rand.Intn(len(availableDirs))]
+		} else {
+			npc.Char.dir = Static
+		}
+
+		*frames = SelectFramesUntilNextStep()
+	}
 }
