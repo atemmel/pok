@@ -208,24 +208,21 @@ func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObje
 
 	for y := 0; y != obj.H; y++ {
 		gy := row + y
-		if gy < 0 || gy >= t.Height {
-			continue
-		}
 
-		wy := gy * t.Width
 		ty := (obj.Y + y) * t.nTilesX[obj.textureIndex]
 
 		for x := 0; x != obj.W; x++ {
 			gx := col + x
-			if gx < 0 || gx >= t.Width {
+
+			if (gx < 0 || gx >= t.Width) || (gy < 0 || gy >= t.Height) {
+				zIndex++
 				continue
 			}
 
-			wx := gx
 			tx := obj.X + x
 
 			tile := ty + tx
-			index := wy + wx
+			index := (gy * t.Width) + gx
 			depth := z + obj.Z[zIndex]
 
 			t.Tiles[depth][index] = tile
@@ -256,7 +253,7 @@ func (t *TileMap) EraseObject(pob PlacedEditorObject, obj *EditorObject) {
 		for x := 0; x < obj.W; x++ {
 			gx := pob.X + x
 
-			if gx < 0 || gx >= t.Width && gy < 0 || gy >= t.Height {
+			if (gx < 0 || gx >= t.Width) || (gy < 0 || gy >= t.Height) {
 				zIndex++
 				continue
 			}

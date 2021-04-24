@@ -96,8 +96,8 @@ func (do *ObjectDelta) Undo(ed *Editor) {
 	pobj := placedObjects[do.tileMapIndex][do.objectIndex]
 	obj := &ed.objectGrid.objs[pobj.Index]
 	tm.EraseObject(pobj, obj)
-	//copy(placedObjects[do.tileMapIndex][do.objectIndex:], placedObjects[do.tileMapIndex][do.objectIndex+1:])
-	//placedObjects[do.tileMapIndex] = placedObjects[do.tileMapIndex][:len(placedObjects[do.tileMapIndex])-1]
+	copy(placedObjects[do.tileMapIndex][do.objectIndex:], placedObjects[do.tileMapIndex][do.objectIndex+1:])
+	placedObjects[do.tileMapIndex] = placedObjects[do.tileMapIndex][:len(placedObjects[do.tileMapIndex])-1]
 }
 
 func (do *ObjectDelta) Redo(ed *Editor) {
