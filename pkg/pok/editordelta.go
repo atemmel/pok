@@ -11,6 +11,7 @@ var RedoStack = make([]Delta, 0, preAllocDelta)
 
 var CurrentPencilDelta *PencilDelta = &PencilDelta{}
 var CurrentEraserDelta *EraserDelta = &EraserDelta{}
+var CurrentObjectDelta *ObjectDelta = &ObjectDelta{}
 
 func PerformUndo(ed *Editor) {
 	if len(UndoStack) > 0 {
@@ -80,4 +81,27 @@ func (de *EraserDelta) Redo(ed *Editor) {
 		tm.Tiles[de.z][j] = -1
 		tm.TextureIndicies[de.z][j] = 0
 	}
+}
+
+type ObjectDelta struct {
+	placedObjectIndex int
+	objectIndex int
+	tileMapIndex int
+	origin int
+	z int
+}
+
+func (do *ObjectDelta) Undo(ed *Editor) {
+	tm := ed.tileMaps[do.tileMapIndex]
+	pobj := placedObjects[do.tileMapIndex][do.objectIndex]
+	obj := &ed.objectGrid.objs[pobj.Index]
+	tm.EraseObject(pobj, obj)
+	//copy(placedObjects[do.tileMapIndex][do.objectIndex:], placedObjects[do.tileMapIndex][do.objectIndex+1:])
+	//placedObjects[do.tileMapIndex] = placedObjects[do.tileMapIndex][:len(placedObjects[do.tileMapIndex])-1]
+}
+
+func (do *ObjectDelta) Redo(ed *Editor) {
+	tm := ed.tileMaps[do.tileMapIndex]
+	obj := &ed.objectGrid.objs[do.placedObjectIndex]
+	tm.InsertObject(obj, do.objectIndex, do.origin, do.z, &placedObjects[do.placedObjectIndex])
 }

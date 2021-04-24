@@ -373,7 +373,6 @@ func (e *Editor) saveFile() {
 func (e *Editor) hasSaved() bool {
 	for i := range e.tileMaps {
 		opt := cmpopts.IgnoreUnexported(NpcInfo{}, TileMap{})
-		//opt := cmpopts.IgnoreFields(*e.tileMaps[i], "images", "nTilesX", "npcImages", "npcImagesStrings", "npcs", "NpcInfo.MovementInfo")
 		if !cmp.Equal(e.lastSavedTileMaps[i], e.tileMaps[i], opt) {
 			return false
 		}
@@ -423,7 +422,6 @@ func (e *Editor) handleInputs() error {
 				e.grid.Scroll(ScrollUp)
 			}
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
-				//cx, cy := ebiten.CursorPosition()
 				e.grid.Select(cx, cy)
 			}
 		} else if e.autoTileGridIsVisible() && e.autoTileGrid.Contains(image.Point{cx, cy}) {
@@ -592,8 +590,7 @@ func (e *Editor) handleMapMouseInputs() {
 		switch activeTool {
 			case Object:
 				if e.selectedTileIsValid() {
-					obj := &e.objectGrid.objs[activeObjsIndex]
-					e.activeTileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
+					e.doObject()
 				}
 			case Link:
 				if e.selectedTileIsValid() {
@@ -660,6 +657,8 @@ func (e *Editor) handleMapMouseInputs() {
 				e.postDoPencil()
 			case Eraser:
 				e.postDoEraser()
+			case Object:
+				e.postDoObject()
 		}
 
 		offset := e.tileMapOffsets[e.activeTileMapIndex]
@@ -1006,6 +1005,17 @@ func (e *Editor) doEraser() {
 	e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
 }
 
+func (e *Editor) doObject() {
+	obj := &e.objectGrid.objs[activeObjsIndex]
+	e.activeTileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
+
+	CurrentObjectDelta.placedObjectIndex = activeObjsIndex
+	CurrentObjectDelta.objectIndex = len(placedObjects[e.activeTileMapIndex]) - 1
+	CurrentObjectDelta.tileMapIndex = e.activeTileMapIndex
+	CurrentObjectDelta.origin = selectedTile
+	CurrentObjectDelta.z = currentLayer
+}
+
 func (e *Editor) postDoPencil() {
 	CurrentPencilDelta.z = currentLayer
 	CurrentPencilDelta.tileMapIndex = e.activeTileMapIndex
@@ -1021,6 +1031,11 @@ func (e *Editor) postDoEraser() {
 	CurrentEraserDelta.newTextureIndex = baseTextureIndex
 	UndoStack = append(UndoStack, CurrentEraserDelta)
 	CurrentEraserDelta = &EraserDelta{}
+}
+
+func (e *Editor) postDoObject() {
+	UndoStack = append(UndoStack, CurrentObjectDelta)
+	CurrentObjectDelta = &ObjectDelta{}
 }
 
 func (e *Editor) tryPlaceNpc() {

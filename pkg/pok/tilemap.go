@@ -247,24 +247,21 @@ func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObje
 	*placedObjects = append(*placedObjects, p)
 }
 
-func (t *TileMap) EraseObject(pob PlacedEditorObject, obj * EditorObject) {
+func (t *TileMap) EraseObject(pob PlacedEditorObject, obj *EditorObject) {
 	zIndex := 0
 
-	for y := 0; y != obj.H; y++ {
+	for y := 0; y < obj.H; y++ {
 		gy := pob.Y + y
-		if gy < 0 || gy >= t.Height {
-			continue
-		}
 
-		gy = gy * t.Width
-
-		for x := 0; x != obj.W; x++ {
+		for x := 0; x < obj.W; x++ {
 			gx := pob.X + x
-			if gx < 0 || gx >= t.Width {
+
+			if gx < 0 || gx >= t.Width && gy < 0 || gy >= t.Height {
+				zIndex++
 				continue
 			}
 
-			index := gy + gx
+			index := (gy * t.Width) + gx
 			depth := pob.Z + obj.Z[zIndex]
 
 			t.Tiles[depth][index] = -1
@@ -299,7 +296,6 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 	ndx, ndy := dx, dy
 
 	insertCol := func(x int) {
-		//fmt.Println("Inserting col")
 		if x == t.Width - 1 {
 			x++
 		}
@@ -317,9 +313,6 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 				t.Tiles[i][index] = 0
 				t.Collision[i][index] = false
 				t.TextureIndicies[i][index] = 0
-
-				//fmt.Println("Appending", x, j, index)
-				//fmt.Println(t.Tiles[0])
 			}
 		}
 	}
@@ -341,7 +334,6 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 				t.Tiles[i][index] = 0
 				t.Collision[i][index] = false
 				t.TextureIndicies[i][index] = 0
-				//fmt.Println("Appending", j, y)
 			}
 		}
 	}
