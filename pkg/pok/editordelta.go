@@ -12,6 +12,7 @@ var RedoStack = make([]Delta, 0, preAllocDelta)
 var CurrentPencilDelta *PencilDelta = &PencilDelta{}
 var CurrentEraserDelta *EraserDelta = &EraserDelta{}
 var CurrentObjectDelta *ObjectDelta = &ObjectDelta{}
+var CurrentLinkDelta *LinkDelta = &LinkDelta{}
 
 func PerformUndo(ed *Editor) {
 	if len(UndoStack) > 0 {
@@ -107,5 +108,32 @@ func (do *ObjectDelta) Redo(ed *Editor) {
 }
 
 type LinkDelta struct {
+	linkBegin *LinkData
+	linkEnd *LinkData
+	linkIdA int
+	linkIdB int
+}
 
+func (dl *LinkDelta) Undo(ed *Editor) {
+	tmA := ed.tileMaps[dl.linkBegin.TileMapIndex]
+	tmB := ed.tileMaps[dl.linkEnd.TileMapIndex]
+
+	for i := range tmA.Exits {
+		if tmA.Exits[i].Id == dl.linkIdA {
+			ed.removeLink(dl.linkBegin.TileMapIndex, i)
+			break
+		}
+	}
+
+	for i := range tmB.Exits {
+		if tmB.Exits[i].Id == dl.linkIdB {
+			ed.removeLink(dl.linkEnd.TileMapIndex, i)
+			break
+		}
+	}
+
+}
+
+func (dl *LinkDelta) Redo(ed *Editor) {
+	ed.tryConnectTileMaps(dl.linkBegin, dl.linkEnd)
 }

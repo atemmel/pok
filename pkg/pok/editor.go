@@ -177,9 +177,7 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	if drawUi && len(e.activeFiles) != 0 {
 		e.drawLinksFromActiveTileMap()
 		e.DrawTileMapDetail()
-		for i := range e.resizers {
-			e.resizers[i].Draw(&e.rend)
-		}
+		e.resizers[e.activeTileMapIndex].Draw(&e.rend)
 	}
 	e.rend.Display(screen)
 
@@ -581,10 +579,11 @@ func (e *Editor) handleMapMouseInputs() {
 			if origin == TopLeftCorner || origin == BotLeftCorner {
 				e.tileMapOffsets[e.activeTileMapIndex].X -= float64(x * TileSize)
 			}
+			linkBegin = nil
 		}
 	}
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) && !ebiten.IsKeyPressed(ebiten.KeyShift) {
 		cx, cy := ebiten.CursorPosition();
 		e.SelectTileFromMouse(cx, cy)
 		switch activeTool {
@@ -844,6 +843,8 @@ func (e *Editor) tryConnectTileMaps(start, end *LinkData) {
 	e.tileMaps[end.TileMapIndex].PlaceEntry(entryB)
 	e.tileMaps[end.TileMapIndex].PlaceExit(exitB)
 
+	CurrentLinkDelta.linkIdA = startEntryIndex
+	CurrentLinkDelta.linkIdB = endEntryIndex
 }
 
 func (e *Editor) validateLink(link *LinkData) bool {
@@ -904,14 +905,16 @@ func (e *Editor) removeInvalidLinks() {
 	ex := e.activeTileMap.Exits[:]
 
 	for i := range ex {
-		if ex[i].X <= e.activeTileMap.Width || ex[i].Y <= e.activeTileMap.Height {
+		if ex[i].X >= e.activeTileMap.Width || ex[i].Y >= e.activeTileMap.Height {
+			fmt.Println("Bad link at", ex[i].X, ex[i].Y, "not within", e.activeTileMap.Width, e.activeTileMap.Height)
 			e.removeLink(e.activeTileMapIndex, i)
 		}
 	}
 
 	en := e.activeTileMap.Entries[:]
 	for i := range en {
-		if en[i].X <= e.activeTileMap.Width || en[i].Y <= e.activeTileMap.Height {
+		if en[i].X >= e.activeTileMap.Width || en[i].Y >= e.activeTileMap.Height {
+			fmt.Println("Other Bad link at", ex[i].X, ex[i].Y)
 			e.removeLinkFromEntry(e.activeTileMapIndex, i)
 		}
 	}
@@ -943,13 +946,12 @@ func (e *Editor) removeLink(tileMapIndex, exitIndex int) {
 }
 
 func (e *Editor) removeLinkFromEntry(tileMapIndex, entryIndex int) {
-	tm := e.tileMaps[tileMapIndex]
-	en := tm.Entries[entryIndex]
-	for _, tm = range e.tileMaps {
+	en := e.tileMaps[tileMapIndex].Entries[entryIndex]
+	for otherTileMapIndex, tm := range e.tileMaps {
 		for i := range tm.Exits {
 			target := e.activeFiles[tileMapIndex]
 			if tm.Exits[i].Target == target && tm.Exits[i].Id == en.Id {
-				e.removeLink(tileMapIndex, i)
+				e.removeLink(otherTileMapIndex, i)
 				break
 			}
 		}
@@ -1003,6 +1005,10 @@ func (e *Editor) doObject() {
 }
 
 func (e *Editor) doLink() {
+	if selectionX < 0 || selectionY < 0 {
+		return
+	}
+
 	if linkBegin == nil {
 		linkBegin = &LinkData{
 			selectionX,
@@ -1016,7 +1022,15 @@ func (e *Editor) doLink() {
 			e.activeTileMapIndex,
 		}
 		e.tryConnectTileMaps(linkBegin, linkEnd)
+		for i, tm := range e.tileMaps {
+			fmt.Println(i, tm.Entries, tm.Exits)
+		}
+
+		CurrentLinkDelta.linkBegin = linkBegin
+		CurrentLinkDelta.linkEnd = linkEnd
 		linkBegin = nil
+
+		e.postDoLink()
 	}
 }
 
@@ -1043,7 +1057,8 @@ func (e *Editor) postDoObject() {
 }
 
 func (e *Editor) postDoLink() {
-
+	UndoStack = append(UndoStack, CurrentLinkDelta)
+	CurrentLinkDelta = &LinkDelta{}
 }
 
 func (e *Editor) tryPlaceNpc() {
