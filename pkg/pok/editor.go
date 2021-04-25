@@ -594,21 +594,7 @@ func (e *Editor) handleMapMouseInputs() {
 				}
 			case Link:
 				if e.selectedTileIsValid() {
-					if linkBegin == nil {
-						linkBegin = &LinkData{
-							selectionX,
-							selectionY,
-							e.activeTileMapIndex,
-						}
-					} else {
-						linkEnd := &LinkData{
-							selectionX,
-							selectionY,
-							e.activeTileMapIndex,
-						}
-						e.tryConnectTileMaps(linkBegin, linkEnd)
-						linkBegin = nil
-					}
+					e.doLink()
 				}
 			case PlaceNpc:
 				e.tryPlaceNpc()
@@ -1009,11 +995,29 @@ func (e *Editor) doObject() {
 	obj := &e.objectGrid.objs[activeObjsIndex]
 	e.activeTileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
 
-	CurrentObjectDelta.placedObjectIndex = activeObjsIndex
-	CurrentObjectDelta.objectIndex = len(placedObjects[e.activeTileMapIndex]) - 1
+	CurrentObjectDelta.placedObjectIndex = len(placedObjects[e.activeTileMapIndex]) - 1
+	CurrentObjectDelta.objectIndex = activeObjsIndex
 	CurrentObjectDelta.tileMapIndex = e.activeTileMapIndex
 	CurrentObjectDelta.origin = selectedTile
 	CurrentObjectDelta.z = currentLayer
+}
+
+func (e *Editor) doLink() {
+	if linkBegin == nil {
+		linkBegin = &LinkData{
+			selectionX,
+			selectionY,
+			e.activeTileMapIndex,
+		}
+	} else {
+		linkEnd := &LinkData{
+			selectionX,
+			selectionY,
+			e.activeTileMapIndex,
+		}
+		e.tryConnectTileMaps(linkBegin, linkEnd)
+		linkBegin = nil
+	}
 }
 
 func (e *Editor) postDoPencil() {
@@ -1036,6 +1040,10 @@ func (e *Editor) postDoEraser() {
 func (e *Editor) postDoObject() {
 	UndoStack = append(UndoStack, CurrentObjectDelta)
 	CurrentObjectDelta = &ObjectDelta{}
+}
+
+func (e *Editor) postDoLink() {
+
 }
 
 func (e *Editor) tryPlaceNpc() {

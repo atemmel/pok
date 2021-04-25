@@ -93,15 +93,19 @@ type ObjectDelta struct {
 
 func (do *ObjectDelta) Undo(ed *Editor) {
 	tm := ed.tileMaps[do.tileMapIndex]
-	pobj := placedObjects[do.tileMapIndex][do.objectIndex]
-	obj := &ed.objectGrid.objs[pobj.Index]
+	pobj := placedObjects[do.tileMapIndex][do.placedObjectIndex]
+	obj := &ed.objectGrid.objs[do.objectIndex]
 	tm.EraseObject(pobj, obj)
-	copy(placedObjects[do.tileMapIndex][do.objectIndex:], placedObjects[do.tileMapIndex][do.objectIndex+1:])
+	copy(placedObjects[do.tileMapIndex][do.placedObjectIndex:], placedObjects[do.tileMapIndex][do.placedObjectIndex+1:])
 	placedObjects[do.tileMapIndex] = placedObjects[do.tileMapIndex][:len(placedObjects[do.tileMapIndex])-1]
 }
 
 func (do *ObjectDelta) Redo(ed *Editor) {
 	tm := ed.tileMaps[do.tileMapIndex]
-	obj := &ed.objectGrid.objs[do.placedObjectIndex]
-	tm.InsertObject(obj, do.objectIndex, do.origin, do.z, &placedObjects[do.placedObjectIndex])
+	obj := &ed.objectGrid.objs[do.objectIndex]
+	tm.InsertObject(obj, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex])
+}
+
+type LinkDelta struct {
+
 }
