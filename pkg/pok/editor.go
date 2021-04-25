@@ -906,7 +906,6 @@ func (e *Editor) removeInvalidLinks() {
 
 	for i := range ex {
 		if ex[i].X >= e.activeTileMap.Width || ex[i].Y >= e.activeTileMap.Height {
-			fmt.Println("Bad link at", ex[i].X, ex[i].Y, "not within", e.activeTileMap.Width, e.activeTileMap.Height)
 			e.removeLink(e.activeTileMapIndex, i)
 		}
 	}
@@ -914,7 +913,6 @@ func (e *Editor) removeInvalidLinks() {
 	en := e.activeTileMap.Entries[:]
 	for i := range en {
 		if en[i].X >= e.activeTileMap.Width || en[i].Y >= e.activeTileMap.Height {
-			fmt.Println("Other Bad link at", ex[i].X, ex[i].Y)
 			e.removeLinkFromEntry(e.activeTileMapIndex, i)
 		}
 	}
@@ -1022,9 +1020,6 @@ func (e *Editor) doLink() {
 			e.activeTileMapIndex,
 		}
 		e.tryConnectTileMaps(linkBegin, linkEnd)
-		for i, tm := range e.tileMaps {
-			fmt.Println(i, tm.Entries, tm.Exits)
-		}
 
 		CurrentLinkDelta.linkBegin = linkBegin
 		CurrentLinkDelta.linkEnd = linkEnd
