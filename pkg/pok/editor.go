@@ -559,8 +559,7 @@ func (e *Editor) handleMapMouseInputs() {
 					*/
 					e.doEraser()
 				} else if activeTool == AutoTile {
-					ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
-					DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
+					e.doAutotile()
 				} else if activeTool == Tree {
 					//TODO: perform tree logic
 				}
@@ -644,6 +643,8 @@ func (e *Editor) handleMapMouseInputs() {
 				e.postDoEraser()
 			case Object:
 				e.postDoObject()
+			case AutoTile:
+				e.postDoAutotile()
 		}
 
 		offset := e.tileMapOffsets[e.activeTileMapIndex]
@@ -657,8 +658,7 @@ func (e *Editor) isAlreadyClicking() bool {
 }
 
 func (e *Editor) selectedTileIsValid() bool {
-	//cx, cy := ebiten.CursorPosition()
-	return 0 <= selectedTile && selectedTile < len(e.activeTileMap.Tiles[currentLayer]) //&& e.getTileMapIndexAtCoord(cx, cy) != -1
+	return 0 <= selectedTile && selectedTile < len(e.activeTileMap.Tiles[currentLayer])
 }
 
 func (e *Editor) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -1029,6 +1029,14 @@ func (e *Editor) doLink() {
 	}
 }
 
+func (e *Editor) doAutotile() {
+	ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
+	atd := DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
+	CurrentAutotileDelta.Join(atd)
+	CurrentAutotileDelta.tileMapIndex = e.activeTileMapIndex
+	CurrentAutotileDelta.z = currentLayer
+}
+
 func (e *Editor) postDoPencil() {
 	CurrentPencilDelta.z = currentLayer
 	CurrentPencilDelta.tileMapIndex = e.activeTileMapIndex
@@ -1054,6 +1062,11 @@ func (e *Editor) postDoObject() {
 func (e *Editor) postDoLink() {
 	UndoStack = append(UndoStack, CurrentLinkDelta)
 	CurrentLinkDelta = &LinkDelta{}
+}
+
+func (e *Editor) postDoAutotile() {
+	UndoStack = append(UndoStack, CurrentAutotileDelta)
+	CurrentAutotileDelta = &AutotileDelta{}
 }
 
 func (e *Editor) tryPlaceNpc() {

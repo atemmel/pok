@@ -97,21 +97,54 @@ func BuildNeighbors(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInf
 	return mat
 }
 
-func DecideTileIndicies(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInfo) {
+func DecideTileIndicies(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInfo) *AutotileDelta {
 	neighbors := BuildNeighbors(tileMap, tile, depth, texture, ati)
 	xStart := tile % tileMap.Width - 1
 	yStart := tile / tileMap.Width - 1
 
+	oldData := make(map[int]ModifiedTile)
+	newData := make(map[int]ModifiedTile)
+
+	oldTile := tileMap.Tiles[depth][tile]
+	oldTextureIndex := tileMap.TextureIndicies[depth][tile]
+
+	oldData[tile] = ModifiedTile{
+		oldTile,
+		oldTextureIndex,
+	}
+
 	ripple := func(x, y int) {
 		newTile := y * tileMap.Width + x
+
 		newNeighbors := BuildNeighbors(tileMap, newTile, depth, texture, ati)
 		newIndex := DecideTileIndex(newNeighbors, ati)
+
+		oldTile = tileMap.Tiles[depth][newTile]
+		oldTextureIndex = tileMap.TextureIndicies[depth][newTile]
+
+		if _, ok := oldData[newTile]; !ok {
+			oldData[newTile] = ModifiedTile{
+				oldTile,
+				tileMap.TextureIndicies[depth][newTile],
+			}
+		}
+
+		newData[newTile] = ModifiedTile{
+			newIndex,
+			texture,
+		}
+
 		tileMap.Tiles[depth][newTile] = newIndex
 		tileMap.TextureIndicies[depth][newTile] = texture
 	}
 
 	tileMap.Tiles[depth][tile] = ati.Center
 	tileMap.TextureIndicies[depth][tile] = texture
+
+	newData[tile] = ModifiedTile{
+		ati.Center,
+		texture,
+	}
 
 	for i := range neighbors {
 		for j := range neighbors[i] {
@@ -125,6 +158,13 @@ func DecideTileIndicies(tileMap *TileMap, tile, depth, texture int, ati *AutoTil
 
 	neighbors = BuildNeighbors(tileMap, tile, depth, texture, ati)
 	tileMap.Tiles[depth][tile] = DecideTileIndex(neighbors, ati)
+
+	return &AutotileDelta{
+		oldData,
+		newData,
+		0,
+		0,
+	}
 }
 
 func DecideTileIndex(neighbors [][]int, ati *AutoTileInfo) int {

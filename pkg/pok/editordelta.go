@@ -13,6 +13,7 @@ var CurrentPencilDelta *PencilDelta = &PencilDelta{}
 var CurrentEraserDelta *EraserDelta = &EraserDelta{}
 var CurrentObjectDelta *ObjectDelta = &ObjectDelta{}
 var CurrentLinkDelta *LinkDelta = &LinkDelta{}
+var CurrentAutotileDelta *AutotileDelta = &AutotileDelta{}
 
 func PerformUndo(ed *Editor) {
 	if len(UndoStack) > 0 {
@@ -136,4 +137,54 @@ func (dl *LinkDelta) Undo(ed *Editor) {
 
 func (dl *LinkDelta) Redo(ed *Editor) {
 	ed.tryConnectTileMaps(dl.linkBegin, dl.linkEnd)
+}
+
+type AutotileDelta struct {
+	oldValues map[int]ModifiedTile
+	newValues map[int]ModifiedTile
+	tileMapIndex int
+	z int
+}
+
+type ModifiedTile struct {
+	tile int
+	textureIndex int
+}
+
+func (a *AutotileDelta) Join(other *AutotileDelta) {
+	if len(a.oldValues) == 0 {
+		a.oldValues = other.oldValues
+	}
+
+	if len(a.newValues) == 0 {
+		a.newValues = other.newValues
+	}
+
+	for i, j := range other.oldValues {
+		if _, ok := a.oldValues[i]; !ok {
+			a.oldValues[i] = j
+		}
+	}
+
+	for i, j := range other.newValues {
+		a.newValues[i] = j
+	}
+}
+
+func (dat *AutotileDelta) Undo(ed *Editor) {
+	tm := ed.tileMaps[dat.tileMapIndex]
+
+	for i, j := range dat.oldValues {
+		tm.Tiles[dat.z][i] = j.tile
+		tm.TextureIndicies[dat.z][i] = j.textureIndex
+	}
+}
+
+func (dat *AutotileDelta) Redo(ed *Editor) {
+	tm := ed.tileMaps[dat.tileMapIndex]
+
+	for i, j := range dat.newValues {
+		tm.Tiles[dat.z][i] = j.tile
+		tm.TextureIndicies[dat.z][i] = j.textureIndex
+	}
 }
