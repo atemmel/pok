@@ -637,6 +637,8 @@ func (e *Editor) handleMapMouseInputs() {
 				e.postDoAutotile()
 		}
 
+		RedoStack = RedoStack[:0]
+
 		offset := e.tileMapOffsets[e.activeTileMapIndex]
 		offset.X = math.Round(offset.X / TileSize) * TileSize
 		offset.Y = math.Round(offset.Y / TileSize) * TileSize
