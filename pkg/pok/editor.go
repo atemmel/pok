@@ -907,8 +907,9 @@ func (e *Editor) drawLinksFromActiveTileMap() {
 	}
 }
 
-func (e *Editor) removeInvalidLinks() (map[int]Exit, map[int]Entry, []int, []int) {
-	exs := e.activeTileMap.Exits[:]
+func (e *Editor) removeInvalidLinks(tileMapIndex int) (map[int]Exit, map[int]Entry, []int, []int) {
+	tm := e.tileMaps[tileMapIndex]
+	exs := tm.Exits[:]
 
 	oldExits := make(map[int]Exit)
 	oldEntries := make(map[int]Entry)
@@ -920,45 +921,24 @@ func (e *Editor) removeInvalidLinks() (map[int]Exit, map[int]Entry, []int, []int
 	entryIndicies := make([]int, 0)
 
 	for i := 0; i < len(exs); i++ {
-		if exs[i].X >= e.activeTileMap.Width || exs[i].Y >= e.activeTileMap.Height {
+		if exs[i].X >= tm.Width || exs[i].Y >= tm.Height {
 			exitsToRemove = append(exitsToRemove, i)
 			exitIndicies = append(exitIndicies, i)
 			oldExits[i] = exs[i]
-			/*
-			ex, en := e.removeLink(e.activeTileMapIndex, i)
-			oldExits[i] = *ex
-			if en != nil {
-				oldEntries[i] = *en
-			}
-			i--
-			exs = e.activeTileMap.Exits[:]
-			*/
 		}
 	}
 
-	ens := e.activeTileMap.Entries[:]
+	ens := tm.Entries[:]
 	for i := 0; i < len(ens); i++ {
-		if ens[i].X >= e.activeTileMap.Width || ens[i].Y >= e.activeTileMap.Height {
+		if ens[i].X >= tm.Width || ens[i].Y >= tm.Height {
 			entriesToRemove = append(entriesToRemove, i)
 			entryIndicies = append(entryIndicies, i)
 			oldEntries[i] = ens[i]
-			/*
-			ex, en := e.removeLinkFromEntry(e.activeTileMapIndex, i)
-			if ex != nil {
-				oldExits[i] = *ex
-			}
-
-			if en != nil {
-				oldEntries[i] = *en
-			}
-			i--
-			ens = e.activeTileMap.Entries[:]
-			*/
 		}
 	}
 
 	for i := len(exitsToRemove) - 1; i >= 0; i-- {
-		_, ent := e.removeLink(e.activeTileMapIndex, exitsToRemove[i] )
+		_, ent := e.removeLink(tileMapIndex, exitsToRemove[i] )
 		if ent != nil {
 			for j := range entriesToRemove {
 				if entriesToRemove[j] == *ent {
@@ -976,7 +956,7 @@ func (e *Editor) removeInvalidLinks() (map[int]Exit, map[int]Entry, []int, []int
 			continue
 		}
 
-		_, ent := e.removeLinkFromEntry(e.activeTileMapIndex, entriesToRemove[i])
+		_, ent := e.removeLinkFromEntry(tileMapIndex, entriesToRemove[i])
 		if ent != nil {
 			for j := range entriesToRemove {
 				if entriesToRemove[j] > *ent {
@@ -1156,7 +1136,7 @@ func (e *Editor) postDoAutotile() {
 
 func (e *Editor) postDoResize(x, y, origin int) {
 	e.activeTileMap.Resize(x, y, origin)
-	exits, entries, exitIndicies, entryIndicies := e.removeInvalidLinks()
+	exits, entries, exitIndicies, entryIndicies := e.removeInvalidLinks(CurrentResizeDelta.tileMapIndex)
 
 	offsetX := 0.0
 	offsetY := 0.0

@@ -255,7 +255,7 @@ func (dr *ResizeDelta) Redo(ed *Editor) {
 	tm := ed.tileMaps[dr.tileMapIndex]
 
 	tm.Resize(dr.dx, dr.dy, dr.origin)
-	_, _, _, _ = ed.removeInvalidLinks()
+	_, _, _, _ = ed.removeInvalidLinks(dr.tileMapIndex)
 
 	ed.tileMapOffsets[dr.tileMapIndex].X += dr.offsetDeltaX
 	ed.tileMapOffsets[dr.tileMapIndex].Y += dr.offsetDeltaY
