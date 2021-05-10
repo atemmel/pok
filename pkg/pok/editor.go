@@ -538,7 +538,7 @@ func (e *Editor) handleMapMouseInputs() {
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) {
 		cx, cy := ebiten.CursorPosition();
 		if !e.isAlreadyClicking() && e.resizers[e.activeTileMapIndex].IsHolding() {
-			e.resizers[e.activeTileMapIndex].Hold()
+			e.doResize()
 		} else {
 			e.SelectTileFromMouse(cx, cy)
 			if e.selectedTileIsValid() {
@@ -568,17 +568,7 @@ func (e *Editor) handleMapMouseInputs() {
 	} else {
 		x, y, origin := e.resizers[e.activeTileMapIndex].Release()
 		if origin != -1 {
-			e.activeTileMap.Resize(x, y, origin)
-			e.removeInvalidLinks()
-
-			if origin == TopLeftCorner || origin == TopRightCorner {
-				e.tileMapOffsets[e.activeTileMapIndex].Y -= float64(y * TileSize)
-			}
-
-			if origin == TopLeftCorner || origin == BotLeftCorner {
-				e.tileMapOffsets[e.activeTileMapIndex].X -= float64(x * TileSize)
-			}
-			linkBegin = nil
+			e.postDoResize(x, y, origin)
 		}
 	}
 
@@ -791,21 +781,35 @@ func (e *Editor) tryConnectTileMaps(start, end *LinkData) {
 	startEntryIndex := 0
 	endEntryIndex := 0
 
-	startEntries := e.tileMaps[start.TileMapIndex].Entries
-	endEntries := e.tileMaps[end.TileMapIndex].Entries
+	startEntries := e.tileMaps[start.TileMapIndex].Entries[:]
+	endEntries := e.tileMaps[end.TileMapIndex].Entries[:]
 
-	for i := range startEntries {
-		if startEntryIndex != startEntries[i].Id {
+	for ; startEntryIndex < len(startEntries); startEntryIndex++ {
+		valid := true
+		for i := range startEntries {
+			if startEntryIndex == startEntries[i].Id {
+				valid = false
+				break
+			}
+		}
+
+		if valid {
 			break
 		}
-		startEntryIndex++
 	}
 
-	for i := range endEntries {
-		if endEntryIndex != endEntries[i].Id {
+	for ; endEntryIndex < len(endEntries); endEntryIndex++ {
+		valid := true
+		for i := range endEntries {
+			if endEntryIndex == endEntries[i].Id {
+				valid = false
+				break
+			}
+		}
+
+		if valid {
 			break
 		}
-		endEntryIndex++
 	}
 
 	entryA := Entry{
@@ -901,24 +905,89 @@ func (e *Editor) drawLinksFromActiveTileMap() {
 	}
 }
 
-func (e *Editor) removeInvalidLinks() {
-	ex := e.activeTileMap.Exits[:]
+func (e *Editor) removeInvalidLinks() (map[int]Exit, map[int]Entry, []int, []int) {
+	exs := e.activeTileMap.Exits[:]
 
-	for i := range ex {
-		if ex[i].X >= e.activeTileMap.Width || ex[i].Y >= e.activeTileMap.Height {
-			e.removeLink(e.activeTileMapIndex, i)
+	oldExits := make(map[int]Exit)
+	oldEntries := make(map[int]Entry)
+
+	exitsToRemove := make([]int, 0)
+	entriesToRemove := make([]int, 0)
+
+	exitIndicies := make([]int, 0)
+	entryIndicies := make([]int, 0)
+
+	for i := 0; i < len(exs); i++ {
+		if exs[i].X >= e.activeTileMap.Width || exs[i].Y >= e.activeTileMap.Height {
+			exitsToRemove = append(exitsToRemove, i)
+			exitIndicies = append(exitIndicies, i)
+			oldExits[i] = exs[i]
+			/*
+			ex, en := e.removeLink(e.activeTileMapIndex, i)
+			oldExits[i] = *ex
+			if en != nil {
+				oldEntries[i] = *en
+			}
+			i--
+			exs = e.activeTileMap.Exits[:]
+			*/
 		}
 	}
 
-	en := e.activeTileMap.Entries[:]
-	for i := range en {
-		if en[i].X >= e.activeTileMap.Width || en[i].Y >= e.activeTileMap.Height {
-			e.removeLinkFromEntry(e.activeTileMapIndex, i)
+	ens := e.activeTileMap.Entries[:]
+	for i := 0; i < len(ens); i++ {
+		if ens[i].X >= e.activeTileMap.Width || ens[i].Y >= e.activeTileMap.Height {
+			entriesToRemove = append(entriesToRemove, i)
+			entryIndicies = append(entryIndicies, i)
+			oldEntries[i] = ens[i]
+			/*
+			ex, en := e.removeLinkFromEntry(e.activeTileMapIndex, i)
+			if ex != nil {
+				oldExits[i] = *ex
+			}
+
+			if en != nil {
+				oldEntries[i] = *en
+			}
+			i--
+			ens = e.activeTileMap.Entries[:]
+			*/
 		}
 	}
+
+	for i := len(exitsToRemove) - 1; i >= 0; i-- {
+		_, ent := e.removeLink(e.activeTileMapIndex, exitsToRemove[i] )
+		if ent != nil {
+			for j := range entriesToRemove {
+				if entriesToRemove[j] == *ent {
+					entriesToRemove[j] = -1
+				}
+				if entriesToRemove[j] > *ent {
+					entriesToRemove[j]--
+				}
+			}
+		}
+	}
+
+	for i := len(entriesToRemove) - 1; i >= 0; i-- {
+		if entriesToRemove[i] == -1 {
+			continue
+		}
+
+		_, ent := e.removeLinkFromEntry(e.activeTileMapIndex, entriesToRemove[i])
+		if ent != nil {
+			for j := range entriesToRemove {
+				if entriesToRemove[j] > *ent {
+					entriesToRemove[j]--
+				}
+			}
+		}
+	}
+
+	return oldExits, oldEntries, exitIndicies, entryIndicies
 }
 
-func (e *Editor) removeLink(tileMapIndex, exitIndex int) {
+func (e *Editor) removeLink(tileMapIndex, exitIndex int) (*int, *int){
 	exs := e.tileMaps[tileMapIndex].Exits[:]
 	ex := exs[exitIndex]
 	e.tileMaps[tileMapIndex].Exits = append(exs[:exitIndex], exs[exitIndex+1:]...)
@@ -932,28 +1001,35 @@ func (e *Editor) removeLink(tileMapIndex, exitIndex int) {
 	}
 
 	if otherTileMap == nil {
-		return
+		return &exitIndex, nil
 	}
+
+	var entry *int
 
 	for i := range otherTileMap.Entries {
 		if otherTileMap.Entries[i].Id == ex.Id {
+			cpy := i
+			entry = &cpy
 			otherTileMap.Entries = append(otherTileMap.Entries[:i], otherTileMap.Entries[i+1:]...)
 			break
 		}
 	}
+
+	return &exitIndex, entry
 }
 
-func (e *Editor) removeLinkFromEntry(tileMapIndex, entryIndex int) {
+func (e *Editor) removeLinkFromEntry(tileMapIndex, entryIndex int) (*int, *int) {
 	en := e.tileMaps[tileMapIndex].Entries[entryIndex]
 	for otherTileMapIndex, tm := range e.tileMaps {
 		for i := range tm.Exits {
 			target := e.activeFiles[tileMapIndex]
 			if tm.Exits[i].Target == target && tm.Exits[i].Id == en.Id {
-				e.removeLink(otherTileMapIndex, i)
-				break
+				return e.removeLink(otherTileMapIndex, i)
 			}
 		}
 	}
+
+	return nil, nil
 }
 
 func (e *Editor) doPencil() {
@@ -1019,11 +1095,13 @@ func (e *Editor) doLink() {
 			selectionY,
 			e.activeTileMapIndex,
 		}
+
 		e.tryConnectTileMaps(linkBegin, linkEnd)
 
 		CurrentLinkDelta.linkBegin = linkBegin
 		CurrentLinkDelta.linkEnd = linkEnd
 		linkBegin = nil
+		linkEnd = nil
 
 		e.postDoLink()
 	}
@@ -1035,6 +1113,11 @@ func (e *Editor) doAutotile() {
 	CurrentAutotileDelta.Join(atd)
 	CurrentAutotileDelta.tileMapIndex = e.activeTileMapIndex
 	CurrentAutotileDelta.z = currentLayer
+}
+
+func (e *Editor) doResize() {
+	e.resizers[e.activeTileMapIndex].Hold()
+	CurrentResizeDelta.tileMapIndex = e.activeTileMapIndex
 }
 
 func (e *Editor) postDoPencil() {
@@ -1067,6 +1150,38 @@ func (e *Editor) postDoLink() {
 func (e *Editor) postDoAutotile() {
 	UndoStack = append(UndoStack, CurrentAutotileDelta)
 	CurrentAutotileDelta = &AutotileDelta{}
+}
+
+func (e *Editor) postDoResize(x, y, origin int) {
+	e.activeTileMap.Resize(x, y, origin)
+	exits, entries, exitIndicies, entryIndicies := e.removeInvalidLinks()
+
+	offsetX := 0.0
+	offsetY := 0.0
+
+	if origin == TopLeftCorner || origin == TopRightCorner {
+		offsetY = -float64(y * TileSize)
+		e.tileMapOffsets[e.activeTileMapIndex].Y += offsetY
+	}
+
+	if origin == TopLeftCorner || origin == BotLeftCorner {
+		offsetX = -float64(x * TileSize)
+		e.tileMapOffsets[e.activeTileMapIndex].X += offsetX
+	}
+	linkBegin = nil
+
+	CurrentResizeDelta.dx = x
+	CurrentResizeDelta.dy = y
+	CurrentResizeDelta.origin = origin
+	CurrentResizeDelta.offsetDeltaX = offsetX
+	CurrentResizeDelta.offsetDeltaY = offsetY
+	CurrentResizeDelta.oldExits = exits
+	CurrentResizeDelta.oldEntries = entries
+	CurrentResizeDelta.exitIndicies = exitIndicies
+	CurrentResizeDelta.entryIndicies = entryIndicies
+
+	UndoStack = append(UndoStack, CurrentResizeDelta)
+	CurrentResizeDelta = &ResizeDelta{}
 }
 
 func (e *Editor) tryPlaceNpc() {

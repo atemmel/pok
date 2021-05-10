@@ -15,6 +15,8 @@ var CurrentObjectDelta *ObjectDelta = &ObjectDelta{}
 var CurrentLinkDelta *LinkDelta = &LinkDelta{}
 var CurrentAutotileDelta *AutotileDelta = &AutotileDelta{}
 
+var CurrentResizeDelta *ResizeDelta = &ResizeDelta{}
+
 func PerformUndo(ed *Editor) {
 	if len(UndoStack) > 0 {
 		top := UndoStack[len(UndoStack) - 1]
@@ -187,4 +189,68 @@ func (dat *AutotileDelta) Redo(ed *Editor) {
 		tm.Tiles[dat.z][i] = j.tile
 		tm.TextureIndicies[dat.z][i] = j.textureIndex
 	}
+}
+
+type ResizeDelta struct {
+	oldExits map[int]Exit
+	oldEntries map[int]Entry
+	exitIndicies []int
+	entryIndicies []int
+
+	offsetDeltaX, offsetDeltaY float64
+	dx, dy, origin int
+	tileMapIndex int
+}
+
+func (dr *ResizeDelta) InsertExitsAndEntries(tm *TileMap) {
+
+	findIndexLessThan := func(value int, span []int) *int {
+		if len(span) == 0 {
+			return nil
+		}
+
+		var min *int = nil
+
+		for i := range span {
+			if span[i] > value {
+				min = &span[i]
+			}
+		}
+
+		if min == nil {
+			return nil
+		}
+
+		for i := range span {
+			if span[i] > value && span[i] < *min {
+				min = &span[i]
+			}
+		}
+
+		return min
+	}
+
+	for i := findIndexLessThan(-1, dr.exitIndicies[:]); i != nil; i = findIndexLessThan(*i, dr.exitIndicies[:]){
+		tm.Exits = append(tm.Exits[:*i+1], tm.Exits[*i:]...)
+		tm.Exits[*i] = dr.oldExits[*i]
+	}
+
+	for i := findIndexLessThan(-1, dr.entryIndicies[:]); i != nil; i = findIndexLessThan(*i, dr.entryIndicies[:]){
+		tm.Entries = append(tm.Entries[:*i+1], tm.Entries[*i:]...)
+		tm.Entries[*i] = dr.oldEntries[*i]
+	}
+}
+
+func (dr *ResizeDelta) Undo(ed *Editor) {
+	tm := ed.tileMaps[dr.tileMapIndex]
+
+	tm.Resize(-dr.dx, -dr.dy, dr.origin)
+	dr.InsertExitsAndEntries(tm)
+
+	ed.tileMapOffsets[dr.tileMapIndex].X -= dr.offsetDeltaX
+	ed.tileMapOffsets[dr.tileMapIndex].Y -= dr.offsetDeltaY
+}
+
+func (dr *ResizeDelta) Redo(ed *Editor) {
+
 }

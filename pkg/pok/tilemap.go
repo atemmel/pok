@@ -411,20 +411,6 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 		}
 	}
 
-	for i, exit := range t.Exits {
-		if exit.X >= t.Width || exit.Y >= t.Height {
-			t.Exits[i] = t.Exits[len(t.Exits) - 1]
-			t.Exits = t.Exits[:len(t.Exits) - 1]
-		}
-	}
-
-	for i, entry := range t.Entries {
-		if entry.X >= t.Width || entry.Y >= t.Height {
-			t.Entries[i] = t.Entries[len(t.Entries) - 1]
-			t.Entries = t.Entries[:len(t.Entries) - 1]
-		}
-	}
-
 	if origin == BotLeftCorner || origin == BotRightCorner {
 		ndy = 0
 	}
