@@ -12,6 +12,7 @@ var RedoStack = make([]Delta, 0, preAllocDelta)
 var CurrentPencilDelta *PencilDelta = &PencilDelta{}
 var CurrentEraserDelta *EraserDelta = &EraserDelta{}
 var CurrentObjectDelta *ObjectDelta = &ObjectDelta{}
+var CurrentRemoveObjectDelta *RemoveObjectDelta = &RemoveObjectDelta{}
 var CurrentLinkDelta *LinkDelta = &LinkDelta{}
 var CurrentAutotileDelta *AutotileDelta = &AutotileDelta{}
 var CurrentNpcDelta *NpcDelta = &NpcDelta{}
@@ -109,6 +110,18 @@ func (do *ObjectDelta) Redo(ed *Editor) {
 	tm := ed.tileMaps[do.tileMapIndex]
 	obj := &ed.objectGrid.objs[do.objectIndex]
 	tm.InsertObject(obj, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex])
+}
+
+type RemoveObjectDelta struct {
+	objectDelta *ObjectDelta
+}
+
+func (dor *RemoveObjectDelta) Undo(ed *Editor) {
+	dor.objectDelta.Redo(ed)
+}
+
+func (dor *RemoveObjectDelta) Redo(ed *Editor) {
+	dor.objectDelta.Undo(ed)
 }
 
 type LinkDelta struct {

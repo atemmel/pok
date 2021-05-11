@@ -548,18 +548,6 @@ func (e *Editor) handleMapMouseInputs() {
 				if activeTool == Pencil {
 					e.doPencil()
 				} else if activeTool == Eraser {
-					//TODO: Map to undo class
-					/*
-					if ebiten.IsKeyPressed(ebiten.KeyShift) {
-						col := selectedTile % e.activeTileMap.Width
-						row := selectedTile / e.activeTileMap.Width
-						i := HasPlacedObjectAt(placedObjects[e.activeTileMapIndex], col, row)
-						if i != -1 {
-							e.activeTileMap.EraseObject(placedObjects[e.activeTileMapIndex][i], &e.objectGrid.objs[placedObjects[e.activeTileMapIndex][i].Index])
-							placedObjects[e.activeTileMapIndex][i] = placedObjects[e.activeTileMapIndex][len(placedObjects[e.activeTileMapIndex]) - 1]
-							placedObjects[e.activeTileMapIndex] = placedObjects[e.activeTileMapIndex][:len(placedObjects[e.activeTileMapIndex]) - 1]
-						}
-					*/
 					e.doEraser()
 				} else if activeTool == AutoTile {
 					e.doAutotile()
@@ -578,17 +566,15 @@ func (e *Editor) handleMapMouseInputs() {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) && !ebiten.IsKeyPressed(ebiten.KeyShift) {
 		cx, cy := ebiten.CursorPosition();
 		e.SelectTileFromMouse(cx, cy)
-		switch activeTool {
-			case Object:
-				if e.selectedTileIsValid() {
+		if e.selectedTileIsValid() {
+			switch activeTool {
+				case Object:
 					e.doObject()
-				}
-			case Link:
-				if e.selectedTileIsValid() {
+				case Link:
 					e.doLink()
-				}
-			case PlaceNpc:
-				e.doPlaceNpc()
+				case PlaceNpc:
+					e.doPlaceNpc()
+			}
 		}
 	}
 
@@ -596,7 +582,10 @@ func (e *Editor) handleMapMouseInputs() {
 		cx, cy := ebiten.CursorPosition();
 		e.SelectTileFromMouse(cx, cy)
 		if e.selectedTileIsValid() {
-			e.activeTileMap.Collision[currentLayer][selectedTile] = !e.activeTileMap.Collision[currentLayer][selectedTile]
+			switch activeTool {
+				case Object:
+					e.doRemoveObject()
+			}
 		}
 	}
 
@@ -647,6 +636,13 @@ func (e *Editor) handleMapMouseInputs() {
 		offset := e.tileMapOffsets[e.activeTileMapIndex]
 		offset.X = math.Round(offset.X / TileSize) * TileSize
 		offset.Y = math.Round(offset.Y / TileSize) * TileSize
+	}
+
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButton(1)) {
+		switch activeTool {
+			case Object:
+				e.postDoRemoveObject()
+		}
 	}
 }
 
@@ -1065,6 +1061,29 @@ func (e *Editor) doObject() {
 	CurrentObjectDelta.z = currentLayer
 }
 
+func (e *Editor) doRemoveObject() {
+	col := selectedTile % e.activeTileMap.Width
+	row := selectedTile / e.activeTileMap.Width
+	i := HasPlacedObjectAt(placedObjects[e.activeTileMapIndex], col, row)
+	if i == -1 {
+		return
+	}
+
+	od := &ObjectDelta{
+		i,
+		placedObjects[e.activeTileMapIndex][i].Index,
+		e.activeTileMapIndex,
+		selectedTile,
+		currentLayer,
+	}
+
+	e.activeTileMap.EraseObject(placedObjects[e.activeTileMapIndex][i], &e.objectGrid.objs[placedObjects[e.activeTileMapIndex][i].Index])
+	placedObjects[e.activeTileMapIndex][i] = placedObjects[e.activeTileMapIndex][len(placedObjects[e.activeTileMapIndex]) - 1]
+	placedObjects[e.activeTileMapIndex] = placedObjects[e.activeTileMapIndex][:len(placedObjects[e.activeTileMapIndex]) - 1]
+
+	CurrentRemoveObjectDelta.objectDelta = od
+}
+
 func (e *Editor) doLink() {
 	if selectionX < 0 || selectionY < 0 {
 		return
@@ -1127,6 +1146,15 @@ func (e *Editor) postDoEraser() {
 func (e *Editor) postDoObject() {
 	UndoStack = append(UndoStack, CurrentObjectDelta)
 	CurrentObjectDelta = &ObjectDelta{}
+}
+
+func (e *Editor) postDoRemoveObject() {
+	if CurrentRemoveObjectDelta.objectDelta == nil {
+		return
+	}
+
+	UndoStack = append(UndoStack, CurrentRemoveObjectDelta)
+	CurrentRemoveObjectDelta = &RemoveObjectDelta{}
 }
 
 func (e *Editor) postDoLink() {
