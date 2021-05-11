@@ -6,8 +6,6 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sqweek/dialog"
 	"io/ioutil"
 	"image"
@@ -35,6 +33,7 @@ var drawUi = false
 var activeTool = Pencil
 var placedObjects [][]PlacedEditorObject = make([][]PlacedEditorObject, 0)
 var linkBegin *LinkData
+var lastSavedUndoStackLength = 0
 
 type LinkData struct {
 	X, Y int
@@ -81,7 +80,6 @@ type Editor struct {
 	activeTileMapIndex int
 
 	activeTileMap *TileMap
-	lastSavedTileMaps []*TileMap
 	rend Renderer
 	grid Grid
 	objectGrid ObjectGrid
@@ -315,7 +313,6 @@ func (e *Editor) loadFile() {
 		}
 	} else {
 		e.updateEditorWithNewTileMap(tm)
-		(*e.lastSavedTileMaps[len(e.lastSavedTileMaps)-1]) = *tm
 	}
 }
 
@@ -348,7 +345,6 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 
 func (e *Editor) appendTileMap(tileMap *TileMap) {
 	placedObjects = append(placedObjects, make([]PlacedEditorObject, 0))
-	e.lastSavedTileMaps = append(e.lastSavedTileMaps, &TileMap{})
 	e.tileMaps = append(e.tileMaps, tileMap)
 	e.tileMapOffsets = append(e.tileMapOffsets, &Vec2{0, 0})
 	e.activeTileMap = e.tileMaps[len(e.tileMaps)-1]
@@ -364,21 +360,19 @@ func (e *Editor) saveFile() {
 		return
 	}
 
-	//TODO: Rethink this, save each file individually or all at once?
-	for i := range e.tileMaps {
-		tm := *e.tileMaps[i]
-		e.lastSavedTileMaps[i] = &tm
-	}
+	lastSavedUndoStackLength = len(UndoStack)
 }
 
 func (e *Editor) hasSaved() bool {
+	/*
 	for i := range e.tileMaps {
 		opt := cmpopts.IgnoreUnexported(NpcInfo{}, TileMap{})
 		if !cmp.Equal(e.lastSavedTileMaps[i], e.tileMaps[i], opt) {
 			return false
 		}
 	}
-	return true
+	*/
+	return len(UndoStack) == lastSavedUndoStackLength
 }
 func (e *Editor) unsavedWorkDialog() {
 	//TODO: Refactor
