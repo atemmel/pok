@@ -84,6 +84,7 @@ type Editor struct {
 	grid Grid
 	objectGrid ObjectGrid
 	selection *ebiten.Image
+	backgroundGrid *ebiten.Image
 	collisionMarker *ebiten.Image
 	deleteableMarker *ebiten.Image
 	exitMarker *ebiten.Image
@@ -112,11 +113,24 @@ func NewEditor() *Editor {
 	es.collisionMarker, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
 	es.exitMarker, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
 	es.deleteableMarker, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
+	es.backgroundGrid, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
 
 	selectionClr := color.RGBA{255, 0, 0, 255}
 	collisionClr := color.RGBA{255, 0, 255, 255}
 	exitClr := color.RGBA{0, 0, 255, 255}
 	deleteableClr := color.RGBA{150, 0, 0, 255}
+	//backgroundGridClr := color.RGBA{55, 55, 55, 255}
+	backgroundGridClr := color.RGBA{255, 255, 255, 25}
+
+	for p := 0; p < es.selection.Bounds().Max.X; p++ {
+		es.selection.Set(p, 0, selectionClr)
+		es.selection.Set(p, es.selection.Bounds().Max.Y - 1, selectionClr)
+	}
+
+	for p := 1; p < es.selection.Bounds().Max.Y - 1; p++ {
+		es.selection.Set(0, p, selectionClr)
+		es.selection.Set(es.selection.Bounds().Max.Y - 1, p, selectionClr)
+	}
 
 	for p := 0; p < es.selection.Bounds().Max.X; p++ {
 		es.selection.Set(p, 0, selectionClr)
@@ -146,6 +160,16 @@ func NewEditor() *Editor {
 		}
 	}
 
+	for p := 0; p < es.backgroundGrid.Bounds().Max.X; p++ {
+		es.backgroundGrid.Set(p, 0, backgroundGridClr)
+		es.backgroundGrid.Set(p, es.backgroundGrid.Bounds().Max.Y - 1, backgroundGridClr)
+	}
+
+	for p := 1; p < es.backgroundGrid.Bounds().Max.Y - 1; p++ {
+		es.backgroundGrid.Set(0, p, backgroundGridClr)
+		es.backgroundGrid.Set(es.backgroundGrid.Bounds().Max.Y - 1, p, backgroundGridClr)
+	}
+
 	es.rend = NewRenderer(DisplaySizeX, DisplaySizeY, 1)
 
 	es.clickStartX = -1
@@ -170,6 +194,8 @@ func (e *Editor) Update(screen *ebiten.Image) error {
 }
 
 func (e *Editor) Draw(screen *ebiten.Image) {
+	e.DrawBackgroundGrid()
+
 	for i := range e.tileMaps {
 		offset := e.tileMapOffsets[i]
 		e.tileMaps[i].DrawWithOffset(&e.rend, offset.X, offset.Y)
@@ -208,6 +234,32 @@ x: %f, y: %f
 zoom: %d%%
 %s`, e.rend.Cam.X, e.rend.Cam.Y, int(e.rend.Cam.Scale * 100), ToolNames[activeTool])
 	ebitenutil.DebugPrint(screen, debugStr)
+}
+
+func (e *Editor) DrawBackgroundGrid() {
+	xMax := e.rend.Cam.W * e.rend.Cam.Scale
+	yMax := e.rend.Cam.H * e.rend.Cam.Scale
+
+
+	x := e.rend.Cam.X - float64(int(e.rend.Cam.X) % TileSize) - TileSize
+	xLeft := x + TileSize
+
+	for x < xLeft + xMax {
+		y := e.rend.Cam.Y - float64(int(e.rend.Cam.Y) % TileSize) - TileSize
+		yLeft := y + TileSize
+		for y < yLeft + yMax {
+			e.rend.Draw(&RenderTarget{
+				&ebiten.DrawImageOptions{},
+				e.backgroundGrid,
+				nil,
+				x,
+				y,
+				-1337,
+			})
+			y += float64(e.backgroundGrid.Bounds().Max.Y)
+		}
+		x += float64(e.backgroundGrid.Bounds().Max.X)
+	}
 }
 
 func (e *Editor) DrawTileMapDetail() {

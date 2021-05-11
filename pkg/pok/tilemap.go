@@ -114,7 +114,7 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 				&rect,
 				x + offsetX,
 				y + offsetY,
-				uint32(j * 2),
+				j * 2,
 			})
 		}
 	}

@@ -15,7 +15,7 @@ type RenderTarget struct {
 	SubImage *image.Rectangle	// nil if drawing entire Src
 	X float64
 	Y float64
-	Z uint32
+	Z int
 }
 
 type DebugLine struct {
@@ -159,7 +159,7 @@ func (r *Renderer) cullRenderTargets() {
 }
 
 func (r *Renderer) clear() {
-	r.dest.Fill(color.Black)
+	r.dest.Fill(color.RGBA{51, 77, 77, 255})
 }
 
 func (r *Renderer) ZoomToPoint(scale, x, y float64) {
