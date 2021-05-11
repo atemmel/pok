@@ -16,6 +16,7 @@ var CurrentRemoveObjectDelta *RemoveObjectDelta = &RemoveObjectDelta{}
 var CurrentLinkDelta *LinkDelta = &LinkDelta{}
 var CurrentAutotileDelta *AutotileDelta = &AutotileDelta{}
 var CurrentNpcDelta *NpcDelta = &NpcDelta{}
+var CurrentRemoveNpcDelta *RemoveNpcDelta = &RemoveNpcDelta{}
 
 var CurrentResizeDelta *ResizeDelta = &ResizeDelta{}
 
@@ -290,4 +291,16 @@ func (dn *NpcDelta) Redo(ed *Editor) {
 	tm := ed.tileMaps[dn.tileMapIndex]
 	dn.npcIndex = len(tm.npcs)
 	tm.PlaceNpc(dn.npcInfo)
+}
+
+type RemoveNpcDelta struct {
+	npcDelta *NpcDelta
+}
+
+func (drn *RemoveNpcDelta) Undo(ed *Editor) {
+	drn.npcDelta.Redo(ed)
+}
+
+func (drn *RemoveNpcDelta) Redo(ed *Editor) {
+	drn.npcDelta.Undo(ed)
 }

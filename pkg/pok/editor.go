@@ -585,6 +585,8 @@ func (e *Editor) handleMapMouseInputs() {
 			switch activeTool {
 				case Object:
 					e.doRemoveObject()
+				case PlaceNpc:
+					e.doRemoveNpc()
 			}
 		}
 	}
@@ -642,6 +644,8 @@ func (e *Editor) handleMapMouseInputs() {
 		switch activeTool {
 			case Object:
 				e.postDoRemoveObject()
+			case PlaceNpc:
+				e.postDoRemoveNpc()
 		}
 	}
 }
@@ -1200,12 +1204,21 @@ func (e *Editor) postDoResize(x, y, origin int) {
 }
 
 func (e *Editor) postDoNpc() {
-	if(CurrentNpcDelta.npcInfo == nil) {
+	if CurrentNpcDelta.npcInfo == nil {
 		return
 	}
 
 	UndoStack = append(UndoStack, CurrentNpcDelta)
 	CurrentNpcDelta = &NpcDelta{}
+}
+
+func (e *Editor) postDoRemoveNpc() {
+	if CurrentRemoveNpcDelta.npcDelta == nil {
+		return
+	}
+
+	UndoStack = append(UndoStack, CurrentRemoveNpcDelta)
+	CurrentRemoveNpcDelta = &RemoveNpcDelta{}
 }
 
 func (e *Editor) doPlaceNpc() {
@@ -1239,6 +1252,34 @@ func (e *Editor) doPlaceNpc() {
 		CurrentNpcDelta.npcIndex = len(e.activeTileMap.npcs) -1
 		CurrentNpcDelta.tileMapIndex = e.activeTileMapIndex
 	}
+}
+
+func (e *Editor) doRemoveNpc() {
+	x := selectedTile % e.activeTileMap.Width
+	y := selectedTile / e.activeTileMap.Width
+	index := -1
+	for i := range e.activeTileMap.NpcInfo {
+		if e.activeTileMap.NpcInfo[i].X == x && e.activeTileMap.NpcInfo[i].Y == y {
+			index = i
+			break
+		}
+	}
+
+	if index == -1 {
+		return
+	}
+
+	ni := e.activeTileMap.NpcInfo[index]
+
+	nd := &NpcDelta{
+		&ni,
+		len(e.activeTileMap.npcs) - 1,
+		e.activeTileMapIndex,
+	}
+
+	e.activeTileMap.RemoveNpc(nd.npcIndex)
+
+	CurrentRemoveNpcDelta.npcDelta = nd
 }
 
 func listPngs(dir string) []string {
