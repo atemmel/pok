@@ -14,6 +14,7 @@ var CurrentEraserDelta *EraserDelta = &EraserDelta{}
 var CurrentObjectDelta *ObjectDelta = &ObjectDelta{}
 var CurrentRemoveObjectDelta *RemoveObjectDelta = &RemoveObjectDelta{}
 var CurrentLinkDelta *LinkDelta = &LinkDelta{}
+var CurrentRemoveLinkDelta *RemoveLinkDelta = &RemoveLinkDelta{}
 var CurrentAutotileDelta *AutotileDelta = &AutotileDelta{}
 var CurrentNpcDelta *NpcDelta = &NpcDelta{}
 var CurrentRemoveNpcDelta *RemoveNpcDelta = &RemoveNpcDelta{}
@@ -154,6 +155,56 @@ func (dl *LinkDelta) Undo(ed *Editor) {
 
 func (dl *LinkDelta) Redo(ed *Editor) {
 	ed.tryConnectTileMaps(dl.linkBegin, dl.linkEnd)
+}
+
+type RemoveLinkDelta struct {
+	entry *Entry
+	exit *Exit
+	tileMapIndex int
+}
+
+func (drl *RemoveLinkDelta) Undo(ed *Editor) {
+	tm := ed.tileMaps[drl.tileMapIndex]
+	if drl.entry != nil {
+		tm.Entries = append(tm.Entries, *drl.entry)
+	}
+	if drl.exit != nil {
+		tm.Exits = append(tm.Exits, *drl.exit)
+	}
+}
+
+func (drl *RemoveLinkDelta) Redo(ed *Editor) {
+	tm := ed.tileMaps[drl.tileMapIndex]
+	if drl.entry != nil {
+		entryIndex := -1
+
+		for i := range tm.Entries {
+			if tm.Exits[i].X == drl.entry.X && tm.Exits[i].Y == drl.entry.Y {
+				entryIndex = i
+				break
+			}
+		}
+
+		if entryIndex != -1 {
+			tm.Entries[entryIndex] = tm.Entries[len(tm.Entries)-1]
+			tm.Entries = tm.Entries[:len(tm.Entries)-1]
+		}
+	}
+	if drl.exit != nil {
+		exitIndex := -1
+
+		for i := range tm.Exits {
+			if tm.Exits[i].X == drl.entry.X && tm.Exits[i].Y == drl.entry.Y {
+				exitIndex = i
+				break
+			}
+		}
+
+		if exitIndex != -1 {
+			tm.Exits[exitIndex] = tm.Exits[len(tm.Exits)-1]
+			tm.Exits = tm.Exits[:len(tm.Exits)-1]
+		}
+	}
 }
 
 type AutotileDelta struct {

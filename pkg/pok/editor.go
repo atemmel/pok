@@ -570,6 +570,8 @@ func (e *Editor) handleMapMouseInputs() {
 			switch activeTool {
 				case Object:
 					e.doRemoveObject()
+				case Link:
+					e.doRemoveLink()
 				case PlaceNpc:
 					e.doRemoveNpc()
 			}
@@ -629,6 +631,8 @@ func (e *Editor) handleMapMouseInputs() {
 		switch activeTool {
 			case Object:
 				e.postDoRemoveObject()
+			case Link:
+				e.postDoRemoveLink()
 			case PlaceNpc:
 				e.postDoRemoveNpc()
 		}
@@ -1102,6 +1106,49 @@ func (e *Editor) doLink() {
 	}
 }
 
+func (e *Editor) doRemoveLink() {
+	if selectionX < 0 || selectionY < 0 {
+		return
+	}
+
+	exitIndex := -1
+	entryIndex := -1
+
+	for i := range e.activeTileMap.Exits {
+		if e.activeTileMap.Exits[i].X == selectionX && e.activeTileMap.Exits[i].Y == selectionY {
+			exitIndex = i
+			break
+		}
+	}
+
+	for i := range e.activeTileMap.Entries {
+		if e.activeTileMap.Exits[i].X == selectionX && e.activeTileMap.Exits[i].Y == selectionY {
+			entryIndex = i
+			break
+		}
+	}
+
+	if exitIndex == -1 && entryIndex == -1 {
+		return
+	}
+
+	if exitIndex != -1 {
+		exit := e.activeTileMap.Exits[exitIndex]
+		CurrentRemoveLinkDelta.exit = &exit
+		e.activeTileMap.Exits[exitIndex] = e.activeTileMap.Exits[len(e.activeTileMap.Exits)-1]
+		e.activeTileMap.Exits = e.activeTileMap.Exits[:len(e.activeTileMap.Exits)-1]
+	}
+
+	if entryIndex != -1 {
+		entry := e.activeTileMap.Entries[entryIndex]
+		CurrentRemoveLinkDelta.entry = &entry
+		e.activeTileMap.Entries[entryIndex] = e.activeTileMap.Entries[len(e.activeTileMap.Entries)-1]
+		e.activeTileMap.Entries = e.activeTileMap.Entries[:len(e.activeTileMap.Entries)-1]
+	}
+
+	CurrentRemoveLinkDelta.tileMapIndex = e.activeTileMapIndex
+}
+
 func (e *Editor) doAutotile() {
 	ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
 	atd := DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
@@ -1149,6 +1196,15 @@ func (e *Editor) postDoRemoveObject() {
 func (e *Editor) postDoLink() {
 	UndoStack = append(UndoStack, CurrentLinkDelta)
 	CurrentLinkDelta = &LinkDelta{}
+}
+
+func (e *Editor) postDoRemoveLink() {
+	if CurrentRemoveLinkDelta.entry == nil && CurrentRemoveLinkDelta.exit == nil {
+		return
+	}
+
+	UndoStack = append(UndoStack, CurrentRemoveLinkDelta)
+	CurrentRemoveLinkDelta = &RemoveLinkDelta{}
 }
 
 func (e *Editor) postDoAutotile() {
