@@ -462,6 +462,13 @@ func (t *TileMap) PlaceNpc(ni *NpcInfo) {
 	t.npcs = append(t.npcs, BuildNpcFromNpcInfo(t, ni))
 }
 
+func (t *TileMap) RemoveNpc(index int) {
+	t.NpcInfo[index] = t.NpcInfo[len(t.NpcInfo)-1]
+	t.npcs[index] = t.npcs[len(t.npcs)-1]
+	t.NpcInfo = t.NpcInfo[:len(t.NpcInfo) - 1]
+	t.npcs = t.npcs[:len(t.npcs) - 1]
+}
+
 func (t *TileMap) Within(x, y int) bool {
 	return x < t.Width && x >= 0 && y < t.Height && y >= 0
 }

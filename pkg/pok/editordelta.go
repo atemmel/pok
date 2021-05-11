@@ -14,6 +14,7 @@ var CurrentEraserDelta *EraserDelta = &EraserDelta{}
 var CurrentObjectDelta *ObjectDelta = &ObjectDelta{}
 var CurrentLinkDelta *LinkDelta = &LinkDelta{}
 var CurrentAutotileDelta *AutotileDelta = &AutotileDelta{}
+var CurrentNpcDelta *NpcDelta = &NpcDelta{}
 
 var CurrentResizeDelta *ResizeDelta = &ResizeDelta{}
 
@@ -259,4 +260,21 @@ func (dr *ResizeDelta) Redo(ed *Editor) {
 
 	ed.tileMapOffsets[dr.tileMapIndex].X += dr.offsetDeltaX
 	ed.tileMapOffsets[dr.tileMapIndex].Y += dr.offsetDeltaY
+}
+
+type NpcDelta struct {
+	npcInfo *NpcInfo
+	tileMapIndex int
+	npcIndex int
+}
+
+func (dn *NpcDelta) Undo(ed *Editor) {
+	tm := ed.tileMaps[dn.tileMapIndex]
+	tm.RemoveNpc(dn.npcIndex)
+}
+
+func (dn *NpcDelta) Redo(ed *Editor) {
+	tm := ed.tileMaps[dn.tileMapIndex]
+	dn.npcIndex = len(tm.npcs)
+	tm.PlaceNpc(dn.npcInfo)
 }

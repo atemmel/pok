@@ -19,6 +19,8 @@ import (
 	"strings"
 )
 
+var WorkingDir, _ = os.Getwd()
+
 var selectionX int
 var selectionY int
 var copyBuffer = 0
@@ -294,6 +296,7 @@ func (e *Editor) TransformPointToCam(cx, cy int) (int, int) {
 func (e *Editor) loadFile() {
 
 	file, err := dialog.File().Title("Open map").Filter("All Files", "*").Load()
+	os.Chdir(WorkingDir)
 	if err != nil && file == ""{
 		return
 	} else if err != nil {
@@ -585,7 +588,7 @@ func (e *Editor) handleMapMouseInputs() {
 					e.doLink()
 				}
 			case PlaceNpc:
-				e.tryPlaceNpc()
+				e.doPlaceNpc()
 		}
 	}
 
@@ -635,6 +638,8 @@ func (e *Editor) handleMapMouseInputs() {
 				e.postDoObject()
 			case AutoTile:
 				e.postDoAutotile()
+			case PlaceNpc:
+				e.postDoNpc()
 		}
 
 		RedoStack = RedoStack[:0]
@@ -1166,12 +1171,22 @@ func (e *Editor) postDoResize(x, y, origin int) {
 	CurrentResizeDelta = &ResizeDelta{}
 }
 
-func (e *Editor) tryPlaceNpc() {
+func (e *Editor) postDoNpc() {
+	if(CurrentNpcDelta.npcInfo == nil) {
+		return
+	}
+
+	UndoStack = append(UndoStack, CurrentNpcDelta)
+	CurrentNpcDelta = &NpcDelta{}
+}
+
+func (e *Editor) doPlaceNpc() {
 	x := selectedTile % e.activeTileMap.Width
 	y := selectedTile / e.activeTileMap.Width
 	if !e.npcAtPosition(x, y) {
 		i := e.npcGrid.GetIndex()
 		file, err := dialog.File().Title("Select NPC dialog file").Filter("All Files", "*").Load()
+		os.Chdir(WorkingDir)
 		if err != nil && file == ""{
 			return
 		} else if err != nil {
@@ -1191,6 +1206,10 @@ func (e *Editor) tryPlaceNpc() {
 		}
 
 		e.activeTileMap.PlaceNpc(ni)
+
+		CurrentNpcDelta.npcInfo = ni
+		CurrentNpcDelta.npcIndex = len(e.activeTileMap.npcs) -1
+		CurrentNpcDelta.tileMapIndex = e.activeTileMapIndex
 	}
 }
 

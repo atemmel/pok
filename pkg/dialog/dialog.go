@@ -172,7 +172,7 @@ func (dt *DialogTree) UnmarshalJSON(bytes []byte) error {
 func ReadDialogTreeFromFile(path string) (*DialogTree, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	tree := &DialogTree{}
