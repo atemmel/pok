@@ -364,18 +364,9 @@ func (e *Editor) saveFile() {
 }
 
 func (e *Editor) hasSaved() bool {
-	/*
-	for i := range e.tileMaps {
-		opt := cmpopts.IgnoreUnexported(NpcInfo{}, TileMap{})
-		if !cmp.Equal(e.lastSavedTileMaps[i], e.tileMaps[i], opt) {
-			return false
-		}
-	}
-	*/
 	return len(UndoStack) == lastSavedUndoStackLength
 }
 func (e *Editor) unsavedWorkDialog() {
-	//TODO: Refactor
 	shouldDie := dialog.Message("You have unsaved work. Are you sure you want to exit?").Title("Unsaved work").YesNo()
 	if shouldDie {
 		os.Exit(0)
