@@ -185,8 +185,8 @@ func (r *Resize) tryClick(px, py int, cam *Camera) bool {
 	py += int(cam.Y)
 
 	for i := range corners {
-		cx := corners[i].x + float64(r.outlined.Bounds().Max.X / 2) + r.offset.X
-		cy := corners[i].y + float64(r.outlined.Bounds().Max.X / 2) + r.offset.Y
+		cx := (corners[i].x + float64(r.outlined.Bounds().Max.X / 2) + r.offset.X) * cam.Scale
+		cy := (corners[i].y + float64(r.outlined.Bounds().Max.X / 2) + r.offset.Y) * cam.Scale
 
 		b := circleIntersect(float64(px), float64(py), cx, cy, DragRadius)
 		r.holding[i] = b

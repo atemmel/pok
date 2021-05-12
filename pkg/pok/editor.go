@@ -322,24 +322,17 @@ func (e *Editor) DrawTileMapDetail() {
 
 func (e *Editor) SelectTileFromMouse(cx, cy int) {
 	offset := e.tileMapOffsets[e.activeTileMapIndex]
-	cx, cy = e.TransformPointToCam(cx, cy)
-	cx += int(e.rend.Cam.X)
-	cy += int(e.rend.Cam.Y)
-	cx -= int(offset.X)
-	cy -= int(offset.Y)
+	cx += int(math.Round(e.rend.Cam.X - offset.X))
+	cy += int(math.Round(e.rend.Cam.Y - offset.Y))
+
+	cx = int(float64(cx) / e.rend.Cam.Scale)
+	cy = int(float64(cy) / e.rend.Cam.Scale)
 
 	cx -= cx % TileSize
 	cy -= cy % TileSize
 	selectionX = cx / TileSize
 	selectionY = cy / TileSize
 	selectedTile =  selectionX + selectionY * e.activeTileMap.Width
-}
-
-func (e *Editor) TransformPointToCam(cx, cy int) (int, int) {
-	ds := 1 / (e.rend.Cam.Scale)
-	cx = int(float64(cx) * ds)
-	cy = int(float64(cy) * ds)
-	return cx, cy
 }
 
 func (e *Editor) loadFile() {
@@ -570,7 +563,6 @@ func (e *Editor) handleMapMouseInputs() {
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 		cx, cy := ebiten.CursorPosition();
-		cx, cy = e.TransformPointToCam(cx, cy)
 		e.resizers[e.activeTileMapIndex].tryClick(cx, cy, &e.rend.Cam)
 	}
 
@@ -635,8 +627,8 @@ func (e *Editor) handleMapMouseInputs() {
 			e.clickStartY = float64(cy)
 			e.clickStartX = float64(cx)
 		} else {
-			e.rend.Cam.X -= (float64(cx) - e.clickStartX) / e.rend.Cam.Scale
-			e.rend.Cam.Y -= (float64(cy) - e.clickStartY) / e.rend.Cam.Scale
+			e.rend.Cam.X -= float64(cx) - e.clickStartX
+			e.rend.Cam.Y -= float64(cy) - e.clickStartY
 			e.clickStartX = float64(cx)
 			e.clickStartY = float64(cy)
 		}
@@ -647,8 +639,8 @@ func (e *Editor) handleMapMouseInputs() {
 			e.clickStartX = float64(cx)
 		} else {
 			offset := e.tileMapOffsets[e.activeTileMapIndex]
-			offset.X += (float64(cx) - e.clickStartX) / e.rend.Cam.Scale
-			offset.Y += (float64(cy) - e.clickStartY) / e.rend.Cam.Scale
+			offset.X += float64(cx) - e.clickStartX
+			offset.Y += float64(cy) - e.clickStartY
 			e.clickStartX = float64(cx)
 			e.clickStartY = float64(cy)
 		}
@@ -779,12 +771,13 @@ func (e *Editor) setActiveTileMap(index int) {
 func (e *Editor) getTileMapIndexAtCoord(cx, cy int) int {
 	p := image.Point{cx, cy}
 	for i := range e.tileMaps {
-		w := int(float64(e.tileMaps[i].Width * TileSize) * e.rend.Cam.Scale)
-		h := int(float64(e.tileMaps[i].Height * TileSize) * e.rend.Cam.Scale)
-		x := int(e.tileMapOffsets[i].X - e.rend.Cam.X)
-		y := int(e.tileMapOffsets[i].Y - e.rend.Cam.Y)
+		w := int(float64(e.tileMaps[i].Width * TileSize) / e.rend.Cam.Scale)
+		h := int(float64(e.tileMaps[i].Height * TileSize) / e.rend.Cam.Scale)
+		x := int(math.Round((e.tileMapOffsets[i].X - e.rend.Cam.X) / e.rend.Cam.Scale))
+		y := int(math.Round((e.tileMapOffsets[i].Y - e.rend.Cam.Y) / e.rend.Cam.Scale))
 
 		r := image.Rect(x, y, x + w, y + h)
+
 		if p.In(r) {
 			return i
 		}

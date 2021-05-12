@@ -1,7 +1,6 @@
 package pok
 
 import (
-	//"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"image"
@@ -50,10 +49,10 @@ type Camera struct {
 
 func (c *Camera) AsRect() image.Rectangle {
 	return image.Rect(
-		int(c.X),
-		int(c.Y),
-		int(c.X + c.W),
-		int(c.Y + c.H),
+		int(c.X) - TileSize,
+		int(c.Y) - TileSize,
+		int(c.X + (c.W / c.Scale)) + TileSize,
+		int(c.Y + (c.H / c.Scale)) + TileSize,
 	)
 }
 
@@ -93,7 +92,8 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	r.prepareRenderTargets()
 
 	for _, t := range r.targets {
-		t.Op.GeoM.Translate(t.X - r.Cam.X, t.Y - r.Cam.Y)
+		t.Op.GeoM.Scale(r.Cam.Scale, r.Cam.Scale)
+		t.Op.GeoM.Translate(t.X * r.Cam.Scale - r.Cam.X, t.Y * r.Cam.Scale - r.Cam.Y)
 		if t.SubImage != nil {
 			r.dest.DrawImage(t.Src.SubImage(*t.SubImage).(*ebiten.Image), t.Op)
 		} else {
@@ -102,16 +102,14 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	}
 
 	for _, d := range r.debugLines {
-		x1 := float64(d.X1) - r.Cam.X
-		y1 := float64(d.Y1) - r.Cam.Y
-		x2 := float64(d.X2) - r.Cam.X
-		y2 := float64(d.Y2) - r.Cam.Y
-		//fmt.Println(x1, y1, x2, y2)
+		x1 := (float64(d.X1) * r.Cam.Scale - r.Cam.X)
+		y1 := (float64(d.Y1) * r.Cam.Scale - r.Cam.Y)
+		x2 := (float64(d.X2) * r.Cam.Scale - r.Cam.X)
+		y2 := (float64(d.Y2) * r.Cam.Scale - r.Cam.Y)
 		ebitenutil.DrawLine(r.dest, x1, y1, x2, y2, d.Clr)
 	}
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Scale(r.Cam.Scale, r.Cam.Scale)
 	screen.DrawImage(r.dest, op)
 	r.targets = r.targets[:0]
 	r.debugLines = r.debugLines[:0]
@@ -125,18 +123,18 @@ func (r *Renderer) cullRenderTargets() {
 	rect := r.Cam.AsRect()
 	for i := 0; i < len(r.targets); i++ {
 		prospect := image.Rect(
-			int(r.targets[i].X),
-			int(r.targets[i].Y),
-			int(r.targets[i].X),
-			int(r.targets[i].Y),
+			int(r.targets[i].X / r.Cam.Scale),
+			int(r.targets[i].Y / r.Cam.Scale),
+			int(r.targets[i].X / r.Cam.Scale),
+			int(r.targets[i].Y / r.Cam.Scale),
 		)
 
 		if r.targets[i].SubImage != nil {
-			prospect.Max.X += r.targets[i].SubImage.Max.X - r.targets[i].SubImage.Min.X
-			prospect.Max.Y += r.targets[i].SubImage.Max.Y - r.targets[i].SubImage.Min.Y
+			prospect.Max.X += int(float64(r.targets[i].SubImage.Max.X - r.targets[i].SubImage.Min.X) / r.Cam.Scale)
+			prospect.Max.Y += int(float64(r.targets[i].SubImage.Max.Y - r.targets[i].SubImage.Min.Y) / r.Cam.Scale)
 		} else {
-			prospect.Max.X += r.targets[i].Src.Bounds().Max.X
-			prospect.Max.Y += r.targets[i].Src.Bounds().Max.Y
+			prospect.Max.X += int(float64(r.targets[i].Src.Bounds().Max.X) / r.Cam.Scale)
+			prospect.Max.Y += int(float64(r.targets[i].Src.Bounds().Max.Y) / r.Cam.Scale)
 		}
 
 		if !rect.Overlaps(prospect) {
