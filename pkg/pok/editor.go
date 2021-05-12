@@ -119,7 +119,6 @@ func NewEditor() *Editor {
 	collisionClr := color.RGBA{255, 0, 255, 255}
 	exitClr := color.RGBA{0, 0, 255, 255}
 	deleteableClr := color.RGBA{150, 0, 0, 255}
-	//backgroundGridClr := color.RGBA{55, 55, 55, 255}
 	backgroundGridClr := color.RGBA{255, 255, 255, 25}
 
 	for p := 0; p < es.selection.Bounds().Max.X; p++ {

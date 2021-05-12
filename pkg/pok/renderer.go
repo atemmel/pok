@@ -159,7 +159,7 @@ func (r *Renderer) cullRenderTargets() {
 }
 
 func (r *Renderer) clear() {
-	r.dest.Fill(color.RGBA{51, 77, 77, 255})
+	r.dest.Fill(color.RGBA{48, 64, 80, 255})
 }
 
 func (r *Renderer) ZoomToPoint(scale, x, y float64) {
