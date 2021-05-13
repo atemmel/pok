@@ -239,9 +239,8 @@ zoom: %d%%
 }
 
 func (e *Editor) DrawBackgroundGrid() {
-	xMax := e.rend.Cam.W * e.rend.Cam.Scale
-	yMax := e.rend.Cam.H * e.rend.Cam.Scale
-
+	xMax := e.rend.Cam.W / e.rend.Cam.Scale
+	yMax := e.rend.Cam.H / e.rend.Cam.Scale
 
 	x := e.rend.Cam.X - float64(int(e.rend.Cam.X) % TileSize) - TileSize
 	xLeft := x + TileSize
@@ -558,9 +557,13 @@ func (e *Editor) handleMapMouseInputs() {
 	_, dy := ebiten.Wheel()
 	if dy != 0. {
 		if dy < 0 {
-			e.rend.ZoomToCenter(e.rend.Cam.Scale - 0.1)
+			if e.rend.Cam.Scale > 0.50000001 {
+				e.rend.ZoomToCenter(e.rend.Cam.Scale - 0.1)
+			}
 		} else {
-			e.rend.ZoomToCenter(e.rend.Cam.Scale + 0.1)
+			if e.rend.Cam.Scale < 2.0 {
+				e.rend.ZoomToCenter(e.rend.Cam.Scale + 0.1)
+			}
 		}
 	}
 
@@ -632,8 +635,8 @@ func (e *Editor) handleMapMouseInputs() {
 			e.clickStartY = float64(cy)
 			e.clickStartX = float64(cx)
 		} else {
-			e.rend.Cam.X -= float64(cx) - e.clickStartX
-			e.rend.Cam.Y -= float64(cy) - e.clickStartY
+			e.rend.Cam.X -= (float64(cx) - e.clickStartX) / e.rend.Cam.Scale
+			e.rend.Cam.Y -= (float64(cy) - e.clickStartY) / e.rend.Cam.Scale
 			e.clickStartX = float64(cx)
 			e.clickStartY = float64(cy)
 		}
