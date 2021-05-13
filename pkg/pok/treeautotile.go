@@ -1,7 +1,6 @@
 package pok
 
 import(
-	"fmt"
 	"image"
 )
 
