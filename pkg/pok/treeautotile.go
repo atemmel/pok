@@ -20,21 +20,30 @@ type TreeAutoTileInfo struct {
 	textureWidth int
 }
 
-func (tati *TreeAutoTileInfo) IsLeftJoinable(index int, isCrowd bool) bool {
+// Unnecesary extensibility, Lmao q8^)
+
+func (self *TreeAutoTileInfo) IsLeftJoinable(index int, isCrowd bool) bool {
+	return self.IsJoinableX(3, 1, index, isCrowd) || self.IsJoinableX(5, 1, index, isCrowd)
+}
+
+func (self *TreeAutoTileInfo) IsRightJoinable(index int, isCrowd bool) bool {
+	return self.IsJoinableX(3, 1, index, isCrowd) || self.IsJoinableX(5, 1, index, isCrowd)
+}
+
+func (self *TreeAutoTileInfo) IsJoinableX(crowdX, singleX, index int, isCrowd bool) bool {
 	if isCrowd {
 		for i := 0; i < CrowdTreeHeight; i++ {
-			j := tati.GetCrowd(CrowdTreeWidth - 3, i)
-			if j == tati.crowdArr[index] {
+			j := self.GetCrowd(crowdX, i)
+			if j == self.crowdArr[index] {
 				return true
 			}
 		}
 	} else {
 		for i := 0; i < SingleTreeHeight; i++ {
-			j:= tati.GetSingle(SingleTreeWidth - 3, i)
-			if j == tati.singleArr[index] {
+			j:= self.GetSingle(singleX, i)
+			if j == self.singleArr[index] {
 				return true
 			}
-			fmt.Println(j, index)
 		}
 	}
 
@@ -62,9 +71,13 @@ func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	if i != -1 {
 		if tx < 0 {
 			if tati.IsLeftJoinable(i, crowdFound) {
-				fmt.Println("YES")
 				PlaceBaselessSingularTree(tileMap, tati, x, y, depth)
 				JoinTreesLeft(tileMap, tati, x, y, depth)
+			}
+		} else if tx > 0 {
+			if tati.IsRightJoinable(i, crowdFound) {
+				PlaceBaselessSingularTree(tileMap, tati, x, y, depth)
+				JoinTreesRight(tileMap, tati, x, y, depth)
 			}
 		}
 
@@ -74,9 +87,18 @@ func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	}
 }
 
+func SelectJoinPatternfromX(x int) (int, int) {
+	if x % 4 > 2 {
+		return 2, 3
+	}
+	return 4, 5
+}
+
 func JoinTreesLeft(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+	ltile, rtile := SelectJoinPatternfromX(x)
+
 	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
-		tile := tati.GetCrowd(4, ty)
+		tile := tati.GetCrowd(ltile, ty)
 		ex, ey := 0 + x, ty + y
 		if tileMap.Within(ex, ey) {
 			index := ey * tileMap.Width + ex
@@ -85,7 +107,7 @@ func JoinTreesLeft(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	}
 
 	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
-		tile := tati.GetCrowd(5, ty)
+		tile := tati.GetCrowd(rtile, ty)
 		ex, ey := 1 + x, ty + y
 		if tileMap.Within(ex, ey) {
 			index := ey * tileMap.Width + ex
@@ -94,23 +116,52 @@ func JoinTreesLeft(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	}
 }
 
+func JoinTreesRight(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+	ltile, rtile := SelectJoinPatternfromX(x)
+
+	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
+		tile := tati.GetCrowd(ltile, ty)
+		ex, ey := 2 + x, ty + y
+		if tileMap.Within(ex, ey) {
+			index := ey * tileMap.Width + ex
+			tileMap.Tiles[depth][index] = tile
+		}
+	}
+
+	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
+		tile := tati.GetCrowd(rtile, ty)
+		ex, ey := 3 + x, ty + y
+		if tileMap.Within(ex, ey) {
+			index := ey * tileMap.Width + ex
+			tileMap.Tiles[depth][index] = tile
+		}
+	}
+}
+
 func FindNearbyTrees(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) (int, int, int, bool) {
-	for tx := x -1; tx < x+1; tx++ {
-		for ty := y-1; ty < y+1; ty++ {
+	offsetX := []int{-1, 0, 3}
+	offsetY := []int{-1, 0, 3}
+
+	for _, ox := range offsetX {
+		for _, oy := range offsetY {
+			if ox == 0 && oy == 0 {
+				continue
+			}
+
+			tx, ty := x + ox, y + oy
 			if tileMap.Within(tx, ty) {
 				// more likely to be within crowd than single
 				ti := ty * tileMap.Width + tx
 				for t, tv := range tati.crowdArr {
 					if tv == tileMap.Tiles[depth][ti] {
-						fmt.Println("MHM")
-						return t, tx - x, ty - y, true
+						return t, ox, oy, true
 					}
 				}
 
 				// also check single
 				for t, tv := range tati.singleArr {
 					if tv == tileMap.Tiles[depth][ti] {
-						return t, tx - x, ty - y, false
+						return t, ox, oy, false
 					}
 				}
 			}
@@ -184,6 +235,4 @@ func (self *TreeAutoTileInfo) prepare() {
 		tx++
 	}
 
-	fmt.Println(self.crowdArr)
-	fmt.Println(self.singleArr)
 }
