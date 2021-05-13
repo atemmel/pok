@@ -105,7 +105,7 @@ type Editor struct {
 	dieOnNextTick bool
 }
 
-func NewEditor() *Editor {
+func NewEditor(paths []string) *Editor {
 	tati.prepare()
 	var err error
 	es := &Editor{}
@@ -186,6 +186,13 @@ func NewEditor() *Editor {
 	es.npcImagesStrings = listPngs(CharacterImagesDir)
 	es.npcImages = loadImages(es.npcImagesStrings, CharacterImagesDir)
 	es.npcGrid = NewNpcGrid(es.npcImages)
+
+	for _, s := range paths {
+		tm, err := es.loadFile(s)
+		if err == nil {
+			es.updateEditorWithNewTileMap(tm)
+		}
+	}
 
 	return es;
 }
@@ -324,11 +331,11 @@ func (e *Editor) DrawTileMapDetail() {
 
 func (e *Editor) SelectTileFromMouse(cx, cy int) {
 	offset := e.tileMapOffsets[e.activeTileMapIndex]
-	cx += int(math.Round(e.rend.Cam.X - offset.X))
-	cy += int(math.Round(e.rend.Cam.Y - offset.Y))
-
 	cx = int(float64(cx) / e.rend.Cam.Scale)
 	cy = int(float64(cy) / e.rend.Cam.Scale)
+
+	cx += int(math.Round(e.rend.Cam.X - offset.X))
+	cy += int(math.Round(e.rend.Cam.Y - offset.Y))
 
 	cx -= cx % TileSize
 	cy -= cy % TileSize
@@ -337,7 +344,7 @@ func (e *Editor) SelectTileFromMouse(cx, cy int) {
 	selectedTile =  selectionX + selectionY * e.activeTileMap.Width
 }
 
-func (e *Editor) loadFile() {
+func (e *Editor) loadFileDialog() {
 
 	file, err := dialog.File().Title("Open map").Filter("All Files", "*").Load()
 	os.Chdir(WorkingDir)
@@ -348,9 +355,7 @@ func (e *Editor) loadFile() {
 		return
 	}
 
-	e.nextFile = file
-	tm := &TileMap{}
-	err = tm.OpenFile(file)
+	tm, err := e.loadFile(file)
 	if err != nil {
 		doNewFile := dialog.Message("Could not open file %s. Create new file?", file).Title("Create new file?").YesNo()
 		if doNewFile {
@@ -360,6 +365,13 @@ func (e *Editor) loadFile() {
 	} else {
 		e.updateEditorWithNewTileMap(tm)
 	}
+}
+
+func (e *Editor) loadFile(file string) (*TileMap, error) {
+	e.nextFile = file
+	tm := &TileMap{}
+	err := tm.OpenFile(file)
+	return tm, err
 }
 
 func (e *Editor) newFile() {
@@ -498,7 +510,7 @@ func (e *Editor) handleInputs() error {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
-		e.loadFile()
+		e.loadFileDialog()
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyN) {
@@ -572,7 +584,7 @@ func (e *Editor) handleMapMouseInputs() {
 		e.resizers[e.activeTileMapIndex].tryClick(cx, cy, &e.rend.Cam)
 	}
 
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) && !ebiten.IsKeyPressed(ebiten.KeyShift) {
 		cx, cy := ebiten.CursorPosition();
 		if !e.isAlreadyClicking() && e.resizers[e.activeTileMapIndex].IsHolding() {
 			e.doResize()
@@ -657,7 +669,7 @@ func (e *Editor) handleMapMouseInputs() {
 		e.clickStartY = -1
 	}
 
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButton(0)) {
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButton(0)) && !ebiten.IsKeyPressed(ebiten.KeyControl) && !ebiten.IsKeyPressed(ebiten.KeyShift) {
 		switch activeTool {
 			case Pencil:
 				e.postDoPencil()
