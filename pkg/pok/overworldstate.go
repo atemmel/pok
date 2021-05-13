@@ -209,19 +209,20 @@ func (o *OverworldState) Draw(g *Game, screen *ebiten.Image) {
 
 	if drawUi {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(
-`player.x: %d
-player.y: %d
+`player.x: %f
+player.y: %f
 player.id: %d
 currentLayer: %d
 drawOnlyCurrentLayer: %t
 selectedTexture: %d`,
-			g.Player.Char.X, g.Player.Char.Y, g.Player.Id, currentLayer,
+			g.Player.Char.Gx, g.Player.Char.Gy, g.Player.Id, currentLayer,
 			drawOnlyCurrentLayer, o.tileMap.Tiles[currentLayer][selectedTile]) )
 	}
 
 	g.Dialog.Draw(screen)
 }
 
+//TODO: Remove usage of DisplaySizex, DisplaySizeY
 func (g *Game) CenterRendererOnPlayer() {
 	g.Rend.LookAt(
 		g.Player.Char.Gx - DisplaySizeX / 4 + TileSize / 2,

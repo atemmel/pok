@@ -26,6 +26,7 @@ func CreateGame() *Game {
 	Assert(err)
 	activePlayerImg = playerImg
 	g.Dialog = NewDialogBox()
+	drawUi = true
 
 	return g
 }
@@ -102,7 +103,8 @@ func (g *Game) Load(str string, entrypoint int) {
 	}
 	g.Player.Char.Gx = float64(g.Player.Char.X * TileSize)
 	g.Player.Char.Gy = float64(g.Player.Char.Y * TileSize)
-	g.Rend = NewRenderer(DisplaySizeX,
+	g.Rend = NewRenderer(
+		DisplaySizeX,
 		DisplaySizeY,
 		2,
 	)

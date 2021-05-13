@@ -51,8 +51,8 @@ func (c *Camera) AsRect() image.Rectangle {
 	return image.Rect(
 		int(c.X) - TileSize,
 		int(c.Y) - TileSize,
-		int(c.X + (c.W / c.Scale)) + TileSize,
-		int(c.Y + (c.H / c.Scale)) + TileSize,
+		int(c.X + (c.W / c.Scale)),
+		int(c.Y + (c.H / c.Scale)),
 	)
 }
 
@@ -92,8 +92,8 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	r.prepareRenderTargets()
 
 	for _, t := range r.targets {
+		t.Op.GeoM.Translate(t.X - r.Cam.X, t.Y - r.Cam.Y)
 		t.Op.GeoM.Scale(r.Cam.Scale, r.Cam.Scale)
-		t.Op.GeoM.Translate(t.X * r.Cam.Scale - r.Cam.X, t.Y * r.Cam.Scale - r.Cam.Y)
 		if t.SubImage != nil {
 			r.dest.DrawImage(t.Src.SubImage(*t.SubImage).(*ebiten.Image), t.Op)
 		} else {
@@ -120,23 +120,29 @@ func (r *Renderer) prepareRenderTargets() {
 }
 
 func (r *Renderer) cullRenderTargets() {
+	// interpret camera as a bounding box
 	rect := r.Cam.AsRect()
+
+	// iterate through targets
 	for i := 0; i < len(r.targets); i++ {
+
+		// create bounding box from target
 		prospect := image.Rect(
-			int(r.targets[i].X / r.Cam.Scale),
-			int(r.targets[i].Y / r.Cam.Scale),
-			int(r.targets[i].X / r.Cam.Scale),
-			int(r.targets[i].Y / r.Cam.Scale),
+			int(r.targets[i].X),
+			int(r.targets[i].Y),
+			int(r.targets[i].X),
+			int(r.targets[i].Y),
 		)
 
 		if r.targets[i].SubImage != nil {
-			prospect.Max.X += int(float64(r.targets[i].SubImage.Max.X - r.targets[i].SubImage.Min.X) / r.Cam.Scale)
-			prospect.Max.Y += int(float64(r.targets[i].SubImage.Max.Y - r.targets[i].SubImage.Min.Y) / r.Cam.Scale)
+			prospect.Max.X += r.targets[i].SubImage.Dx()
+			prospect.Max.Y += r.targets[i].SubImage.Dy()
 		} else {
-			prospect.Max.X += int(float64(r.targets[i].Src.Bounds().Max.X) / r.Cam.Scale)
-			prospect.Max.Y += int(float64(r.targets[i].Src.Bounds().Max.Y) / r.Cam.Scale)
+			prospect.Max.X += r.targets[i].Src.Bounds().Max.X
+			prospect.Max.Y += r.targets[i].Src.Bounds().Max.Y
 		}
 
+		// if camera does not overlap target bounding box
 		if !rect.Overlaps(prospect) {
 			r.targets[i] = r.targets[len(r.targets) - 1] // Copy last element
 			r.targets = r.targets[:len(r.targets) - 1]	// Pop back

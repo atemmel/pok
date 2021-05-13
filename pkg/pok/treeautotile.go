@@ -1,28 +1,19 @@
 package pok
 
-/*
-import(
-	"encoding/json"
-	"io/ioutil"
-	"log"
-	"strings"
-)
-*/
-
 import(
 	"image"
 )
 
 const(
 	SingleTreeWidth = 4
-	SingleTreeHeight = 3
+	SingleTreeHeight = 4
 	CrowdTreeWidth = 8
-	CrowdTreeHeight = 6
+	CrowdTreeHeight = 8
 )
 
 type TreeAutoTileInfo struct {
-	Single image.Rectangle
-	Crowd image.Rectangle
+	Single image.Point
+	Crowd image.Point
 	singleArr [SingleTreeWidth*SingleTreeHeight]int
 	crowdArr [CrowdTreeWidth*CrowdTreeHeight]int
 	textureWidth int
@@ -56,6 +47,10 @@ func (self *TreeAutoTileInfo) GetCrowd(x, y int) int {
 }
 
 func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+	depth += 1
+	for depth >= len(tileMap.Tiles) {
+		tileMap.AppendLayer()
+	}
 	// Place singular tree
 	for tx := 0; tx < SingleTreeWidth; tx++ {
 		for ty := 0; ty < SingleTreeHeight; ty++ {
@@ -70,17 +65,19 @@ func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 }
 
 func (self *TreeAutoTileInfo) prepare() {
+	//self.Single = image.Rect(8, 608, 56, 672)
+	self.Single = image.Point{0, 38*2}
+	self.textureWidth = 128 / TileSize
 	// do single tree
-	x := self.Single.Min.X
-	y := self.Single.Min.Y
-	w := self.Single.Dx()
+	x := self.Single.X
+	y := self.Single.Y
 
-	base := y * self.textureWidth + x
+	base := y * SingleTreeWidth + x
 
 	ty := 0
 	tx := 0
 	for i := range self.singleArr {
-		if tx > w {
+		if tx > self.textureWidth {
 			ty++
 			tx = 0
 		}
@@ -89,20 +86,4 @@ func (self *TreeAutoTileInfo) prepare() {
 	}
 
 	// do crowd tree
-	x = self.Crowd.Min.X
-	y = self.Crowd.Min.Y
-	w = self.Single.Dx()
-
-	base = y * self.textureWidth + x
-
-	ty = 0
-	tx = 0
-	for i := range self.crowdArr {
-		if tx > w {
-			ty++
-			tx = 0
-		}
-		self.crowdArr[i] = ty * self.textureWidth + base + tx
-		tx++
-	}
 }

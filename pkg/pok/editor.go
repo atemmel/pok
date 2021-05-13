@@ -35,6 +35,8 @@ var placedObjects [][]PlacedEditorObject = make([][]PlacedEditorObject, 0)
 var linkBegin *LinkData
 var lastSavedUndoStackLength = 0
 
+var tati = &TreeAutoTileInfo{}
+
 type LinkData struct {
 	X, Y int
 	TileMapIndex int
@@ -104,6 +106,7 @@ type Editor struct {
 }
 
 func NewEditor() *Editor {
+	tati.prepare()
 	var err error
 	es := &Editor{}
 
@@ -573,14 +576,16 @@ func (e *Editor) handleMapMouseInputs() {
 		} else {
 			e.SelectTileFromMouse(cx, cy)
 			if e.selectedTileIsValid() {
-				if activeTool == Pencil {
-					e.doPencil()
-				} else if activeTool == Eraser {
-					e.doEraser()
-				} else if activeTool == AutoTile {
-					e.doAutotile()
-				} else if activeTool == Tree {
-					//TODO: perform tree logic
+				switch activeTool {
+					case Pencil:
+						e.doPencil()
+					case Eraser:
+						e.doEraser()
+					case AutoTile:
+						e.doAutotile()
+					case Tree:
+						//TODO: perform tree logic
+						PlaceTree(e.activeTileMap, tati, selectionX, selectionY, currentLayer)
 				}
 			}
 		}
