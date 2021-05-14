@@ -15,8 +15,7 @@ func (t *TreeAreaSelection) ClampToTileMap(tm *TileMap) {
 
 }
 
-func (t *TreeAreaSelection) Hold(x, y int, cam *Camera) {
-	x, y = fitToCamera(x, y, cam)
+func (t *TreeAreaSelection) Hold(x, y int) {
 	if t.BeginX == nil && t.BeginY == nil {
 		t.BeginX = &x
 		t.BeginY = &y
@@ -26,16 +25,23 @@ func (t *TreeAreaSelection) Hold(x, y int, cam *Camera) {
 	}
 }
 
+func abs(i int) int {
+	if i < 0 {
+		return -i
+	}
+	return i
+}
+
 func (t *TreeAreaSelection) Draw(rend *Renderer) {
 	if !t.IsHolding() {
 		return
 	}
 
-	x0 := float64(*t.BeginX)
-	y0 := float64(*t.BeginY)
+	x0 := float64(*t.BeginX * TileSize) / rend.Cam.Scale
+	y0 := float64(*t.BeginY * TileSize) / rend.Cam.Scale
 
-	x1 := float64(t.EndX)
-	y1 := float64(t.EndY)
+	x1 := float64(t.EndX * TileSize) / rend.Cam.Scale
+	y1 := float64(t.EndY * TileSize) / rend.Cam.Scale
 
 	clr := color.RGBA{255, 0, 0, 255}
 
@@ -83,13 +89,6 @@ func (t *TreeAreaSelection) IsHolding() bool {
 func (t *TreeAreaSelection) Release() {
 	if t.BeginX == nil || t.BeginY == nil {
 		return
-	}
-
-	abs := func(i int) int {
-		if i < 0 {
-			return -i
-		}
-		return i
 	}
 
 	w := abs(*t.BeginX - t.EndX)

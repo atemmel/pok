@@ -603,7 +603,7 @@ func (e *Editor) handleMapMouseInputs() {
 					case Tree:
 						//TODO: perform tree logic
 						//PlaceTree(e.activeTileMap, tati, selectionX, selectionY, currentLayer)
-						treeArea.Hold(cx, cy, &e.rend.Cam)
+						treeArea.Hold(selectionX, selectionY)
 				}
 			}
 		}
@@ -625,8 +625,6 @@ func (e *Editor) handleMapMouseInputs() {
 					e.doLink()
 				case PlaceNpc:
 					e.doPlaceNpc()
-				case Tree:
-					treeArea.Release()
 			}
 		}
 	}
@@ -686,6 +684,8 @@ func (e *Editor) handleMapMouseInputs() {
 				e.postDoAutotile()
 			case PlaceNpc:
 				e.postDoNpc()
+			case Tree:
+				treeArea.Release()
 		}
 
 		RedoStack = RedoStack[:0]
