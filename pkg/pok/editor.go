@@ -36,6 +36,7 @@ var linkBegin *LinkData
 var lastSavedUndoStackLength = 0
 
 var tati = &TreeAutoTileInfo{}
+var treeArea = &TreeAreaSelection{}
 
 type LinkData struct {
 	X, Y int
@@ -204,6 +205,7 @@ func (e *Editor) Update(screen *ebiten.Image) error {
 
 func (e *Editor) Draw(screen *ebiten.Image) {
 	e.DrawBackgroundGrid()
+	treeArea.Draw(&e.rend)
 
 	for i := range e.tileMaps {
 		offset := e.tileMapOffsets[i]
@@ -600,7 +602,8 @@ func (e *Editor) handleMapMouseInputs() {
 						e.doAutotile()
 					case Tree:
 						//TODO: perform tree logic
-						PlaceTree(e.activeTileMap, tati, selectionX, selectionY, currentLayer)
+						//PlaceTree(e.activeTileMap, tati, selectionX, selectionY, currentLayer)
+						treeArea.Hold(cx, cy, &e.rend.Cam)
 				}
 			}
 		}
@@ -622,6 +625,8 @@ func (e *Editor) handleMapMouseInputs() {
 					e.doLink()
 				case PlaceNpc:
 					e.doPlaceNpc()
+				case Tree:
+					treeArea.Release()
 			}
 		}
 	}

@@ -5,7 +5,7 @@ import(
 )
 
 const(
-	SingleTreeWidth = 4
+	SingleTreeWidth = 5
 	SingleTreeHeight = 4
 	CrowdTreeWidth = 8
 	CrowdTreeHeight = 6
@@ -118,6 +118,8 @@ func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 				PlaceBaselessSingularTree(tileMap, tati, x, y, depth)
 				JoinTreesDown(tileMap, tati, x, y, depth)
 			}
+		} else {
+			DoTreeDownBorder(tileMap, tati, x, y, depth)
 		}
 
 	} else {
@@ -126,11 +128,18 @@ func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	}
 }
 
-func SelectJoinPatternfromX(x int) (int, int) {
+func SelectJoinPatternFromX(x int) (int, int) {
 	if x % 4 > 2 {
 		return 2, 3
 	}
 	return 4, 5
+}
+
+func SelectLowerPartsFromX(x int) (int, int) {
+	if x % 4 > 2 {
+		return 0, 0
+	}
+	return 0, 0
 }
 
 func JoinTreesDown(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
@@ -174,7 +183,7 @@ func JoinTreesUp(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 }
 
 func JoinTreesLeft(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
-	ltile, rtile := SelectJoinPatternfromX(x)
+	ltile, rtile := SelectJoinPatternFromX(x)
 
 	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
 		tile := tati.GetCrowd(ltile, ty)
@@ -195,8 +204,32 @@ func JoinTreesLeft(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	}
 }
 
+// föttrrrrrrrrr
+func DoTreeDownBorder(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+	//_, rtile := SelectLowerPartsFromX(x)
+	for tx := 1; tx < SingleTreeWidth; tx++ {
+		tile := tati.GetCrowd(tx, 5)
+		ex, ey := tx + x - 2, 3 + y
+		if tileMap.Within(ex, ey) {
+			index := ey * tileMap.Width + ex
+			tileMap.Tiles[depth][index] = tile
+		}
+	}
+
+	/*
+	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
+		tile := tati.GetCrowd(tx, 4)
+		ex, ey := tx + x, 2 + y
+		if tileMap.Within(ex, ey) {
+			index := ey * tileMap.Width + ex
+			tileMap.Tiles[depth][index] = tile
+		}
+	}
+	*/
+}
+
 func JoinTreesRight(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
-	ltile, rtile := SelectJoinPatternfromX(x)
+	ltile, rtile := SelectJoinPatternFromX(x)
 
 	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
 		tile := tati.GetCrowd(ltile, ty)
@@ -250,8 +283,8 @@ func FindNearbyTrees(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) 
 }
 
 func PlaceBaselessSingularTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
-	for tx := 1; tx < SingleTreeWidth; tx++ {
-		for ty := 0; ty < SingleTreeHeight - 1; ty++ {
+	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
+		for ty := 1; ty < SingleTreeHeight - 1; ty++ {
 			tile := tati.GetSingle(tx, ty)
 			ex, ey := tx + x, ty + y
 			if tileMap.Within(ex, ey) {
