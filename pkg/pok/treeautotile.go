@@ -29,6 +29,14 @@ func (self *TreeAutoTileInfo) IsRightJoinable(index int, isCrowd bool) bool {
 	return self.IsJoinableX(3, 1, index, isCrowd) || self.IsJoinableX(5, 1, index, isCrowd)
 }
 
+func (self *TreeAutoTileInfo) IsUpJoinable(index int, isCrowd bool) bool {
+	return self.IsJoinableY(CrowdTreeHeight - 3, SingleTreeHeight - 3, index, isCrowd)
+}
+
+func (self *TreeAutoTileInfo) IsDownJoinable(index int, isCrowd bool) bool {
+	return self.IsJoinableY(1, 1, index, isCrowd)
+}
+
 func (self *TreeAutoTileInfo) IsJoinableX(crowdX, singleX, index int, isCrowd bool) bool {
 	if isCrowd {
 		for i := 0; i < CrowdTreeHeight; i++ {
@@ -40,6 +48,26 @@ func (self *TreeAutoTileInfo) IsJoinableX(crowdX, singleX, index int, isCrowd bo
 	} else {
 		for i := 0; i < SingleTreeHeight; i++ {
 			j:= self.GetSingle(singleX, i)
+			if j == self.singleArr[index] {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (self *TreeAutoTileInfo) IsJoinableY(crowdY, singleY, index int, isCrowd bool) bool {
+	if isCrowd {
+		for i := 0; i < CrowdTreeWidth; i++ {
+			j := self.GetCrowd(i, crowdY)
+			if j == self.crowdArr[index] {
+				return true
+			}
+		}
+	} else {
+		for i := 0; i < SingleTreeWidth; i++ {
+			j:= self.GetSingle(i, singleY)
 			if j == self.singleArr[index] {
 				return true
 			}
@@ -66,7 +94,7 @@ func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	}
 
 	// Find nearby trees
-	i, tx, _, crowdFound := FindNearbyTrees(tileMap, tati, x, y, depth)
+	i, tx, ty, crowdFound := FindNearbyTrees(tileMap, tati, x, y, depth)
 	if i != -1 {
 		if tx < 0 {
 			if tati.IsLeftJoinable(i, crowdFound) {
@@ -77,6 +105,18 @@ func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 			if tati.IsRightJoinable(i, crowdFound) {
 				PlaceBaselessSingularTree(tileMap, tati, x, y, depth)
 				JoinTreesRight(tileMap, tati, x, y, depth)
+			}
+		}
+
+		if ty < 0 {
+			if tati.IsUpJoinable(i, crowdFound) {
+				PlaceBaselessSingularTree(tileMap, tati, x, y, depth)
+				JoinTreesUp(tileMap, tati, x, y, depth)
+			}
+		} else if ty > 0 {
+			if tati.IsDownJoinable(i, crowdFound) {
+				PlaceBaselessSingularTree(tileMap, tati, x, y, depth)
+				JoinTreesDown(tileMap, tati, x, y, depth)
 			}
 		}
 
@@ -91,6 +131,46 @@ func SelectJoinPatternfromX(x int) (int, int) {
 		return 2, 3
 	}
 	return 4, 5
+}
+
+func JoinTreesDown(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
+		tile := tati.GetCrowd(tx, 2)
+		ex, ey := tx + x, 2 + y
+		if tileMap.Within(ex, ey) {
+			index := ey * tileMap.Width + ex
+			tileMap.Tiles[depth][index] = tile
+		}
+	}
+
+	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
+		tile := tati.GetCrowd(tx, 3)
+		ex, ey := tx + x, 3 + y
+		if tileMap.Within(ex, ey) {
+			index := ey * tileMap.Width + ex
+			tileMap.Tiles[depth][index] = tile
+		}
+	}
+}
+
+func JoinTreesUp(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
+		tile := tati.GetCrowd(tx, 2)
+		ex, ey := tx + x, 0 + y
+		if tileMap.Within(ex, ey) {
+			index := ey * tileMap.Width + ex
+			tileMap.Tiles[depth][index] = tile
+		}
+	}
+
+	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
+		tile := tati.GetCrowd(tx, 3)
+		ex, ey := tx + x, 1 + y
+		if tileMap.Within(ex, ey) {
+			index := ey * tileMap.Width + ex
+			tileMap.Tiles[depth][index] = tile
+		}
+	}
 }
 
 func JoinTreesLeft(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
@@ -139,7 +219,7 @@ func JoinTreesRight(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 
 func FindNearbyTrees(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) (int, int, int, bool) {
 	offsetX := []int{-1, 0, 3}
-	offsetY := []int{-1, 0, 3}
+	offsetY := []int{-1, 0, 1}
 
 	for _, ox := range offsetX {
 		for _, oy := range offsetY {
