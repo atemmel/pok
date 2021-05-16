@@ -40,8 +40,23 @@ func (t *TreeAreaSelection) Draw(rend *Renderer) {
 	x0 := float64(*t.BeginX * TileSize) / rend.Cam.Scale
 	y0 := float64(*t.BeginY * TileSize) / rend.Cam.Scale
 
-	x1 := float64(t.EndX * TileSize) / rend.Cam.Scale
-	y1 := float64(t.EndY * TileSize) / rend.Cam.Scale
+	lineX := abs(*t.BeginX - t.EndX)
+	lineY := abs(*t.BeginY - t.EndY)
+
+	if lineX >= SingleTreeWidth {
+		lineX = SingleTreeWidth + ((lineX - SingleTreeWidth) / 3) * 3
+	} else {
+		lineX = 0
+	}
+
+	if lineY >= SingleTreeHeight {
+		lineY = SingleTreeHeight + ((lineY - SingleTreeHeight) / 3) * 3
+	} else {
+		lineY = 0
+	}
+
+	x1 := x0 + float64(lineX * TileSize) / rend.Cam.Scale
+	y1 := y0 + float64(lineY * TileSize) / rend.Cam.Scale
 
 	clr := color.RGBA{255, 0, 0, 255}
 
