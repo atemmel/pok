@@ -37,11 +37,14 @@ func (t *TreeAreaSelection) Draw(rend *Renderer) {
 		return
 	}
 
-	x0 := float64(*t.BeginX * TileSize) / rend.Cam.Scale
-	y0 := float64(*t.BeginY * TileSize) / rend.Cam.Scale
-
 	lineX, lineY := t.CountBoundingTrees()
 	px, py := t.Polarity()
+
+	x0 := float64(*t.BeginX)
+	y0 := float64(*t.BeginY)
+
+	x0 = x0 * TileSize / rend.Cam.Scale
+	y0 = y0 * TileSize / rend.Cam.Scale
 
 	x1 := x0 + float64(lineX * px * TileSize) / rend.Cam.Scale
 	y1 := y0 + float64(lineY * py * TileSize) / rend.Cam.Scale
@@ -84,13 +87,13 @@ func (t *TreeAreaSelection) CountBoundingTrees() (int, int) {
 	lineY := abs(*t.BeginY - t.EndY)
 
 	if lineX >= SingleTreeWidth {
-		lineX = SingleTreeWidth + ((lineX - SingleTreeWidth) / 3) * 3
+		lineX = SingleTreeWidth + ((lineX - SingleTreeWidth) / 2) * 2
 	} else {
 		lineX = 0
 	}
 
 	if lineY >= SingleTreeHeight {
-		lineY = SingleTreeHeight + ((lineY - SingleTreeHeight) / 3) * 3
+		lineY = SingleTreeHeight + ((lineY - SingleTreeHeight) / 2) * 2
 	} else {
 		lineY = 0
 	}

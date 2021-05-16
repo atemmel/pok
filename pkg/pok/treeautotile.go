@@ -20,10 +20,32 @@ type TreeAutoTileInfo struct {
 }
 
 func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x0, y0, x1, y1, depth int) {
-	const increment = 3
-	for y := y0; y <= y1 - increment; y += increment {
-		for x := x0; x <= x1 - increment; x += increment {
+	const xincrement = 2
+	const yincrement = 2
+	for y := y0; y <= y1 - yincrement; y += yincrement {
+		if y == y0 + yincrement + 1 {
+			y--
+		}
+
+		for x := x0; x <= x1 - xincrement; x += xincrement {
 			PlaceSingularTree(tm, self, x, y, depth)
+			if x == x0 + xincrement + 1 {
+				x--
+			}
+
+			if x > x0 {
+				JoinTreesLeft(tm, self, x, y, depth)
+			} else {
+				x++
+			}
+		}
+
+		if y > y0 {
+			for x := x0 + 1; x <= x1 - xincrement; x += xincrement {
+				JoinTreesUp(tm, self, x - 1, y, depth)
+			}
+		} else {
+			y++
 		}
 	}
 }
@@ -138,7 +160,7 @@ func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 }
 
 func SelectJoinPatternFromX(x int) (int, int) {
-	if x % 4 > 2 {
+	if x % 4 >= 2 {
 		return 2, 3
 	}
 	return 4, 5
