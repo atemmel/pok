@@ -5,7 +5,7 @@ import(
 )
 
 const(
-	SingleTreeWidth = 5
+	SingleTreeWidth = 4
 	SingleTreeHeight = 4
 	CrowdTreeWidth = 8
 	CrowdTreeHeight = 6
@@ -17,6 +17,15 @@ type TreeAutoTileInfo struct {
 	singleArr [SingleTreeWidth*SingleTreeHeight]int
 	crowdArr [CrowdTreeWidth*CrowdTreeHeight]int
 	textureWidth int
+}
+
+func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x0, y0, x1, y1, depth int) {
+	const increment = 3
+	for y := y0; y <= y1 - increment; y += increment {
+		for x := x0; x <= x1 - increment; x += increment {
+			PlaceSingularTree(tm, self, x, y, depth)
+		}
+	}
 }
 
 // Unnecesary extensibility, Lmao q8^)

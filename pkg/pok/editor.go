@@ -108,6 +108,7 @@ type Editor struct {
 
 func NewEditor(paths []string) *Editor {
 	tati.prepare()
+	treeArea.TreeInfo = tati
 	var err error
 	es := &Editor{}
 
@@ -685,7 +686,7 @@ func (e *Editor) handleMapMouseInputs() {
 			case PlaceNpc:
 				e.postDoNpc()
 			case Tree:
-				treeArea.Release()
+				treeArea.Release(e.activeTileMap, currentLayer)
 		}
 
 		RedoStack = RedoStack[:0]

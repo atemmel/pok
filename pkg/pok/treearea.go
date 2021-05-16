@@ -40,23 +40,11 @@ func (t *TreeAreaSelection) Draw(rend *Renderer) {
 	x0 := float64(*t.BeginX * TileSize) / rend.Cam.Scale
 	y0 := float64(*t.BeginY * TileSize) / rend.Cam.Scale
 
-	lineX := abs(*t.BeginX - t.EndX)
-	lineY := abs(*t.BeginY - t.EndY)
+	lineX, lineY := t.CountBoundingTrees()
+	px, py := t.Polarity()
 
-	if lineX >= SingleTreeWidth {
-		lineX = SingleTreeWidth + ((lineX - SingleTreeWidth) / 3) * 3
-	} else {
-		lineX = 0
-	}
-
-	if lineY >= SingleTreeHeight {
-		lineY = SingleTreeHeight + ((lineY - SingleTreeHeight) / 3) * 3
-	} else {
-		lineY = 0
-	}
-
-	x1 := x0 + float64(lineX * TileSize) / rend.Cam.Scale
-	y1 := y0 + float64(lineY * TileSize) / rend.Cam.Scale
+	x1 := x0 + float64(lineX * px * TileSize) / rend.Cam.Scale
+	y1 := y0 + float64(lineY * py * TileSize) / rend.Cam.Scale
 
 	clr := color.RGBA{255, 0, 0, 255}
 
@@ -91,29 +79,74 @@ func (t *TreeAreaSelection) Draw(rend *Renderer) {
 	rend.DrawLine(line)
 }
 
-func fitToCamera(x, y int, cam *Camera) (int, int) {
-	x = int((float64(x) + cam.X) / cam.Scale)
-	y = int((float64(y) + cam.Y) / cam.Scale)
-	return x, y
+func (t *TreeAreaSelection) CountBoundingTrees() (int, int) {
+	lineX := abs(*t.BeginX - t.EndX)
+	lineY := abs(*t.BeginY - t.EndY)
+
+	if lineX >= SingleTreeWidth {
+		lineX = SingleTreeWidth + ((lineX - SingleTreeWidth) / 3) * 3
+	} else {
+		lineX = 0
+	}
+
+	if lineY >= SingleTreeHeight {
+		lineY = SingleTreeHeight + ((lineY - SingleTreeHeight) / 3) * 3
+	} else {
+		lineY = 0
+	}
+
+	return lineX, lineY
+}
+
+func (t *TreeAreaSelection) Polarity() (int, int) {
+	xp, yp := 1, 1
+	if *t.BeginX > t.EndX {
+		xp = -1
+	}
+
+	if *t.BeginY > t.EndY {
+		yp = -1
+	}
+
+	return xp, yp
 }
 
 func (t *TreeAreaSelection) IsHolding() bool {
 	return t.BeginX != nil && t.BeginY != nil
 }
 
-func (t *TreeAreaSelection) Release() {
+func (t *TreeAreaSelection) Release(tm *TileMap, depth int) {
 	if t.BeginX == nil || t.BeginY == nil {
 		return
 	}
 
-	w := abs(*t.BeginX - t.EndX)
-	h := abs(*t.BeginY - t.EndY)
-
-	t.PopulateWithTrees(w, h)
+	t.PopulateWithTrees(tm, depth)
 	t.BeginX = nil
 	t.BeginY = nil
 }
 
-func (t *TreeAreaSelection) PopulateWithTrees(w, h int) {
+func (t *TreeAreaSelection) PopulateWithTrees(tm *TileMap, depth int) {
+	nx, ny := t.CountBoundingTrees()
 
+	if nx <= 0 || ny <= 0 {
+		return
+	}
+
+	px, py := t.Polarity()
+	rx, ry := *t.BeginX + nx * px, *t.BeginY + ny * py
+
+	x0, y0 := *t.BeginX, *t.BeginY
+	x1, y1 := rx, ry
+
+	if px == -1 {
+		x0 = rx
+		x1 = *t.BeginX
+	}
+
+	if py == -1 {
+		y0 = ry
+		y1 = *t.BeginY
+	}
+
+	t.TreeInfo.FillArea(tm, x0, y0, x1, y1, depth)
 }
