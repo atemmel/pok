@@ -11,13 +11,15 @@ const(
 	CrowdTreeHeight = 6
 	CrowdTreeSpaceX = 2
 	CrowdTreeSpaceY = 2
+
+	TreeDepthOffset = 3
 )
 
 type TreeAutoTileInfo struct {
 	Single image.Point
 	Crowd image.Point
-	singleArr [SingleTreeWidth*SingleTreeHeight]int
-	crowdArr [CrowdTreeWidth*CrowdTreeHeight]int
+	single int
+	crowd int
 	textureWidth int
 }
 
@@ -65,17 +67,51 @@ func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x, y, nx, ny, depth int) {
 				tm.Tiles[depth][index] = innerRightBorder
 			}
 		}
+	}
 
+	ypos := y + CrowdTreeSpaceY * ny + CrowdTreeSpaceY - 1
+	for i := 0; i < nx; i++ {
+		xpos := x + CrowdTreeSpaceX * i + 1
+		if tm.Within(xpos, ypos) {
+			index := ypos * tm.Width + xpos
+			tile := tm.Tiles[depth][index]
+			tm.Tiles[depth][index] = -1
+			tm.Tiles[depth - 2][index] = tile
+		}
+
+		xpos++
+		if tm.Within(xpos, ypos) {
+			index := ypos * tm.Width + xpos
+			tile := tm.Tiles[depth][index]
+			tm.Tiles[depth][index] = -1
+			tm.Tiles[depth - 2][index] = tile
+		}
+	}
+
+	w := nx * CrowdTreeSpaceX
+	h := ny * CrowdTreeSpaceY
+
+	FillCollision(tm, x + 1, y + 2, w, h, depth - TreeDepthOffset)
+}
+
+func FillCollision(tm *TileMap, x, y, w, h, z int) {
+	for j:= y; j < y + h; j++ {
+		for i := x; i < x + w; i++ {
+			if tm.Within(i, j) {
+				index := i + tm.Width * j
+				tm.Collision[z][index] = true
+			}
+		}
 	}
 }
 
 func (self *TreeAutoTileInfo) GetSingle(x, y int) int {
-	offset := self.singleArr[0]
+	offset := self.single
 	return y * self.textureWidth + x + offset
 }
 
 func (self *TreeAutoTileInfo) GetCrowd(x, y int) int {
-	offset := self.crowdArr[0]
+	offset := self.crowd
 	return y * self.textureWidth + x + offset
 }
 
@@ -213,16 +249,7 @@ func (self *TreeAutoTileInfo) prepare() {
 
 	base := y * SingleTreeWidth + x
 
-	ty := 0
-	tx := 0
-	for i := range self.singleArr {
-		if tx > self.textureWidth {
-			ty++
-			tx = 0
-		}
-		self.singleArr[i] = ty * self.textureWidth + base + tx
-		tx++
-	}
+	self.single = base
 
 	// do crowd tree
 	x = self.Crowd.X
@@ -230,15 +257,5 @@ func (self *TreeAutoTileInfo) prepare() {
 
 	base = y * CrowdTreeWidth + x
 
-	ty = 0
-	tx = 0
-	for i := range self.crowdArr {
-		if tx > self.textureWidth {
-			ty++
-			tx = 0
-		}
-		self.crowdArr[i] = ty * self.textureWidth + base + tx
-		tx++
-	}
-
+	self.crowd = base
 }

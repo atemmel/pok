@@ -169,5 +169,9 @@ func (t *TreeAreaSelection) PopulateWithTrees(tm *TileMap, depth int) {
 		y0 = ry
 	}
 
-	t.TreeInfo.FillArea(tm, x0, y0, nx, ny, depth)
+	for len(tm.Tiles) <= depth + TreeDepthOffset {
+		tm.AppendLayer()
+	}
+
+	t.TreeInfo.FillArea(tm, x0, y0, nx, ny, depth + TreeDepthOffset)
 }

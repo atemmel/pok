@@ -140,7 +140,7 @@ func (g *Game) DrawPlayer(player *Player) {
 		&playerRect,
 		x,
 		y,
-		3,
+		2,
 	})
 }
 
