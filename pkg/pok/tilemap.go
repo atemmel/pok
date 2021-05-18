@@ -92,8 +92,9 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 				continue;
 			}
 
-			x := float64(i % t.Width) * TileSize
-			y := float64(i / t.Width) * TileSize
+			ix, iy := t.Coords(i)
+			x := float64(ix) * TileSize
+			y := float64(iy) * TileSize
 
 			nTilesX := t.nTilesX[t.TextureIndicies[j][i]]
 
@@ -169,6 +170,14 @@ func (t *TileMap) OpenFile(path string) error {
 	return nil
 }
 
+func (t *TileMap) Index(x, y int) int {
+	return y * t.Width + x
+}
+
+func (t *TileMap) Coords(i int) (int, int) {
+	return i % t.Width, i / t.Width
+}
+
 func (t *TileMap) SaveToFile(path string) error {
 	data, err := json.Marshal(t)
 	if err != nil {
@@ -178,8 +187,7 @@ func (t *TileMap) SaveToFile(path string) error {
 }
 
 func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObjects *[]PlacedEditorObject) {
-	row := i / t.Width
-	col := i % t.Width
+	col, row := t.Coords(i)
 
 	existingObjectIndex := HasPlacedObjectAt(*placedObjects, col, row)
 	if existingObjectIndex != -1 {
@@ -222,7 +230,7 @@ func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObje
 			tx := obj.X + x
 
 			tile := ty + tx
-			index := (gy * t.Width) + gx
+			index := t.Index(gx, gy)
 			depth := z + obj.Z[zIndex]
 
 			t.Tiles[depth][index] = tile
@@ -258,7 +266,7 @@ func (t *TileMap) EraseObject(pob PlacedEditorObject, obj *EditorObject) {
 				continue
 			}
 
-			index := (gy * t.Width) + gx
+			index := t.Index(gx, gy)
 			depth := pob.Z + obj.Z[zIndex]
 
 			t.Tiles[depth][index] = -1
@@ -469,8 +477,19 @@ func (t *TileMap) RemoveNpc(index int) {
 	t.npcs = t.npcs[:len(t.npcs) - 1]
 }
 
-func (t *TileMap) Within(x, y int) bool {
+func (t *TileMap) Contains(x, y int) bool {
 	return x < t.Width && x >= 0 && y < t.Height && y >= 0
+}
+
+func (t *TileMap) FillCollision(x, y, w, h, z int) {
+	for j:= y; j < y + h; j++ {
+		for i := x; i < x + w; i++ {
+			if t.Contains(i, j) {
+				index := i + t.Width * j
+				t.Collision[z][index] = true
+			}
+		}
+	}
 }
 
 func CreateTileMap(width int, height int, textures []string) *TileMap {

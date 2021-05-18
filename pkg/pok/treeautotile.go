@@ -58,11 +58,11 @@ func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x, y, nx, ny, depth int) {
 			ex2 := x + (nx - 1) * CrowdTreeSpaceX + 3
 			ey := ypos
 
-			if tm.Within(ex1, ey) {
+			if tm.Contains(ex1, ey) {
 				index := ey * tm.Width + ex1
 				tm.Tiles[depth][index] = outerRightBorder
 			}
-			if tm.Within(ex2, ey) {
+			if tm.Contains(ex2, ey) {
 				index := ey * tm.Width + ex2
 				tm.Tiles[depth][index] = innerRightBorder
 			}
@@ -72,7 +72,7 @@ func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x, y, nx, ny, depth int) {
 	ypos := y + CrowdTreeSpaceY * ny + CrowdTreeSpaceY - 1
 	for i := 0; i < nx; i++ {
 		xpos := x + CrowdTreeSpaceX * i + 1
-		if tm.Within(xpos, ypos) {
+		if tm.Contains(xpos, ypos) {
 			index := ypos * tm.Width + xpos
 			tile := tm.Tiles[depth][index]
 			tm.Tiles[depth][index] = -1
@@ -80,7 +80,7 @@ func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x, y, nx, ny, depth int) {
 		}
 
 		xpos++
-		if tm.Within(xpos, ypos) {
+		if tm.Contains(xpos, ypos) {
 			index := ypos * tm.Width + xpos
 			tile := tm.Tiles[depth][index]
 			tm.Tiles[depth][index] = -1
@@ -91,18 +91,7 @@ func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x, y, nx, ny, depth int) {
 	w := nx * CrowdTreeSpaceX
 	h := ny * CrowdTreeSpaceY
 
-	FillCollision(tm, x + 1, y + 2, w, h, depth - TreeDepthOffset)
-}
-
-func FillCollision(tm *TileMap, x, y, w, h, z int) {
-	for j:= y; j < y + h; j++ {
-		for i := x; i < x + w; i++ {
-			if tm.Within(i, j) {
-				index := i + tm.Width * j
-				tm.Collision[z][index] = true
-			}
-		}
-	}
+	tm.FillCollision(x + 1, y + 2, w, h, depth - TreeDepthOffset)
 }
 
 func (self *TreeAutoTileInfo) GetSingle(x, y int) int {
@@ -132,8 +121,8 @@ func (self *TreeAutoTileInfo) JoinTreesUp(tileMap *TileMap, tati *TreeAutoTileIn
 	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
 		tile := self.GetCrowd(tx, 2)
 		ex, ey := tx + x, 0 + y
-		if tileMap.Within(ex, ey) {
-			index := ey * tileMap.Width + ex
+		if tileMap.Contains(ex, ey) {
+			index := tileMap.Index(ex, ey)
 			tileMap.Tiles[depth][index] = tile
 		}
 	}
@@ -141,8 +130,8 @@ func (self *TreeAutoTileInfo) JoinTreesUp(tileMap *TileMap, tati *TreeAutoTileIn
 	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
 		tile := self.GetCrowd(tx, 3)
 		ex, ey := tx + x, 1 + y
-		if tileMap.Within(ex, ey) {
-			index := ey * tileMap.Width + ex
+		if tileMap.Contains(ex, ey) {
+			index := tileMap.Index(ex, ey)
 			tileMap.Tiles[depth][index] = tile
 		}
 	}
@@ -154,8 +143,8 @@ func (self *TreeAutoTileInfo) JoinTreesLeftDown(tileMap *TileMap, x, y, depth in
 	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
 		tile := self.GetCrowd(ltile, ty)
 		ex, ey := 0 + x, ty + y
-		if tileMap.Within(ex, ey) {
-			index := ey * tileMap.Width + ex
+		if tileMap.Contains(ex, ey) {
+			index := tileMap.Index(ex, ey)
 			tileMap.Tiles[depth][index] = tile
 		}
 	}
@@ -163,8 +152,8 @@ func (self *TreeAutoTileInfo) JoinTreesLeftDown(tileMap *TileMap, x, y, depth in
 	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
 		tile := tati.GetCrowd(rtile, ty)
 		ex, ey := 1 + x, ty + y
-		if tileMap.Within(ex, ey) {
-			index := ey * tileMap.Width + ex
+		if tileMap.Contains(ex, ey) {
+			index := tileMap.Index(ex, ey)
 			tileMap.Tiles[depth][index] = tile
 		}
 	}
@@ -177,14 +166,13 @@ func (self *TreeAutoTileInfo) JoinTreesLeft(tileMap *TileMap, x, y, depth int) {
 		ltile := self.GetCrowd(tile1, ty)
 		rtile := self.GetCrowd(tile2, ty)
 		ex, ey := 0 + x, ty + y
-		if tileMap.Within(ex, ey) {
-			index := ey * tileMap.Width + ex
+		if tileMap.Contains(ex, ey) {
+			index := tileMap.Index(ex, ey)
 			tileMap.Tiles[depth][index] = ltile
 		}
 		ex += 1
-		if tileMap.Within(ex, ey) {
-			index := ey * tileMap.Width + ex
-			tileMap.Tiles[depth][index] = ltile
+		if tileMap.Contains(ex, ey) {
+			index := tileMap.Index(ex, ey)
 			tileMap.Tiles[depth][index] = rtile
 		}
 	}
@@ -193,14 +181,13 @@ func (self *TreeAutoTileInfo) JoinTreesLeft(tileMap *TileMap, x, y, depth int) {
 	ltile := tati.GetCrowd(tile1, ty + 2)
 	rtile := tati.GetCrowd(tile2, ty + 2)
 	ex, ey := 0 + x, ty + y
-	if tileMap.Within(ex, ey) {
-		index := ey * tileMap.Width + ex
+	if tileMap.Contains(ex, ey) {
+		index := tileMap.Index(ex, ey)
 		tileMap.Tiles[depth][index] = ltile
 	}
 	ex += 1
-	if tileMap.Within(ex, ey) {
-		index := ey * tileMap.Width + ex
-		tileMap.Tiles[depth][index] = ltile
+	if tileMap.Contains(ex, ey) {
+		index := tileMap.Index(ex, ey)
 		tileMap.Tiles[depth][index] = rtile
 	}
 }
@@ -209,8 +196,8 @@ func (self *TreeAutoTileInfo) DoTreeDownBorder(tileMap *TileMap, x, y, depth int
 	for tx := 1; tx < SingleTreeWidth; tx++ {
 		tile := self.GetCrowd(tx, 5)
 		ex, ey := tx + x - 2, y + 3
-		if tileMap.Within(ex, ey) {
-			index := ey * tileMap.Width + ex
+		if tileMap.Contains(ex, ey) {
+			index := tileMap.Index(ex, ey)
 			tileMap.Tiles[depth][index] = tile
 		}
 	}
@@ -219,8 +206,8 @@ func (self *TreeAutoTileInfo) DoTreeDownBorder(tileMap *TileMap, x, y, depth int
 func (self *TreeAutoTileInfo) DoTreeLeftBorder(tileMap *TileMap, x, y, depth int) {
 	tile := self.GetCrowd(0, 2)
 	ex, ey := x, y + 2
-	if tileMap.Within(ex, ey) {
-		index := ey * tileMap.Width + ex
+	if tileMap.Contains(ex, ey) {
+		index := tileMap.Index(ex, ey)
 		tileMap.Tiles[depth][index] = tile
 	}
 }
@@ -230,8 +217,8 @@ func (self *TreeAutoTileInfo) PlaceSingularTree(tileMap *TileMap, x, y, depth in
 		for ty := 0; ty < SingleTreeHeight; ty++ {
 			tile := self.GetSingle(tx, ty)
 			ex, ey := tx + x, ty + y
-			if tileMap.Within(ex, ey) {
-				index := ey * tileMap.Width + ex
+			if tileMap.Contains(ex, ey) {
+				index := tileMap.Index(ex, ey)
 				tileMap.Tiles[depth][index] = tile
 			}
 		}
