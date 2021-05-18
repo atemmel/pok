@@ -19,34 +19,54 @@ type TreeAutoTileInfo struct {
 	textureWidth int
 }
 
-func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x0, y0, x1, y1, depth int) {
+func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x, y, nx, ny, depth int) {
 	const xincrement = 2
 	const yincrement = 2
-	for y := y0; y <= y1 - yincrement; y += yincrement {
-		if y == y0 + yincrement + 1 {
-			y--
-		}
 
-		for x := x0; x <= x1 - xincrement; x += xincrement {
-			PlaceSingularTree(tm, self, x, y, depth)
-			if x == x0 + xincrement + 1 {
-				x--
+	outerRightBorder := tati.GetCrowd(CrowdTreeWidth - 2, 2)
+	innerRightBorder := tati.GetCrowd(CrowdTreeWidth - 1, 2)
+
+	for j := 0; j < ny; j++ {
+		ypos := y + yincrement * j
+
+		for i := 0; i < nx; i++ {
+			xpos := x + xincrement * i
+
+			PlaceSingularTree(tm, self, xpos, ypos, depth)
+
+			if i > 0 {
+				if j == ny - 1 {
+					DoTreeDownBorder(tm, self, xpos, ypos, depth)
+					JoinTreesLeft(tm, self, xpos, ypos, depth)
+				} else {
+					JoinTreesLeftDown(tm, self, xpos, ypos, depth)
+				}
 			}
 
-			if x > x0 {
-				JoinTreesLeft(tm, self, x, y, depth)
-			} else {
-				x++
+		}
+
+		if j > 0 {
+			DoTreeLeftBorder(tm, self, x, ypos - yincrement, depth)
+
+			for i := 0; i < nx; i++ {
+				xpos := x + xincrement * i
+				JoinTreesUp(tm, self, xpos, ypos, depth)
+			}
+
+			ex1 := x + (nx - 1) * xincrement + 2
+			ex2 := x + (nx - 1) * xincrement + 3
+			ey := ypos
+
+			if tm.Within(ex1, ey) {
+				index := ey * tm.Width + ex1
+				tm.Tiles[depth][index] = outerRightBorder
+			}
+			if tm.Within(ex2, ey) {
+				index := ey * tm.Width + ex2
+				tm.Tiles[depth][index] = innerRightBorder
 			}
 		}
 
-		if y > y0 {
-			for x := x0 + 1; x <= x1 - xincrement; x += xincrement {
-				JoinTreesUp(tm, self, x - 1, y, depth)
-			}
-		} else {
-			y++
-		}
 	}
 }
 
@@ -160,7 +180,7 @@ func PlaceTree(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 }
 
 func SelectJoinPatternFromX(x int) (int, int) {
-	if x % 4 >= 2 {
+	if x % 4 > 1 {
 		return 2, 3
 	}
 	return 4, 5
@@ -213,7 +233,7 @@ func JoinTreesUp(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	}
 }
 
-func JoinTreesLeft(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+func JoinTreesLeftDown(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	ltile, rtile := SelectJoinPatternFromX(x)
 
 	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
@@ -235,28 +255,77 @@ func JoinTreesLeft(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	}
 }
 
-// föttrrrrrrrrr
-func DoTreeDownBorder(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
-	//_, rtile := SelectLowerPartsFromX(x)
-	for tx := 1; tx < SingleTreeWidth; tx++ {
-		tile := tati.GetCrowd(tx, 5)
-		ex, ey := tx + x - 2, 3 + y
+func JoinTreesLeft(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+	tile1, tile2 := SelectJoinPatternFromX(x)
+
+	for ty := 0; ty < SingleTreeHeight - 2; ty++ {
+		ltile := tati.GetCrowd(tile1, ty)
+		rtile := tati.GetCrowd(tile2, ty)
+		ex, ey := 0 + x, ty + y
 		if tileMap.Within(ex, ey) {
 			index := ey * tileMap.Width + ex
-			tileMap.Tiles[depth][index] = tile
+			tileMap.Tiles[depth][index] = ltile
+		}
+		ex += 1
+		if tileMap.Within(ex, ey) {
+			index := ey * tileMap.Width + ex
+			tileMap.Tiles[depth][index] = ltile
+			tileMap.Tiles[depth][index] = rtile
 		}
 	}
 
-	/*
-	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
-		tile := tati.GetCrowd(tx, 4)
-		ex, ey := tx + x, 2 + y
+	ty := SingleTreeHeight - 2
+	ltile := tati.GetCrowd(tile1, ty + 2)
+	rtile := tati.GetCrowd(tile2, ty + 2)
+	ex, ey := 0 + x, ty + y
+	if tileMap.Within(ex, ey) {
+		index := ey * tileMap.Width + ex
+		tileMap.Tiles[depth][index] = ltile
+	}
+	ex += 1
+	if tileMap.Within(ex, ey) {
+		index := ey * tileMap.Width + ex
+		tileMap.Tiles[depth][index] = ltile
+		tileMap.Tiles[depth][index] = rtile
+	}
+}
+
+func JoinTreesDownRightCorner(tileMap *TileMap, tati*TreeAutoTileInfo, x, y, depth int) {
+	tile := tati.GetCrowd(CrowdTreeWidth - 2, 6)
+	ex, ey := x + 2, y + 3
+	if tileMap.Within(ex, ey) {
+		index := ey * tileMap.Width + ex
+		tileMap.Tiles[depth][index] = tile
+	}
+}
+
+func JoinTreesUpRightCorner(tileMap *TileMap, tati*TreeAutoTileInfo, x, y, depth int) {
+	tile := tati.GetCrowd(CrowdTreeWidth - 2, 4)
+	ex, ey := x + 3, y
+	if tileMap.Within(ex, ey) {
+		index := ey * tileMap.Width + ex
+		tileMap.Tiles[depth][index] = tile
+	}
+}
+
+func DoTreeDownBorder(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+	for tx := 1; tx < SingleTreeWidth; tx++ {
+		tile := tati.GetCrowd(tx, 5)
+		ex, ey := tx + x - 2, y + 3
 		if tileMap.Within(ex, ey) {
 			index := ey * tileMap.Width + ex
 			tileMap.Tiles[depth][index] = tile
 		}
 	}
-	*/
+}
+
+func DoTreeLeftBorder(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+	tile := tati.GetCrowd(0, 2)
+	ex, ey := x, y + 2
+	if tileMap.Within(ex, ey) {
+		index := ey * tileMap.Width + ex
+		tileMap.Tiles[depth][index] = tile
+	}
 }
 
 func JoinTreesRight(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
