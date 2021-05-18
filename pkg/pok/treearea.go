@@ -87,13 +87,13 @@ func (t *TreeAreaSelection) CountBoundingTiles() (int, int) {
 	lineY := abs(*t.BeginY - t.EndY)
 
 	if lineX >= SingleTreeWidth {
-		lineX = SingleTreeWidth + ((lineX - SingleTreeWidth) / 2) * 2
+		lineX = SingleTreeWidth + ((lineX - SingleTreeWidth) / CrowdTreeSpaceX) * CrowdTreeSpaceX
 	} else {
 		lineX = 0
 	}
 
 	if lineY >= SingleTreeHeight {
-		lineY = SingleTreeHeight + ((lineY - SingleTreeHeight) / 2) * 2
+		lineY = SingleTreeHeight + ((lineY - SingleTreeHeight) / CrowdTreeSpaceY) * CrowdTreeSpaceY
 	} else {
 		lineY = 0
 	}
@@ -106,13 +106,13 @@ func (t *TreeAreaSelection) CountBoundingTrees() (int, int) {
 	lineY := abs(*t.BeginY - t.EndY)
 
 	if lineX >= SingleTreeWidth {
-		lineX = 1 + ((lineX - SingleTreeWidth) / 2)
+		lineX = 1 + ((lineX - SingleTreeWidth) / CrowdTreeSpaceX)
 	} else {
 		lineX = 0
 	}
 
 	if lineY >= SingleTreeHeight {
-		lineY = 1 + ((lineY - SingleTreeHeight) / 2)
+		lineY = 1 + ((lineY - SingleTreeHeight) / CrowdTreeSpaceY)
 	} else {
 		lineY = 0
 	}
