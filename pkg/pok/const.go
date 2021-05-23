@@ -21,4 +21,5 @@ const (
 	EditorImagesDir = EditorResourceDir + "images/"
 	OverworldObjectsDir = EditorResourceDir + "overworldobjects/"
 	AutotileInfoDir = EditorResourceDir + "autotileinfo/"
+	TreeAutotileInfoDir = EditorResourceDir + "treeautotileinfo/"
 )

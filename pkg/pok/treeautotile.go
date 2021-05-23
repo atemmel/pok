@@ -1,7 +1,10 @@
 package pok
 
 import(
+	"encoding/json"
+	"errors"
 	"image"
+	"io/ioutil"
 )
 
 const(
@@ -16,16 +19,19 @@ const(
 )
 
 type TreeAutoTileInfo struct {
-	Single image.Point
-	Crowd image.Point
+	SingleStart image.Point
+	CrowdStart image.Point
+	Texture string
+
+	textureIndex int
 	single int
 	crowd int
 	textureWidth int
 }
 
 func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x, y, nx, ny, depth int) {
-	outerRightBorder := tati.GetCrowd(CrowdTreeWidth - 2, 2)
-	innerRightBorder := tati.GetCrowd(CrowdTreeWidth - 1, 2)
+	outerRightBorder := self.GetCrowd(CrowdTreeWidth - 2, 2)
+	innerRightBorder := self.GetCrowd(CrowdTreeWidth - 1, 2)
 
 	for j := 0; j < ny; j++ {
 		ypos := y + CrowdTreeSpaceY * j
@@ -150,7 +156,7 @@ func (self *TreeAutoTileInfo) JoinTreesLeftDown(tileMap *TileMap, x, y, depth in
 	}
 
 	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
-		tile := tati.GetCrowd(rtile, ty)
+		tile := self.GetCrowd(rtile, ty)
 		ex, ey := 1 + x, ty + y
 		if tileMap.Contains(ex, ey) {
 			index := tileMap.Index(ex, ey)
@@ -178,8 +184,8 @@ func (self *TreeAutoTileInfo) JoinTreesLeft(tileMap *TileMap, x, y, depth int) {
 	}
 
 	ty := SingleTreeHeight - 2
-	ltile := tati.GetCrowd(tile1, ty + 2)
-	rtile := tati.GetCrowd(tile2, ty + 2)
+	ltile := self.GetCrowd(tile1, ty + 2)
+	rtile := self.GetCrowd(tile2, ty + 2)
 	ex, ey := 0 + x, ty + y
 	if tileMap.Contains(ex, ey) {
 		index := tileMap.Index(ex, ey)
@@ -225,24 +231,62 @@ func (self *TreeAutoTileInfo) PlaceSingularTree(tileMap *TileMap, x, y, depth in
 	}
 }
 
-func (self *TreeAutoTileInfo) prepare() {
-	self.Single = image.Point{0, 38*2}
-	self.Crowd = image.Point{0, 16*2}
-	self.textureWidth = 128 / TileSize
+func (self *TreeAutoTileInfo) FitToTileMap(tm *TileMap) error {
+	i := 0
+	for i = range tm.Textures {
+		if tm.Textures[i] == self.Texture {
+			break
+		}
+	}
+
+	if i == len(tm.Textures) {
+		return errors.New("Texture not found")
+	}
+
+	w := tm.images[i].Bounds().Dx()
+	self.textureWidth = w / TileSize
+	self.textureIndex = i
 
 	// do single tree
-	x := self.Single.X
-	y := self.Single.Y
+	x := self.SingleStart.X
+	y := self.SingleStart.Y
 
-	base := y * SingleTreeWidth + x
-
-	self.single = base
+	self.single = y * self.textureWidth + x
 
 	// do crowd tree
-	x = self.Crowd.X
-	y = self.Crowd.Y
+	x = self.CrowdStart.X
+	y = self.CrowdStart.Y
 
-	base = y * CrowdTreeWidth + x
+	self.crowd = y * self.textureWidth + x
+	return nil
+}
 
-	self.crowd = base
+func ReadAllTreeAutoTileInfo(dir string) ([]TreeAutoTileInfo, error) {
+	paths := listWithExtension(dir, ".tati")
+	tatis := make([]TreeAutoTileInfo, 0, len(paths))
+
+	for i := range paths {
+		tati, err := LoadTreeAutoTileFromFile(dir + paths[i])
+		if err != nil {
+			return nil, err
+		}
+		tatis = append(tatis, *tati)
+	}
+
+	return tatis, nil
+}
+
+func LoadTreeAutoTileFromFile(path string) (*TreeAutoTileInfo, error) {
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	tati := &TreeAutoTileInfo{}
+	err = json.Unmarshal(bytes, tati)
+	if err != nil {
+		return nil, err
+	}
+
+	return tati, nil
 }

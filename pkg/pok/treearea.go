@@ -11,10 +11,6 @@ type TreeAreaSelection struct {
 	TreeInfo *TreeAutoTileInfo
 }
 
-func (t *TreeAreaSelection) ClampToTileMap(tm *TileMap) {
-
-}
-
 func (t *TreeAreaSelection) Hold(x, y int) {
 	if t.BeginX == nil && t.BeginY == nil {
 		t.BeginX = &x

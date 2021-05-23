@@ -35,7 +35,6 @@ var placedObjects [][]PlacedEditorObject = make([][]PlacedEditorObject, 0)
 var linkBegin *LinkData
 var lastSavedUndoStackLength = 0
 
-var tati = &TreeAutoTileInfo{}
 var treeArea = &TreeAreaSelection{}
 
 type LinkData struct {
@@ -100,6 +99,8 @@ type Editor struct {
 	resizers []Resize
 	autoTileInfo []AutoTileInfo
 	autoTileGrid AutoTileGrid
+	treeAutoTileInfo []TreeAutoTileInfo
+	treeAutoTileGrid TreeAutoTileGrid
 	npcImages []*ebiten.Image
 	npcImagesStrings []string
 	npcGrid NpcGrid
@@ -107,8 +108,6 @@ type Editor struct {
 }
 
 func NewEditor(paths []string) *Editor {
-	tati.prepare()
-	treeArea.TreeInfo = tati
 	var err error
 	es := &Editor{}
 
@@ -189,6 +188,12 @@ func NewEditor(paths []string) *Editor {
 	es.npcImages = loadImages(es.npcImagesStrings, CharacterImagesDir)
 	es.npcGrid = NewNpcGrid(es.npcImages)
 
+	es.treeAutoTileInfo, err = ReadAllTreeAutoTileInfo(TreeAutotileInfoDir)
+	Assert(err)
+	if len(es.treeAutoTileInfo) > 0 {
+		treeArea.TreeInfo = &es.treeAutoTileInfo[0]
+	}
+
 	for _, s := range paths {
 		tm, err := es.loadFile(s)
 		if err == nil {
@@ -228,6 +233,8 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 			e.autoTileGrid.Draw(screen)
 		} else if e.npcGridIsVisible() {
 			e.npcGrid.Draw(screen)
+		} else if e.treeAutoTileGridIsVisible() {
+			e.treeAutoTileGrid.grid.Draw(screen)
 		}
 		e.drawIcons(screen)
 	}
@@ -402,6 +409,13 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	e.autoTileInfo, err = ReadAllAutoTileInfo(AutotileInfoDir)
 	e.autoTileGrid = NewAutoTileGrid(tileMap.images[0], tileMap.nTilesX[0], e.autoTileInfo)
 	Assert(err)
+
+	for i := range e.treeAutoTileInfo {
+		err := e.treeAutoTileInfo[i].FitToTileMap(tileMap)
+		Assert(err)
+	}
+
+	e.treeAutoTileGrid = NewTreeAutoTileGrid(tileMap.images[0], e.treeAutoTileInfo)
 }
 
 func (e *Editor) appendTileMap(tileMap *TileMap) {
@@ -459,7 +473,8 @@ func (e *Editor) handleInputs() error {
 		cx, cy := ebiten.CursorPosition()
 		index := e.getTileMapIndexAtCoord(cx, cy)
 		if index != -1 && !e.isAlreadyClicking() {
-			e.setActiveTileMap(index)
+			err := e.setActiveTileMap(index)
+			Assert(err)
 		}
 		if e.gridIsVisible() && e.grid.Contains(image.Point{cx, cy}) {
 			_, sy := ebiten.Wheel()
@@ -497,6 +512,16 @@ func (e *Editor) handleInputs() error {
 				if obj != -1 {
 					activeObjsIndex = obj
 				}
+			}
+		} else if e.treeAutoTileGridIsVisible() && e.treeAutoTileGrid.Contains(image.Point{cx, cy}) {
+			_, sy := ebiten.Wheel()
+			if sy < 0 {
+				e.treeAutoTileGrid.Scroll(ScrollDown)
+			} else if sy > 0 {
+				e.treeAutoTileGrid.Scroll(ScrollUp)
+			}
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
+				e.treeAutoTileGrid.Select(cx, cy)
 			}
 		} else if i := e.containsIcon(cx, cy); i != NIcons {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
@@ -604,6 +629,7 @@ func (e *Editor) handleMapMouseInputs() {
 					case Tree:
 						//TODO: perform tree logic
 						//PlaceTree(e.activeTileMap, tati, selectionX, selectionY, currentLayer)
+						treeArea.TreeInfo = &e.treeAutoTileInfo[e.treeAutoTileGrid.GetIndex()]
 						treeArea.Hold(selectionX, selectionY)
 				}
 			}
@@ -736,6 +762,10 @@ func (e *Editor) npcGridIsVisible() bool {
 	return activeTool == PlaceNpc
 }
 
+func (e *Editor) treeAutoTileGridIsVisible() bool {
+	return activeTool == Tree
+}
+
 func (e *Editor) drawIcons(screen *ebiten.Image) {
 	w, h := e.icons.Size()
 	h /= NIcons
@@ -789,9 +819,16 @@ func (e *Editor) fillObjectGrid(dir string) {
 	e.objectGrid = NewObjectGrid(e.activeTileMap, objs)
 }
 
-func (e *Editor) setActiveTileMap(index int) {
+func (e *Editor) setActiveTileMap(index int) error {
 	e.activeTileMap = e.tileMaps[index]
 	e.activeTileMapIndex = index
+	for i := range e.treeAutoTileInfo {
+		err := e.treeAutoTileInfo[i].FitToTileMap(e.activeTileMap)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (e *Editor) getTileMapIndexAtCoord(cx, cy int) int {
@@ -1394,15 +1431,18 @@ func (e *Editor) doRemoveNpc() {
 }
 
 func listPngs(dir string) []string {
+	return listWithExtension(dir, ".png")
+}
+
+func listWithExtension(dir string, ext string) []string {
 	dirs, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Println("Could not open dir", dir)
 		return make([]string, 0)
 	}
 
 	valid := make([]string, 0)
 	for i := range dirs {
-		if dirs[i].IsDir() || !strings.HasSuffix(dirs[i].Name(), ".png") {
+		if dirs[i].IsDir() || !strings.HasSuffix(dirs[i].Name(), ext) {
 			continue
 		}
 		valid = append(valid, dirs[i].Name())

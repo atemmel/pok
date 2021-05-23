@@ -1,0 +1,11 @@
+{
+	"SingleStart": {
+		"X": 4,
+		"Y": 38
+	}, 
+	"CrowdStart": {
+		"X": 0,
+		"Y": 41
+	},
+	"Texture": "base.png"
+}

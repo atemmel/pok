@@ -3,8 +3,6 @@ package pok
 import(
 	"encoding/json"
 	"io/ioutil"
-	"log"
-	"strings"
 )
 
 const Unused = -1
@@ -30,19 +28,10 @@ func (ati *AutoTileInfo) HasIndex(index int) bool {
 }
 
 func ReadAllAutoTileInfo(directory string) ([]AutoTileInfo, error) {
-	dirs, err := ioutil.ReadDir(directory)
-	if err != nil {
-		log.Println("Could not open dir", directory)
-		return make([]AutoTileInfo, 0), nil
-	}
-
+	files := listWithExtension(directory, ".ati")
 	atis := make([]AutoTileInfo, 0)
-	for i := range dirs {
-		if dirs[i].IsDir() || !strings.HasSuffix(dirs[i].Name(), ".ati") {
-			continue
-		}
-
-		bytes, err := ioutil.ReadFile(directory + dirs[i].Name())
+	for i := range files {
+		bytes, err := ioutil.ReadFile(directory + files[i])
 		if err != nil {
 			return nil, err
 		}

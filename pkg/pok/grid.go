@@ -49,21 +49,25 @@ func NewGrid(tileSet *ebiten.Image, innerWidth int) Grid {
 	totalTilesetItems := tileSet.Bounds().Max.X * tileSet.Bounds().Max.Y / innerWidth
 	nItemsPerRow := maxGridWidth / innerWidth
 	return Grid{
-		tileSet,
-		selection,
-		0,
-		0,
-		innerWidth,
-		0,
-		0,
-		totalTilesetItems / nItemsPerRow,
-		nItemsPerRow,
-		image.Rect(xGridPos, yGridPos, xGridPos + innerWidth * nItemsPerRow, yGridPos + innerWidth * columnLen),
+		tileSet: tileSet,
+		selection: selection,
+		selectionX: 0,
+		selectionY: 0,
+		innerWidth: innerWidth,
+		currentIndex: 0,
+		currentCol: 0,
+		maxRow: totalTilesetItems / nItemsPerRow,
+		nItemsPerRow: nItemsPerRow,
+		rect: image.Rect(xGridPos, yGridPos, xGridPos + innerWidth * nItemsPerRow, yGridPos + innerWidth * columnLen),
 	}
 }
 
 func (g *Grid) Draw(target *ebiten.Image) {
 	w, _ := g.tileSet.Size()
+	if w < 1 {
+		return
+	}
+	//target.DrawImage(g.tileSet, &ebiten.DrawImageOptions{})
 	nTilesX := w / g.innerWidth
 	for i := 0; i < columnLen; i++ {
 		for j := 0; j < g.nItemsPerRow; j++ {
