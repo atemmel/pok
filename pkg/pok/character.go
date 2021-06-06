@@ -10,6 +10,7 @@ type Direction int
 type Character struct {
 	Gx float64
 	Gy float64
+	OffsetY float64
 	X int
 	Y int
 	Z int
@@ -19,11 +20,18 @@ type Character struct {
 	dir Direction
 	isWalking bool
 	isRunning bool
+	isJumping bool
 	frames int
 	animationState int
 	turnCheck int
 	velocity float64
 }
+
+const (
+	DoJump = iota
+	DoCollision
+	DoNone
+)
 
 const (
 	Static Direction = iota
@@ -50,6 +58,7 @@ func (dir *Direction) Inverse() Direction {
 const(
 	WalkVelocity = 1
 	RunVelocity = 2
+	JumpVelocity = 1
 	characterMaxCycle = 8
 	turnCheckLimit = 5 // in frames
 )
@@ -58,7 +67,7 @@ func (c *Character) Draw(img *ebiten.Image, rend *Renderer, offsetX, offsetY flo
 	charOpt := &ebiten.DrawImageOptions{}
 
 	x := c.Gx + NpcOffsetX + offsetX
-	y := c.Gy + NpcOffsetY + offsetY
+	y := c.Gy + NpcOffsetY + offsetY + c.OffsetY
 
 	playerRect := image.Rect(
 		c.Tx,
@@ -105,7 +114,14 @@ func (c *Character) Update(g *Game) bool {
 	c.Animate()
 	c.Step()
 
-	if c.frames * int(c.velocity) >= TileSize {
+	if c.isJumping {
+		if c.frames * int(c.velocity) >= TileSize * 2 {
+			c.frames = 0
+			c.OffsetY = 0
+			c.isJumping = false
+			return true
+		}
+	} else if c.frames * int(c.velocity) >= TileSize {
 		c.frames = 0
 		return true
 	}
@@ -115,6 +131,12 @@ func (c *Character) Update(g *Game) bool {
 
 func (c *Character) Step() {
 	c.frames++
+
+	if c.isJumping {
+		x := float64(c.frames) / (TileSize * 2)
+		c.OffsetY = (-4.0 * ((x - 0.5) * (x - 0.5)) + 1) * -8
+	}
+
 	switch c.dir {
 		case Up:
 			c.Ty = 32 * 3
@@ -208,8 +230,24 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 				c.isWalking = false
 			} else {
 				// Accept new position
+				if res := c.TryJumpLedge(nx, ny, g); res == DoJump {
+					g.Audio.PlayPlayerJump()
+					c.isJumping = true
+					ny++
+				} else if res == DoCollision {
+					if c.animationState == characterMaxCycle -1 {
+						g.Audio.PlayThud()
+					}
+					c.dir = dir
+					c.Animate()
+					c.isWalking = false
+					return
+				}
+
 				c.X, c.Y = nx, ny
-				if c.isRunning {
+				if c.isJumping {
+					c.velocity = JumpVelocity
+				} else if c.isRunning {
 					c.velocity = RunVelocity
 				} else {
 					c.velocity = WalkVelocity
@@ -220,7 +258,24 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 	}
 }
 
+func (c *Character) TryJumpLedge(nx, ny int, g *Game) int {
+
+	isDownLedge := func(i int) bool {
+		return g.Ows.tileMap.Tiles[c.Z][i] == 213 || g.Ows.tileMap.Tiles[c.Z][i] == 214 || g.Ows.tileMap.Tiles[c.Z][i] == 215
+	}
+
+	index := g.Ows.tileMap.Index(nx, ny)
+	if c.dir == Down && isDownLedge(index) {
+		return DoJump
+	} else if c.dir != Down && isDownLedge(index) {
+		return DoCollision
+	}
+
+	return DoNone
+}
+
 func (c *Character) EndAnim() {
 	c.animationState = 0
 	c.Tx = 0
+	c.isJumping = false
 }

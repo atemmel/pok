@@ -125,7 +125,7 @@ func (g *Game) DrawPlayer(player *Player) {
 	playerOpt := &ebiten.DrawImageOptions{}
 
 	x := player.Char.Gx + NpcOffsetX
-	y := player.Char.Gy + NpcOffsetY
+	y := player.Char.Gy + NpcOffsetY + player.Char.OffsetY
 
 	playerRect := image.Rect(
 		player.Char.Tx,
