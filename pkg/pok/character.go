@@ -233,7 +233,14 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 				if res := c.TryJumpLedge(nx, ny, g); res == DoJump {
 					g.Audio.PlayPlayerJump()
 					c.isJumping = true
-					ny++
+					switch c.dir {
+					case Down:
+						ny++
+					case Right:
+						nx++
+					case Left:
+						nx--
+					}
 				} else if res == DoCollision {
 					if c.animationState == characterMaxCycle -1 {
 						g.Audio.PlayThud()
@@ -260,14 +267,36 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 
 func (c *Character) TryJumpLedge(nx, ny int, g *Game) int {
 
+	//TODO: Increase ledge Z index by 1
+	//TODO: Check texture index as well
 	isDownLedge := func(i int) bool {
 		return g.Ows.tileMap.Tiles[c.Z][i] == 213 || g.Ows.tileMap.Tiles[c.Z][i] == 214 || g.Ows.tileMap.Tiles[c.Z][i] == 215
+	}
+
+	isRightLedge := func(i int) bool {
+		return g.Ows.tileMap.Tiles[c.Z][i] == 233 || g.Ows.tileMap.Tiles[c.Z][i] == 241 || g.Ows.tileMap.Tiles[c.Z][i] == 249
+	}
+
+	isLeftLedge := func(i int) bool {
+		return g.Ows.tileMap.Tiles[c.Z][i] == 232 || g.Ows.tileMap.Tiles[c.Z][i] == 240 || g.Ows.tileMap.Tiles[c.Z][i] == 248
 	}
 
 	index := g.Ows.tileMap.Index(nx, ny)
 	if c.dir == Down && isDownLedge(index) {
 		return DoJump
 	} else if c.dir != Down && isDownLedge(index) {
+		return DoCollision
+	}
+
+	if c.dir == Right && isRightLedge(index) {
+		return DoJump
+	} else if c.dir != Right && isRightLedge(index) {
+		return DoCollision
+	}
+
+	if c.dir == Left && isLeftLedge(index) {
+		return DoJump
+	} else if c.dir != Left && isLeftLedge(index) {
 		return DoCollision
 	}
 
