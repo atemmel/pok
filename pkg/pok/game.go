@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/debug"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"image"
@@ -21,9 +22,9 @@ func CreateGame() *Game {
 	g.As = &g.Ows
 	var err error
 	playerImg, _, err = ebitenutil.NewImageFromFile(CharacterImagesDir + "trchar000.png", ebiten.FilterDefault)
-	Assert(err)
+	debug.Assert(err)
 	playerRunningImg, _, err = ebitenutil.NewImageFromFile(CharacterImagesDir + "boy_run.png", ebiten.FilterDefault)
-	Assert(err)
+	debug.Assert(err)
 	activePlayerImg = playerImg
 	g.Dialog = NewDialogBox()
 	drawUi = true
@@ -89,7 +90,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func (g *Game) Load(str string, entrypoint int) {
 	err := g.Ows.tileMap.OpenFile(str)
-	Assert(err)
+	debug.Assert(err)
 	currentLayer = 0
 	selectedTile = 0
 	g.Player.Location = str

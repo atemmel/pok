@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/debug"
 	"github.com/hajimehoshi/ebiten"
 	"image/color"
 	"math"
@@ -38,7 +39,7 @@ const (
 
 func NewResize(tileMap *TileMap, offset *Vec2) Resize {
 	if tileMap == nil {
-		Assert(errors.New("tileMap was nil :/"))
+		debug.Assert(errors.New("tileMap was nil :/"))
 	}
 	img, _ := ebiten.NewImage(32, 32, ebiten.FilterDefault)
 	img2, _ := ebiten.NewImage(32, 32, ebiten.FilterDefault)

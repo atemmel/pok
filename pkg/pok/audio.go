@@ -2,6 +2,7 @@ package pok
 
 import (
 	"io/ioutil"
+	"github.com/atemmel/pok/pkg/debug"
 	"github.com/hajimehoshi/ebiten/audio"
 	"github.com/hajimehoshi/ebiten/audio/mp3"
 	"github.com/hajimehoshi/ebiten/audio/vorbis"
@@ -38,22 +39,22 @@ func (a *Audio) PlayPlayerJump() {
 
 func NewAudio() Audio {
 	ctx, err := audio.NewContext(44100)
-	Assert(err)
+	debug.Assert(err)
 	msrc, err := loadMp3(ctx, AudioDir + "apple.mp3")
-	Assert(err)
+	debug.Assert(err)
 	loop := audio.NewInfiniteLoop(msrc, msrc.Length() - 2500000)
 	player, err := audio.NewPlayer(ctx, loop)
-	Assert(err)
+	debug.Assert(err)
 	msrc, err = loadMp3(ctx, AudioDir + "thud.mp3")
-	Assert(err)
+	debug.Assert(err)
 	thud, err := audio.NewPlayer(ctx, msrc)
-	Assert(err)
+	debug.Assert(err)
 	msrc, err = loadMp3(ctx, AudioDir + "door.mp3")
-	Assert(err)
+	debug.Assert(err)
 	door, err := audio.NewPlayer(ctx, msrc)
-	Assert(err)
+	debug.Assert(err)
 	osrc, err := loadOgg(ctx, AudioDir + "player_jump.ogg")
-	Assert(err)
+	debug.Assert(err)
 	jump, err := audio.NewPlayer(ctx, osrc)
 
 	player.SetVolume(volume)

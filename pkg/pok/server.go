@@ -3,6 +3,7 @@ package pok
 import (
 	"bufio"
 	"encoding/json"	//TODO Change to protobuf implementation
+	"github.com/atemmel/pok/pkg/debug"
 	"log"
 	"net"
 	"strconv"
@@ -44,9 +45,9 @@ func (s *Server) Serve() {
 	var err error
 	log.Println("Starting server...")
 	s.conf, err = ReadServerConfig()
-	Assert(err)
+	debug.Assert(err)
 	s.listener, err = net.Listen("tcp", s.conf.Url + ":" + s.conf.Port)
-	Assert(err)
+	debug.Assert(err)
 
 	log.Println("Server is now running")
 

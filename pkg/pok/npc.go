@@ -2,6 +2,7 @@ package pok
 
 import(
 	"errors"
+	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/dialog"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
@@ -53,7 +54,7 @@ const(
 
 func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 	tree, err := dialog.ReadDialogTreeFromFile(DialogDir + info.DialogPath)
-	Assert(err)
+	debug.Assert(err)
 
 	if info.MovementInfo.Strategy == Zone {
 		info.MovementInfo.zoneFramesUntilNextStep = SelectFramesUntilNextStep()
@@ -82,7 +83,7 @@ func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 	if npc.NpcTextureIndex == -1 {
 		texture, _, err := ebitenutil.NewImageFromFile(CharacterImagesDir + info.Texture, ebiten.FilterDefault)
 
-		Assert(err)
+		debug.Assert(err)
 
 		npc.NpcTextureIndex = len(t.npcImages)
 		t.npcImages = append(t.npcImages, texture)
@@ -160,7 +161,7 @@ func (npc *Npc) doZoneStrategy(g *Game) {
 	*frames--
 	if *frames <= 0 {
 		if len(npc.MovementInfo.Commands) < 4 {
-			Assert(errors.New("Could not form rectangle from MovementInfo.Commands"))
+			debug.Assert(errors.New("Could not form rectangle from MovementInfo.Commands"))
 		}
 
 		x1 := npc.MovementInfo.Commands[0]

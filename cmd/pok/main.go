@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/atemmel/pok/pkg/pok"
+	"github.com/atemmel/pok/pkg/debug"
 	"github.com/hajimehoshi/ebiten"
 )
 
@@ -14,7 +15,7 @@ var isServing = false
 var fileToOpen string
 
 func init() {
-	pok.InitAssert(&LogFileName, false)
+	debug.InitAssert(&LogFileName, false)
 	flag.BoolVar(&isServing, "serve", false, "Run as game server")
 	flag.Parse()
 

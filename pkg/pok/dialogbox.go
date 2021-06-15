@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/dialog"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
@@ -41,10 +42,10 @@ type DialogBox struct {
 
 func NewDialogBox() DialogBox {
 	data, err := ioutil.ReadFile(FontsDir + "pokemon_pixel_font.ttf")
-	Assert(err)
+	debug.Assert(err)
 
 	tt, err := truetype.Parse(data)
-	Assert(err)
+	debug.Assert(err)
 
 	db := DialogBox{}
 
@@ -56,7 +57,7 @@ func NewDialogBox() DialogBox {
 	})
 
 	db.box, _, err = ebitenutil.NewImageFromFile(ImagesDir + "dialog0.png", ebiten.FilterDefault);
-	Assert(err)
+	debug.Assert(err)
 
 	db.Hidden = true
 	db.speed = TextNormal

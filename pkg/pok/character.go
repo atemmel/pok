@@ -82,7 +82,7 @@ func (c *Character) Draw(img *ebiten.Image, rend *Renderer, offsetX, offsetY flo
 		&playerRect,
 		x,
 		y,
-		3,
+		2,
 	})
 }
 
@@ -270,31 +270,40 @@ func (c *Character) TryJumpLedge(nx, ny int, g *Game) int {
 	//TODO: Increase ledge Z index by 1
 	//TODO: Check texture index as well
 	isDownLedge := func(i int) bool {
-		return g.Ows.tileMap.Tiles[c.Z][i] == 213 || g.Ows.tileMap.Tiles[c.Z][i] == 214 || g.Ows.tileMap.Tiles[c.Z][i] == 215
+		return (g.Ows.tileMap.Tiles[c.Z][i] == 213 || g.Ows.tileMap.Tiles[c.Z][i] == 214 || g.Ows.tileMap.Tiles[c.Z][i] == 215)
 	}
 
 	isRightLedge := func(i int) bool {
-		return g.Ows.tileMap.Tiles[c.Z][i] == 233 || g.Ows.tileMap.Tiles[c.Z][i] == 241 || g.Ows.tileMap.Tiles[c.Z][i] == 249
+		return (g.Ows.tileMap.Tiles[c.Z][i] == 233 || g.Ows.tileMap.Tiles[c.Z][i] == 241 || g.Ows.tileMap.Tiles[c.Z][i] == 249)
 	}
 
 	isLeftLedge := func(i int) bool {
-		return g.Ows.tileMap.Tiles[c.Z][i] == 232 || g.Ows.tileMap.Tiles[c.Z][i] == 240 || g.Ows.tileMap.Tiles[c.Z][i] == 248
+		return (g.Ows.tileMap.Tiles[c.Z][i] == 232 || g.Ows.tileMap.Tiles[c.Z][i] == 240 || g.Ows.tileMap.Tiles[c.Z][i] == 248)
 	}
 
 	index := g.Ows.tileMap.Index(nx, ny)
 	if c.dir == Down && isDownLedge(index) {
+		if g.TileIsOccupied(nx, ny + 1, c.Z) {
+			return DoCollision
+		}
 		return DoJump
 	} else if c.dir != Down && isDownLedge(index) {
 		return DoCollision
 	}
 
 	if c.dir == Right && isRightLedge(index) {
+		if g.TileIsOccupied(nx + 1, ny, c.Z) {
+			return DoCollision
+		}
 		return DoJump
 	} else if c.dir != Right && isRightLedge(index) {
 		return DoCollision
 	}
 
 	if c.dir == Left && isLeftLedge(index) {
+		if g.TileIsOccupied(nx - 1, ny, c.Z) {
+			return DoCollision
+		}
 		return DoJump
 	} else if c.dir != Left && isLeftLedge(index) {
 		return DoCollision

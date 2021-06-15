@@ -3,6 +3,7 @@ package pok
 import (
 	"errors"
 	"fmt"
+	"github.com/atemmel/pok/pkg/debug"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
@@ -179,7 +180,7 @@ func NewEditor(paths []string) *Editor {
 	es.clickStartY = -1
 
 	es.icons, _, err = ebitenutil.NewImageFromFile(EditorImagesDir + "editoricons.png", ebiten.FilterDefault)
-	Assert(err)
+	debug.Assert(err)
 
 	es.tileMaps = make([]*TileMap, 0)
 	es.tileMapOffsets = make([]*Vec2, 0)
@@ -189,7 +190,7 @@ func NewEditor(paths []string) *Editor {
 	es.npcGrid = NewNpcGrid(es.npcImages)
 
 	es.treeAutoTileInfo, err = ReadAllTreeAutoTileInfo(TreeAutotileInfoDir)
-	Assert(err)
+	debug.Assert(err)
 	if len(es.treeAutoTileInfo) > 0 {
 		treeArea.TreeInfo = &es.treeAutoTileInfo[0]
 	}
@@ -408,11 +409,11 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	var err error
 	e.autoTileInfo, err = ReadAllAutoTileInfo(AutotileInfoDir)
 	e.autoTileGrid = NewAutoTileGrid(tileMap.images[0], tileMap.nTilesX[0], e.autoTileInfo)
-	Assert(err)
+	debug.Assert(err)
 
 	for i := range e.treeAutoTileInfo {
 		err := e.treeAutoTileInfo[i].FitToTileMap(tileMap)
-		Assert(err)
+		debug.Assert(err)
 	}
 
 	e.treeAutoTileGrid = NewTreeAutoTileGrid(tileMap.images[0], e.treeAutoTileInfo)
@@ -474,7 +475,7 @@ func (e *Editor) handleInputs() error {
 		index := e.getTileMapIndexAtCoord(cx, cy)
 		if index != -1 && !e.isAlreadyClicking() {
 			err := e.setActiveTileMap(index)
-			Assert(err)
+			debug.Assert(err)
 		}
 		if e.gridIsVisible() && e.grid.Contains(image.Point{cx, cy}) {
 			_, sy := ebiten.Wheel()
@@ -800,7 +801,7 @@ func (e *Editor) containsIcon(x, y int) int {
 
 func (e *Editor) fillObjectGrid(dir string) {
 	objs, err := ReadAllObjects(dir)
-	Assert(err)
+	debug.Assert(err)
 
 	for i := range objs {
 		for j := range e.activeTileMap.Textures {

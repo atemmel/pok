@@ -1,4 +1,4 @@
-package pok
+package debug
 
 import(
 	"github.com/sqweek/dialog"

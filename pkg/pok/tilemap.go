@@ -2,6 +2,7 @@ package pok
 
 import(
 	"encoding/json"
+	"github.com/atemmel/pok/pkg/debug"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"io/ioutil"
@@ -151,7 +152,7 @@ func (t *TileMap) OpenFile(path string) error {
 	imgs := make([]*ebiten.Image, len(t.Textures))
 	for i := range imgs {
 		img, _, err := ebitenutil.NewImageFromFile(TileMapImagesDir + t.Textures[i], ebiten.FilterDefault)
-		Assert(err)
+		debug.Assert(err)
 		imgs[i] = img
 	}
 
@@ -496,7 +497,7 @@ func CreateTileMap(width int, height int, textures []string) *TileMap {
 	imgs := make([]*ebiten.Image, len(textures))
 	for i := range imgs {
 		img, _, err := ebitenutil.NewImageFromFile(TileMapImagesDir + textures[i], ebiten.FilterDefault)
-		Assert(err)
+		debug.Assert(err)
 		imgs[i] = img
 	}
 
