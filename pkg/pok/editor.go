@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/atemmel/pok/pkg/debug"
+	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
@@ -179,7 +180,8 @@ func NewEditor(paths []string) *Editor {
 	es.clickStartX = -1
 	es.clickStartY = -1
 
-	es.icons, _, err = ebitenutil.NewImageFromFile(EditorImagesDir + "editoricons.png", ebiten.FilterDefault)
+	//es.icons, _, err = ebitenutil.NewImageFromFile(EditorImagesDir + "editoricons.png", ebiten.FilterDefault)
+	es.icons, _ = textures.Load(EditorImagesDir + "editoricons.png")
 	debug.Assert(err)
 
 	es.tileMaps = make([]*TileMap, 0)
@@ -404,11 +406,12 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	e.activeFullFiles = append(e.activeFiles, e.nextFile)
 	e.activeFiles = append(e.activeFiles, filepath.Base(e.nextFile))
 	drawUi = true
-	e.grid = NewGrid(tileMap.images[0], TileSize)
+	const baseIndex = 0
+	e.grid = NewGrid(textures.Access(tileMap.textureMapping[baseIndex]), TileSize)
 	e.fillObjectGrid(OverworldObjectsDir)
 	var err error
 	e.autoTileInfo, err = ReadAllAutoTileInfo(AutotileInfoDir)
-	e.autoTileGrid = NewAutoTileGrid(tileMap.images[0], tileMap.nTilesX[0], e.autoTileInfo)
+	e.autoTileGrid = NewAutoTileGrid(textures.Access(tileMap.textureMapping[baseIndex]), tileMap.nTilesX[baseIndex], e.autoTileInfo)
 	debug.Assert(err)
 
 	for i := range e.treeAutoTileInfo {
@@ -416,7 +419,7 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 		debug.Assert(err)
 	}
 
-	e.treeAutoTileGrid = NewTreeAutoTileGrid(tileMap.images[0], e.treeAutoTileInfo)
+	e.treeAutoTileGrid = NewTreeAutoTileGrid(textures.Access(tileMap.textureMapping[baseIndex]), e.treeAutoTileInfo)
 }
 
 func (e *Editor) appendTileMap(tileMap *TileMap) {
@@ -425,8 +428,8 @@ func (e *Editor) appendTileMap(tileMap *TileMap) {
 	e.tileMapOffsets = append(e.tileMapOffsets, &Vec2{0, 0})
 	e.activeTileMap = e.tileMaps[len(e.tileMaps)-1]
 	e.resizers = append(e.resizers, NewResize(e.tileMaps[len(e.tileMaps)-1], e.tileMapOffsets[len(e.tileMapOffsets) - 1]))
-	tileMap.npcImages = e.npcImages
-	tileMap.npcImagesStrings = e.npcImagesStrings
+	//tileMap.npcImages = e.npcImages
+	//tileMap.npcImagesStrings = e.npcImagesStrings
 }
 
 func (e *Editor) saveFile() {
@@ -1455,7 +1458,7 @@ func loadImages(images []string, base string) []*ebiten.Image {
 	imgs := make([]*ebiten.Image, 0, len(images))
 
 	for _, s := range images {
-		img, _, err := ebitenutil.NewImageFromFile(base + s, ebiten.FilterDefault)
+		img, err := textures.LoadWithError(base + s) 
 		if err != nil {
 			log.Println("Could not load image", s)
 		}

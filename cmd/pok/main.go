@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/atemmel/pok/pkg/pok"
 	"github.com/atemmel/pok/pkg/debug"
+	"github.com/atemmel/pok/pkg/pok"
+	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
 )
 
@@ -42,6 +43,7 @@ func main() {
 	ebiten.SetWindowTitle("pok")
 	ebiten.SetWindowResizable(true)
 
+	textures.Init()
 	game := pok.CreateGame()
 
 	game.Load(fileToOpen, 0)

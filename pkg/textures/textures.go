@@ -28,6 +28,11 @@ func Load(path string) (*ebiten.Image, int) {
 	return Access(index), index
 }
 
+func LoadWithError(path string) (*ebiten.Image, error) {
+	img, _, err := ebitenutil.NewImageFromFile(path, ebiten.FilterDefault)
+	return img, err
+}
+
 func Access(index int) *ebiten.Image {
 	return textures[index];
 }

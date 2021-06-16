@@ -243,8 +243,7 @@ func (self *TreeAutoTileInfo) FitToTileMap(tm *TileMap) error {
 		return errors.New("Texture not found")
 	}
 
-	w := tm.images[i].Bounds().Dx()
-	self.textureWidth = w / TileSize
+	self.textureWidth = tm.nTilesX[i]
 	self.textureIndex = i
 
 	// do single tree

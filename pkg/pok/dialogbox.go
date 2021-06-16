@@ -3,8 +3,9 @@ package pok
 import (
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/dialog"
+	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
+	//"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/text"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
@@ -56,7 +57,8 @@ func NewDialogBox() DialogBox {
 		Hinting: font.HintingFull,
 	})
 
-	db.box, _, err = ebitenutil.NewImageFromFile(ImagesDir + "dialog0.png", ebiten.FilterDefault);
+	//db.box, _, err = ebitenutil.NewImageFromFile(ImagesDir + "dialog0.png", ebiten.FilterDefault);
+	db.box, err = textures.LoadWithError(ImagesDir + "dialog0.png")
 	debug.Assert(err)
 
 	db.Hidden = true

@@ -2,8 +2,8 @@ package pok
 
 import (
 	"github.com/atemmel/pok/pkg/debug"
+	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"image"
 )
 
@@ -20,11 +20,8 @@ type Game struct {
 func CreateGame() *Game {
 	g := &Game{}
 	g.As = &g.Ows
-	var err error
-	playerImg, _, err = ebitenutil.NewImageFromFile(CharacterImagesDir + "trchar000.png", ebiten.FilterDefault)
-	debug.Assert(err)
-	playerRunningImg, _, err = ebitenutil.NewImageFromFile(CharacterImagesDir + "boy_run.png", ebiten.FilterDefault)
-	debug.Assert(err)
+	playerImg, _ = textures.Load(CharacterImagesDir + "trchar000.png")
+	playerRunningImg, _ = textures.Load(CharacterImagesDir + "boy_run.png")
 	activePlayerImg = playerImg
 	g.Dialog = NewDialogBox()
 	drawUi = true

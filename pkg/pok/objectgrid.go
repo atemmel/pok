@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
 	"image"
 	"image/color"
@@ -62,7 +63,8 @@ func (og *ObjectGrid) Draw(target *ebiten.Image) {
 	y := 0.0
 	for i, ob := range og.objs {
 		r := image.Rect(ob.X * TileSize, ob.Y * TileSize, (ob.X + ob.W) * TileSize, (ob.Y + ob.H) * TileSize)
-		img := og.tileMap.images[ob.textureIndex]
+		//img := og.tileMap.images[ob.textureIndex]
+		img := textures.Access(og.tileMap.textureMapping[ob.textureIndex])
 		opt := &ebiten.DrawImageOptions{}
 		dx := xGridPos + float64(og.rects[i].Min.X)
 		dy := yGridPos + float64(og.rects[i].Min.Y)

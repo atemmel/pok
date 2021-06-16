@@ -2,9 +2,8 @@ package pok
 
 import(
 	"encoding/json"
-	"github.com/atemmel/pok/pkg/debug"
+	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"io/ioutil"
 	"image"
 	"strings"
@@ -38,11 +37,9 @@ type TileMap struct {
 	Height int
 	NpcInfo []NpcInfo
 
-	images []*ebiten.Image
 	nTilesX []int
+	textureMapping []int
 
-	npcImages []*ebiten.Image
-	npcImagesStrings []string
 	npcs []Npc
 }
 
@@ -77,8 +74,7 @@ func (t *TileMap) UpdateNpcs(g *Game) {
 func (t *TileMap) drawNpcs(rend *Renderer, offsetX, offsetY float64) {
 	for i := range t.npcs {
 		index := t.npcs[i].NpcTextureIndex
-		img := t.npcImages[index]
-		t.npcs[i].Char.Draw(img, rend, offsetX, offsetY)
+		t.npcs[i].Char.Draw(textures.Access(index), rend, offsetX, offsetY)
 	}
 }
 
@@ -107,7 +103,7 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			}
 
 			opt := &ebiten.DrawImageOptions{}
-			img := t.images[t.TextureIndicies[j][i]]
+			img := textures.Access(t.textureMapping[t.TextureIndicies[j][i]])
 
 			rect := image.Rect(tx, ty, tx + TileSize, ty + TileSize)
 			rend.Draw(&RenderTarget{
@@ -149,26 +145,23 @@ func (t *TileMap) OpenFile(path string) error {
 		return err
 	}
 
-	imgs := make([]*ebiten.Image, len(t.Textures))
-	for i := range imgs {
-		img, _, err := ebitenutil.NewImageFromFile(TileMapImagesDir + t.Textures[i], ebiten.FilterDefault)
-		debug.Assert(err)
-		imgs[i] = img
-	}
+	indicies := make([]int, len(t.Textures))
+	nTilesX := make([]int, len(t.Textures))
 
-	nTilesX := make([]int, len(imgs))
-	for i := range imgs {
-		w, _ := imgs[i].Size()
+	for i := range indicies {
+		img, index := textures.Load(TileMapImagesDir + t.Textures[i])
+		indicies[i] = index
+		w, _ := img.Size()
 		nTilesX[i] = w / TileSize
 	}
 
-	t.images = imgs
+	t.textureMapping = indicies
 	t.nTilesX = nTilesX
 
 	t.npcs = t.npcs[:0]
 	err = t.createNpcs()
 
-	return nil
+	return err
 }
 
 func (t *TileMap) Index(x, y int) int {
@@ -493,17 +486,15 @@ func (t *TileMap) FillCollision(x, y, w, h, z int) {
 	}
 }
 
-func CreateTileMap(width int, height int, textures []string) *TileMap {
-	imgs := make([]*ebiten.Image, len(textures))
-	for i := range imgs {
-		img, _, err := ebitenutil.NewImageFromFile(TileMapImagesDir + textures[i], ebiten.FilterDefault)
-		debug.Assert(err)
-		imgs[i] = img
-	}
+func CreateTileMap(width int, height int, texture []string) *TileMap {
+	textureMapping := make([]int, len(texture))
+	nTilesX := make([]int, len(texture))
 
-	nTilesX := make([]int, len(imgs))
-	for i := range imgs {
-		w, _ := imgs[i].Size()
+	for i := range texture {
+		img, index := textures.Load(texture[i])
+		w, _ := img.Size()
+
+		textureMapping[i] = index
 		nTilesX[i] = w / TileSize
 	}
 
@@ -520,16 +511,14 @@ func CreateTileMap(width int, height int, textures []string) *TileMap {
 		tex,
 		col,
 		ind,
-		textures,
+		texture,
 		make([]Exit, 0),
 		make([]Entry, 0),
 		width,
 		height,
 		make([]NpcInfo, 0),
-		imgs,
 		nTilesX,
-		make([]*ebiten.Image, 0),
-		make([]string, 0),
+		textureMapping,
 		make([]Npc, 0),
 	}
 	return tiles
