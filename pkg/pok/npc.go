@@ -2,6 +2,7 @@ package pok
 
 import(
 	"errors"
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/dialog"
 	"github.com/atemmel/pok/pkg/textures"
@@ -52,7 +53,7 @@ const(
 )
 
 func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
-	tree, err := dialog.ReadDialogTreeFromFile(DialogDir + info.DialogPath)
+	tree, err := dialog.ReadDialogTreeFromFile(constants.DialogDir + info.DialogPath)
 	debug.Assert(err)
 
 	if info.MovementInfo.Strategy == Zone {
@@ -66,13 +67,13 @@ func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 		info.MovementInfo,
 	}
 
-	npc.Char.Gx = float64(info.X) * TileSize
-	npc.Char.Gy = float64(info.Y) * TileSize
+	npc.Char.Gx = float64(info.X) * constants.TileSize
+	npc.Char.Gy = float64(info.Y) * constants.TileSize
 
 	npc.Char.X = info.X
 	npc.Char.Y = info.Y
 
-	_, npc.NpcTextureIndex = textures.Load(CharacterImagesDir + info.Texture)
+	_, npc.NpcTextureIndex = textures.Load(constants.CharacterImagesDir + info.Texture)
 
 	return npc
 }

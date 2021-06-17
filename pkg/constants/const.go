@@ -1,4 +1,4 @@
-package pok
+package constants
 
 const (
 	TileSize = 16

@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
@@ -20,8 +21,8 @@ type Game struct {
 func CreateGame() *Game {
 	g := &Game{}
 	g.As = &g.Ows
-	playerImg, _ = textures.Load(CharacterImagesDir + "trchar000.png")
-	playerRunningImg, _ = textures.Load(CharacterImagesDir + "boy_run.png")
+	playerImg, _ = textures.Load(constants.CharacterImagesDir + "trchar000.png")
+	playerRunningImg, _ = textures.Load(constants.CharacterImagesDir + "boy_run.png")
 	activePlayerImg = playerImg
 	g.Dialog = NewDialogBox()
 	drawUi = true
@@ -99,11 +100,11 @@ func (g *Game) Load(str string, entrypoint int) {
 		g.Player.Char.X = 0
 		g.Player.Char.Y = 0
 	}
-	g.Player.Char.Gx = float64(g.Player.Char.X * TileSize)
-	g.Player.Char.Gy = float64(g.Player.Char.Y * TileSize)
+	g.Player.Char.Gx = float64(g.Player.Char.X * constants.TileSize)
+	g.Player.Char.Gy = float64(g.Player.Char.Y * constants.TileSize)
 	g.Rend = NewRenderer(
-		DisplaySizeX,
-		DisplaySizeY,
+		constants.DisplaySizeX,
+		constants.DisplaySizeY,
 		2,
 	)
 }
@@ -128,8 +129,8 @@ func (g *Game) DrawPlayer(player *Player) {
 	playerRect := image.Rect(
 		player.Char.Tx,
 		player.Char.Ty,
-		player.Char.Tx + (TileSize * 2),
-		player.Char.Ty + (TileSize * 2),
+		player.Char.Tx + (constants.TileSize * 2),
+		player.Char.Ty + (constants.TileSize * 2),
 	)
 
 	g.Rend.Draw(&RenderTarget{
@@ -143,7 +144,7 @@ func (g *Game) DrawPlayer(player *Player) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return DisplaySizeX, DisplaySizeY
+	return constants.DisplaySizeX, constants.DisplaySizeY
 }
 
 func (g *Game) PlayAudio() {

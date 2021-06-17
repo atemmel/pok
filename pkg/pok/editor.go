@@ -3,6 +3,7 @@ package pok
 import (
 	"errors"
 	"fmt"
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
@@ -117,11 +118,11 @@ func NewEditor(paths []string) *Editor {
 
 	es.dieOnNextTick = false
 
-	es.selection, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	es.collisionMarker, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	es.exitMarker, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	es.deleteableMarker, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
-	es.backgroundGrid, _ = ebiten.NewImage(TileSize, TileSize, ebiten.FilterDefault)
+	es.selection, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
+	es.collisionMarker, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
+	es.exitMarker, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
+	es.deleteableMarker, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
+	es.backgroundGrid, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
 
 	selectionClr := color.RGBA{255, 0, 0, 255}
 	collisionClr := color.RGBA{255, 0, 255, 255}
@@ -177,26 +178,26 @@ func NewEditor(paths []string) *Editor {
 		es.backgroundGrid.Set(es.backgroundGrid.Bounds().Max.Y - 1, p, backgroundGridClr)
 	}
 
-	es.rend = NewRenderer(DisplaySizeX, DisplaySizeY, 1)
+	es.rend = NewRenderer(constants.DisplaySizeX, constants.DisplaySizeY, 1)
 
 	es.clickStartX = -1
 	es.clickStartY = -1
 
-	es.icons, err = textures.LoadWithError(EditorImagesDir + "editoricons.png")
+	es.icons, err = textures.LoadWithError(constants.EditorImagesDir + "editoricons.png")
 	debug.Assert(err)
-	es.addButton, err = textures.LoadWithError(EditorImagesDir + "addbutton.png")
+	es.addButton, err = textures.LoadWithError(constants.EditorImagesDir + "addbutton.png")
 	debug.Assert(err)
-	es.subButton, err = textures.LoadWithError(EditorImagesDir + "subbutton.png")
+	es.subButton, err = textures.LoadWithError(constants.EditorImagesDir + "subbutton.png")
 	debug.Assert(err)
 
 	es.tileMaps = make([]*TileMap, 0)
 	es.tileMapOffsets = make([]*Vec2, 0)
 
-	es.npcImagesStrings = listPngs(CharacterImagesDir)
-	es.npcImages = loadImages(es.npcImagesStrings, CharacterImagesDir)
+	es.npcImagesStrings = listPngs(constants.CharacterImagesDir)
+	es.npcImages = loadImages(es.npcImagesStrings, constants.CharacterImagesDir)
 	es.npcGrid = NewNpcGrid(es.npcImages)
 
-	es.treeAutoTileInfo, err = ReadAllTreeAutoTileInfo(TreeAutotileInfoDir)
+	es.treeAutoTileInfo, err = ReadAllTreeAutoTileInfo(constants.TreeAutotileInfoDir)
 	debug.Assert(err)
 	if len(es.treeAutoTileInfo) > 0 {
 		treeArea.TreeInfo = &es.treeAutoTileInfo[0]
@@ -267,12 +268,12 @@ func (e *Editor) DrawBackgroundGrid() {
 	xMax := e.rend.Cam.W / e.rend.Cam.Scale
 	yMax := e.rend.Cam.H / e.rend.Cam.Scale
 
-	x := e.rend.Cam.X - float64(int(e.rend.Cam.X) % TileSize) - TileSize
-	xLeft := x + TileSize
+	x := e.rend.Cam.X - float64(int(e.rend.Cam.X) % constants.TileSize) - constants.TileSize
+	xLeft := x + constants.TileSize
 
 	for x < xLeft + xMax {
-		y := e.rend.Cam.Y - float64(int(e.rend.Cam.Y) % TileSize) - TileSize
-		yLeft := y + TileSize
+		y := e.rend.Cam.Y - float64(int(e.rend.Cam.Y) % constants.TileSize) - constants.TileSize
+		yLeft := y + constants.TileSize
 		for y < yLeft + yMax {
 			e.rend.Draw(&RenderTarget{
 				&ebiten.DrawImageOptions{},
@@ -295,8 +296,8 @@ func (e *Editor) DrawTileMapDetail() {
 			continue
 		}
 		for i := range e.activeTileMap.Collision[j] {
-			x := float64(i % e.activeTileMap.Width) * TileSize
-			y := float64(i / e.activeTileMap.Width) * TileSize
+			x := float64(i % e.activeTileMap.Width) * constants.TileSize
+			y := float64(i / e.activeTileMap.Width) * constants.TileSize
 
 			if currentLayer == j && e.activeTileMap.Collision[j][i] {
 				e.rend.Draw(&RenderTarget{
@@ -317,8 +318,8 @@ func (e *Editor) DrawTileMapDetail() {
 				&ebiten.DrawImageOptions{},
 				e.exitMarker,
 				nil,
-				float64(e.activeTileMap.Exits[i].X * TileSize) + offset.X,
-				float64(e.activeTileMap.Exits[i].Y * TileSize) + offset.Y,
+				float64(e.activeTileMap.Exits[i].X * constants.TileSize) + offset.X,
+				float64(e.activeTileMap.Exits[i].Y * constants.TileSize) + offset.Y,
 				100,
 			})
 		}
@@ -329,8 +330,8 @@ func (e *Editor) DrawTileMapDetail() {
 					&ebiten.DrawImageOptions{},
 					e.deleteableMarker,
 					nil,
-					float64(placedObjects[e.activeTileMapIndex][i].X * TileSize) + offset.X,
-					float64(placedObjects[e.activeTileMapIndex][i].Y * TileSize) + offset.Y,
+					float64(placedObjects[e.activeTileMapIndex][i].X * constants.TileSize) + offset.X,
+					float64(placedObjects[e.activeTileMapIndex][i].Y * constants.TileSize) + offset.Y,
 					100,
 				})
 			}
@@ -340,8 +341,8 @@ func (e *Editor) DrawTileMapDetail() {
 			&ebiten.DrawImageOptions{},
 			e.selection,
 			nil,
-			float64(selectionX * TileSize) + offset.X,
-			float64(selectionY * TileSize) + offset.Y,
+			float64(selectionX * constants.TileSize) + offset.X,
+			float64(selectionY * constants.TileSize) + offset.Y,
 			100,
 		})
 	}
@@ -355,10 +356,10 @@ func (e *Editor) SelectTileFromMouse(cx, cy int) {
 	cx += int(math.Round(e.rend.Cam.X - offset.X))
 	cy += int(math.Round(e.rend.Cam.Y - offset.Y))
 
-	cx -= cx % TileSize
-	cy -= cy % TileSize
-	selectionX = cx / TileSize
-	selectionY = cy / TileSize
+	cx -= cx % constants.TileSize
+	cy -= cy % constants.TileSize
+	selectionX = cx / constants.TileSize
+	selectionY = cy / constants.TileSize
 	selectedTile =  selectionX + selectionY * e.activeTileMap.Width
 }
 
@@ -377,7 +378,7 @@ func (e *Editor) loadFileDialog() {
 	if err != nil {
 		doNewFile := dialog.Message("Could not open file %s. Create new file?", file).Title("Create new file?").YesNo()
 		if doNewFile {
-			tm = CreateTileMap(2, 2, listPngs(TileMapImagesDir))
+			tm = CreateTileMap(2, 2, listPngs(constants.TileMapImagesDir))
 			e.updateEditorWithNewTileMap(tm)
 		}
 	} else {
@@ -401,7 +402,7 @@ func (e *Editor) newFile() {
 		return
 	}
 
-	tm := CreateTileMap(2, 2, listPngs(TileMapImagesDir))
+	tm := CreateTileMap(2, 2, listPngs(constants.TileMapImagesDir))
 	e.nextFile = file
 	e.updateEditorWithNewTileMap(tm)
 }
@@ -412,10 +413,10 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	e.activeFiles = append(e.activeFiles, filepath.Base(e.nextFile))
 	drawUi = true
 	const baseIndex = 0
-	e.grid = NewGrid(textures.Access(tileMap.textureMapping[baseIndex]), TileSize)
-	e.fillObjectGrid(OverworldObjectsDir)
+	e.grid = NewGrid(textures.Access(tileMap.textureMapping[baseIndex]), constants.TileSize)
+	e.fillObjectGrid(constants.OverworldObjectsDir)
 	var err error
-	e.autoTileInfo, err = ReadAllAutoTileInfo(AutotileInfoDir)
+	e.autoTileInfo, err = ReadAllAutoTileInfo(constants.AutotileInfoDir)
 	e.autoTileGrid = NewAutoTileGrid(textures.Access(tileMap.textureMapping[baseIndex]), tileMap.nTilesX[baseIndex], e.autoTileInfo)
 	debug.Assert(err)
 
@@ -433,8 +434,6 @@ func (e *Editor) appendTileMap(tileMap *TileMap) {
 	e.tileMapOffsets = append(e.tileMapOffsets, &Vec2{0, 0})
 	e.activeTileMap = e.tileMaps[len(e.tileMaps)-1]
 	e.resizers = append(e.resizers, NewResize(e.tileMaps[len(e.tileMaps)-1], e.tileMapOffsets[len(e.tileMapOffsets) - 1]))
-	//tileMap.npcImages = e.npcImages
-	//tileMap.npcImagesStrings = e.npcImagesStrings
 }
 
 func (e *Editor) saveFile() {
@@ -738,8 +737,8 @@ func (e *Editor) handleMapMouseInputs() {
 		RedoStack = RedoStack[:0]
 
 		offset := e.tileMapOffsets[e.activeTileMapIndex]
-		offset.X = math.Round(offset.X / TileSize) * TileSize
-		offset.Y = math.Round(offset.Y / TileSize) * TileSize
+		offset.X = math.Round(offset.X / constants.TileSize) * constants.TileSize
+		offset.Y = math.Round(offset.Y / constants.TileSize) * constants.TileSize
 	}
 
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButton(1)) {
@@ -763,7 +762,7 @@ func (e *Editor) selectedTileIsValid() bool {
 }
 
 func (e *Editor) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return DisplaySizeX, DisplaySizeY
+	return constants.DisplaySizeX, constants.DisplaySizeY
 }
 
 func (e *Editor) gridIsVisible() bool {
@@ -878,8 +877,8 @@ func (e *Editor) setActiveTileMap(index int) error {
 func (e *Editor) getTileMapIndexAtCoord(cx, cy int) int {
 	p := image.Point{cx, cy}
 	for i := range e.tileMaps {
-		w := int(float64(e.tileMaps[i].Width * TileSize) / e.rend.Cam.Scale)
-		h := int(float64(e.tileMaps[i].Height * TileSize) / e.rend.Cam.Scale)
+		w := int(float64(e.tileMaps[i].Width * constants.TileSize) / e.rend.Cam.Scale)
+		h := int(float64(e.tileMaps[i].Height * constants.TileSize) / e.rend.Cam.Scale)
 		x := int(math.Round((e.tileMapOffsets[i].X - e.rend.Cam.X) / e.rend.Cam.Scale))
 		y := int(math.Round((e.tileMapOffsets[i].Y - e.rend.Cam.Y) / e.rend.Cam.Scale))
 
@@ -1035,13 +1034,13 @@ func (e *Editor) drawLinksFromActiveTileMap() {
 			if e.activeFiles[i] == ex.Target {
 				line := DebugLine{}
 				line.Clr = clr
-				line.X1 = float64(ex.X) * TileSize + e.tileMapOffsets[e.activeTileMapIndex].X + TileSize / 2
-				line.Y1 = float64(ex.Y) * TileSize + e.tileMapOffsets[e.activeTileMapIndex].Y + TileSize / 2
+				line.X1 = float64(ex.X) * constants.TileSize + e.tileMapOffsets[e.activeTileMapIndex].X + constants.TileSize / 2
+				line.Y1 = float64(ex.Y) * constants.TileSize + e.tileMapOffsets[e.activeTileMapIndex].Y + constants.TileSize / 2
 
 				for _, en := range e.tileMaps[i].Entries {
 					if en.Id == ex.Id {
-						line.X2 = float64(en.X) * TileSize + e.tileMapOffsets[i].X + TileSize / 2
-						line.Y2 = float64(en.Y) * TileSize + e.tileMapOffsets[i].Y + TileSize / 2
+						line.X2 = float64(en.X) * constants.TileSize + e.tileMapOffsets[i].X + constants.TileSize / 2
+						line.Y2 = float64(en.Y) * constants.TileSize + e.tileMapOffsets[i].Y + constants.TileSize / 2
 						break
 					}
 				}
@@ -1371,12 +1370,12 @@ func (e *Editor) postDoResize(x, y, origin int) {
 	offsetY := 0.0
 
 	if origin == TopLeftCorner || origin == TopRightCorner {
-		offsetY = -float64(y * TileSize)
+		offsetY = -float64(y * constants.TileSize)
 		e.tileMapOffsets[e.activeTileMapIndex].Y += offsetY
 	}
 
 	if origin == TopLeftCorner || origin == BotLeftCorner {
-		offsetX = -float64(x * TileSize)
+		offsetX = -float64(x * constants.TileSize)
 		e.tileMapOffsets[e.activeTileMapIndex].X += offsetX
 	}
 	linkBegin = nil

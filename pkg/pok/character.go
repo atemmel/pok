@@ -1,6 +1,7 @@
 package pok
 
 import(
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/hajimehoshi/ebiten"
 	"image"
 )
@@ -72,8 +73,8 @@ func (c *Character) Draw(img *ebiten.Image, rend *Renderer, offsetX, offsetY flo
 	playerRect := image.Rect(
 		c.Tx,
 		c.Ty,
-		c.Tx + (TileSize * 2),
-		c.Ty + (TileSize * 2),
+		c.Tx + (constants.TileSize * 2),
+		c.Ty + (constants.TileSize * 2),
 	)
 
 	rend.Draw(&RenderTarget{
@@ -115,13 +116,13 @@ func (c *Character) Update(g *Game) bool {
 	c.Step()
 
 	if c.isJumping {
-		if c.frames * int(c.velocity) >= TileSize * 2 {
+		if c.frames * int(c.velocity) >= constants.TileSize * 2 {
 			c.frames = 0
 			c.OffsetY = 0
 			c.isJumping = false
 			return true
 		}
-	} else if c.frames * int(c.velocity) >= TileSize {
+	} else if c.frames * int(c.velocity) >= constants.TileSize {
 		c.frames = 0
 		return true
 	}
@@ -133,7 +134,7 @@ func (c *Character) Step() {
 	c.frames++
 
 	if c.isJumping {
-		x := float64(c.frames) / (TileSize * 2)
+		x := float64(c.frames) / (constants.TileSize * 2)
 		c.OffsetY = (-4.0 * ((x - 0.5) * (x - 0.5)) + 1) * -8
 	}
 

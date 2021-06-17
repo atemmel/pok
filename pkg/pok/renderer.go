@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"image"
@@ -49,8 +50,8 @@ type Camera struct {
 
 func (c *Camera) AsRect() image.Rectangle {
 	return image.Rect(
-		int(c.X) - TileSize,
-		int(c.Y) - TileSize,
+		int(c.X) - constants.TileSize,
+		int(c.Y) - constants.TileSize,
 		int(c.X + (c.W / c.Scale)),
 		int(c.Y + (c.H / c.Scale)),
 	)
@@ -180,7 +181,7 @@ func (r *Renderer) ZoomToPoint(scale, x, y float64) {
 }
 
 func (r *Renderer) ZoomToCenter(scale float64) {
-	x := DisplaySizeX / 2.0
-	y := DisplaySizeY / 2.0
+	x := constants.DisplaySizeX / 2.0
+	y := constants.DisplaySizeY / 2.0
 	r.ZoomToPoint(scale, x, y)
 }

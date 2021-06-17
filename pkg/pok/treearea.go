@@ -1,7 +1,7 @@
 package pok
 
 import (
-	//"github.com/hajimehoshi/ebiten"
+	"github.com/atemmel/pok/pkg/constants"
 	"image/color"
 )
 
@@ -39,11 +39,11 @@ func (t *TreeAreaSelection) Draw(rend *Renderer) {
 	x0 := float64(*t.BeginX)
 	y0 := float64(*t.BeginY)
 
-	x0 = x0 * TileSize / rend.Cam.Scale
-	y0 = y0 * TileSize / rend.Cam.Scale
+	x0 = x0 * constants.TileSize / rend.Cam.Scale
+	y0 = y0 * constants.TileSize / rend.Cam.Scale
 
-	x1 := x0 + float64(lineX * px * TileSize) / rend.Cam.Scale
-	y1 := y0 + float64(lineY * py * TileSize) / rend.Cam.Scale
+	x1 := x0 + float64(lineX * px * constants.TileSize) / rend.Cam.Scale
+	y1 := y0 + float64(lineY * py * constants.TileSize) / rend.Cam.Scale
 
 	clr := color.RGBA{255, 0, 0, 255}
 

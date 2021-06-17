@@ -2,6 +2,7 @@ package pok
 
 import(
 	"encoding/json"
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
 	"io/ioutil"
@@ -90,13 +91,13 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			}
 
 			ix, iy := t.Coords(i)
-			x := float64(ix) * TileSize
-			y := float64(iy) * TileSize
+			x := float64(ix) * constants.TileSize
+			y := float64(iy) * constants.TileSize
 
 			nTilesX := t.nTilesX[t.TextureIndicies[j][i]]
 
-			tx := (n % nTilesX) * TileSize
-			ty := (n / nTilesX) * TileSize
+			tx := (n % nTilesX) * constants.TileSize
+			ty := (n / nTilesX) * constants.TileSize
 
 			if tx < 0 || ty < 0 {
 				continue
@@ -105,7 +106,7 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			opt := &ebiten.DrawImageOptions{}
 			img := textures.Access(t.textureMapping[t.TextureIndicies[j][i]])
 
-			rect := image.Rect(tx, ty, tx + TileSize, ty + TileSize)
+			rect := image.Rect(tx, ty, tx + constants.TileSize, ty + constants.TileSize)
 			rend.Draw(&RenderTarget{
 				opt,
 				img,
@@ -131,7 +132,7 @@ func (t *TileMap) OpenFile(path string) error {
 				var secondErr error
 				data, secondErr = ioutil.ReadFile(dbgPath)
 				if secondErr != nil {
-					return err
+					return secondErr
 				}
 			} else {
 				return err
@@ -149,10 +150,10 @@ func (t *TileMap) OpenFile(path string) error {
 	nTilesX := make([]int, len(t.Textures))
 
 	for i := range indicies {
-		img, index := textures.Load(TileMapImagesDir + t.Textures[i])
+		img, index := textures.Load(constants.TileMapImagesDir + t.Textures[i])
 		indicies[i] = index
 		w, _ := img.Size()
-		nTilesX[i] = w / TileSize
+		nTilesX[i] = w / constants.TileSize
 	}
 
 	t.textureMapping = indicies
@@ -440,8 +441,8 @@ func (t *TileMap) moveNpcs(dx, dy int) {
 			dy += t.Height - ny - 1
 		}
 
-		t.npcs[i].Char.Gx += float64(dx * TileSize)
-		t.npcs[i].Char.Gy += float64(dy * TileSize)
+		t.npcs[i].Char.Gx += float64(dx * constants.TileSize)
+		t.npcs[i].Char.Gy += float64(dy * constants.TileSize)
 
 		t.npcs[i].Char.X += dx
 		t.npcs[i].Char.Y += dy
@@ -495,7 +496,7 @@ func CreateTileMap(width int, height int, texture []string) *TileMap {
 		w, _ := img.Size()
 
 		textureMapping[i] = index
-		nTilesX[i] = w / TileSize
+		nTilesX[i] = w / constants.TileSize
 	}
 
 	tex := make([][]int, 1)

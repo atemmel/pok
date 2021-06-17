@@ -4,15 +4,23 @@ import(
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/atemmel/pok/pkg/debug"
+	"github.com/atemmel/pok/pkg/constants"
 )
 
 var(
 	aliases map[string]int
 	textures []*ebiten.Image
+
+	baseTextureIndex = InvalidIndex
+	waterTextureIndex = InvalidIndex
 )
 
 const(
+	InvalidIndex = -1
+
 	preAlloc = 8
+	baseTextureStr = constants.TileMapImagesDir + "base.png"
+	waterTextureStr = constants.TileMapImagesDir + "water.png"
 )
 
 func Init() {
@@ -53,4 +61,12 @@ func insertNewTexture(path string) (*ebiten.Image, int) {
 	aliases[path] = i
 	textures = append(textures, img)
 	return img, i
+}
+
+func checkForSpecialTextures(path string, index int) {
+	if baseTextureIndex == InvalidIndex && baseTextureStr == path {
+		baseTextureIndex = index
+	} else if waterTextureIndex == InvalidIndex && waterTextureStr == path {
+		waterTextureIndex = index
+	}
 }

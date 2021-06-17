@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/hajimehoshi/ebiten"
 	"image/color"
@@ -116,16 +117,16 @@ func (r *Resize) GetCorners() [4]Corner {
 			-float64(r.outlined.Bounds().Max.Y / 2),
 		},
 		{
-			float64(r.tileMap.Width * TileSize -r.outlined.Bounds().Max.X / 2),
+			float64(r.tileMap.Width * constants.TileSize -r.outlined.Bounds().Max.X / 2),
 			-float64(r.outlined.Bounds().Max.Y / 2),
 		},
 		{
 			-float64(r.outlined.Bounds().Max.X / 2),
-			float64(r.tileMap.Height * TileSize -r.outlined.Bounds().Max.Y / 2),
+			float64(r.tileMap.Height * constants.TileSize -r.outlined.Bounds().Max.Y / 2),
 		},
 		{
-			float64(r.tileMap.Width * TileSize -r.outlined.Bounds().Max.X / 2),
-			float64(r.tileMap.Height * TileSize -r.outlined.Bounds().Max.Y / 2),
+			float64(r.tileMap.Width * constants.TileSize -r.outlined.Bounds().Max.X / 2),
+			float64(r.tileMap.Height * constants.TileSize -r.outlined.Bounds().Max.Y / 2),
 		},
 	}
 
@@ -133,8 +134,8 @@ func (r *Resize) GetCorners() [4]Corner {
 		return corners
 	}
 
-	dx := float64(r.dx / TileSize) * TileSize
-	dy := float64(r.dy / TileSize) * TileSize
+	dx := float64(r.dx / constants.TileSize) * constants.TileSize
+	dy := float64(r.dy / constants.TileSize) * constants.TileSize
 
 	corners = r.moveCorners(corners, dx, dy)
 
@@ -218,8 +219,8 @@ func (r *Resize) Release() (int, int, int) {
 		return 0, 0, -1
 	}
 
-	x := r.dx / TileSize
-	y := r.dy / TileSize
+	x := r.dx / constants.TileSize
+	y := r.dy / constants.TileSize
 	i := r.holdIndex
 	r.holding[r.holdIndex] = false
 	r.holdIndex = -1

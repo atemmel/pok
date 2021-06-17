@@ -1,6 +1,7 @@
 package pok
 
 import(
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/hajimehoshi/ebiten"
 	"image"
 )
@@ -10,23 +11,23 @@ type TreeAutoTileGrid struct {
 }
 
 func NewTreeAutoTileGrid(tileSet *ebiten.Image, tatis []TreeAutoTileInfo) TreeAutoTileGrid {
-	w := len(tatis) * TileSize * SingleTreeWidth
-	h := SingleTreeHeight * TileSize
+	w := len(tatis) * constants.TileSize * SingleTreeWidth
+	h := SingleTreeHeight * constants.TileSize
 
 	img, _ := ebiten.NewImage(w, h, ebiten.FilterDefault)
 
 	for i := range tatis {
-		tx := tatis[i].SingleStart.X * TileSize
-		ty := tatis[i].SingleStart.Y * TileSize
+		tx := tatis[i].SingleStart.X * constants.TileSize
+		ty := tatis[i].SingleStart.Y * constants.TileSize
 
-		rect := image.Rect(tx, ty, tx + (SingleTreeWidth * TileSize), ty + (SingleTreeHeight * TileSize))
+		rect := image.Rect(tx, ty, tx + (SingleTreeWidth * constants.TileSize), ty + (SingleTreeHeight * constants.TileSize))
 		opt := &ebiten.DrawImageOptions{}
 
-		opt.GeoM.Translate(TileSize * float64(i * SingleTreeWidth), 0)
+		opt.GeoM.Translate(constants.TileSize * float64(i * SingleTreeWidth), 0)
 		img.DrawImage(tileSet.SubImage(rect).(*ebiten.Image), opt)
 	}
 
-	grid := NewGrid(img, TileSize * SingleTreeWidth)
+	grid := NewGrid(img, constants.TileSize * SingleTreeWidth)
 	return TreeAutoTileGrid{
 		grid,
 	}

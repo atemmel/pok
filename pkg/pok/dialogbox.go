@@ -1,11 +1,11 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/dialog"
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
-	//"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/text"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
@@ -42,7 +42,7 @@ type DialogBox struct {
 }
 
 func NewDialogBox() DialogBox {
-	data, err := ioutil.ReadFile(FontsDir + "pokemon_pixel_font.ttf")
+	data, err := ioutil.ReadFile(constants.FontsDir + "pokemon_pixel_font.ttf")
 	debug.Assert(err)
 
 	tt, err := truetype.Parse(data)
@@ -58,7 +58,7 @@ func NewDialogBox() DialogBox {
 	})
 
 	//db.box, _, err = ebitenutil.NewImageFromFile(ImagesDir + "dialog0.png", ebiten.FilterDefault);
-	db.box, err = textures.LoadWithError(ImagesDir + "dialog0.png")
+	db.box, err = textures.LoadWithError(constants.ImagesDir + "dialog0.png")
 	debug.Assert(err)
 
 	db.Hidden = true
@@ -129,8 +129,8 @@ func (d *DialogBox) Draw(target *ebiten.Image) {
 		return
 	}
 	opt := &ebiten.DrawImageOptions{}
-	dx := DisplaySizeX / 2 - d.box.Bounds().Dx() / 2
-	dy := DisplaySizeY - d.box.Bounds().Dy() - 4
+	dx := constants.DisplaySizeX / 2 - d.box.Bounds().Dx() / 2
+	dy := constants.DisplaySizeY - d.box.Bounds().Dy() - 4
 	opt.GeoM.Translate(float64(dx), float64(dy))
 	target.DrawImage(d.box, opt)
 	text.Draw(target, d.dispStr, d.font, dx + textXDelta + 1, dy + textYDelta, bgClr)

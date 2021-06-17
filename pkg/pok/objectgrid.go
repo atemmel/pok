@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten"
 	"image"
@@ -32,10 +33,10 @@ func NewObjectGrid(tileMap *TileMap, objs []EditorObject) ObjectGrid {
 	oldh := 0
 
 	for i := range objs {
-		w := objs[i].W * TileSize
-		h := objs[i].H * TileSize
+		w := objs[i].W * constants.TileSize
+		h := objs[i].H * constants.TileSize
 
-		if x + w >= 8 * TileSize {
+		if x + w >= 8 * constants.TileSize {
 			x = 0
 			y += oldh
 		}
@@ -55,21 +56,21 @@ func NewObjectGrid(tileMap *TileMap, objs []EditorObject) ObjectGrid {
 		0,
 		0,
 		maxDepth,
-		image.Rect(xGridPos, yGridPos, xGridPos + TileSize * 8, yGridPos + TileSize * columnLen),
+		image.Rect(xGridPos, yGridPos, xGridPos + constants.TileSize * 8, yGridPos + constants.TileSize * columnLen),
 	}
 }
 
 func (og *ObjectGrid) Draw(target *ebiten.Image) {
 	y := 0.0
 	for i, ob := range og.objs {
-		r := image.Rect(ob.X * TileSize, ob.Y * TileSize, (ob.X + ob.W) * TileSize, (ob.Y + ob.H) * TileSize)
+		r := image.Rect(ob.X * constants.TileSize, ob.Y * constants.TileSize, (ob.X + ob.W) * constants.TileSize, (ob.Y + ob.H) * constants.TileSize)
 		//img := og.tileMap.images[ob.textureIndex]
 		img := textures.Access(og.tileMap.textureMapping[ob.textureIndex])
 		opt := &ebiten.DrawImageOptions{}
 		dx := xGridPos + float64(og.rects[i].Min.X)
 		dy := yGridPos + float64(og.rects[i].Min.Y)
 		opt.GeoM.Translate(dx, dy)
-		y += float64(ob.H) * TileSize
+		y += float64(ob.H) * constants.TileSize
 		target.DrawImage(img.SubImage(r).(*ebiten.Image), opt)
 	}
 

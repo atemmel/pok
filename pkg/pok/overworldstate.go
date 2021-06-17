@@ -3,6 +3,7 @@ package pok
 import (
 	"errors"
 	"fmt"
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/dialog"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
@@ -225,7 +226,7 @@ selectedTexture: %d`,
 //TODO: Remove usage of DisplaySizex, DisplaySizeY
 func (g *Game) CenterRendererOnPlayer() {
 	g.Rend.LookAt(
-		g.Player.Char.Gx - DisplaySizeX / 4 + TileSize / 2,
-		g.Player.Char.Gy - DisplaySizeY / 4 + TileSize / 2,
+		g.Player.Char.Gx - constants.DisplaySizeX / 4 + constants.TileSize / 2,
+		g.Player.Char.Gy - constants.DisplaySizeY / 4 + constants.TileSize / 2,
 	)
 }

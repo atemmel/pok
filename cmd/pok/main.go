@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/pok"
 	"github.com/atemmel/pok/pkg/textures"
@@ -39,7 +40,7 @@ func main() {
 		return
 	}
 
-	ebiten.SetWindowSize(pok.WindowSizeX, pok.WindowSizeY)
+	ebiten.SetWindowSize(constants.WindowSizeX, constants.WindowSizeY)
 	ebiten.SetWindowTitle("pok")
 	ebiten.SetWindowResizable(true)
 

@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"github.com/atemmel/pok/pkg/constants"
 	"github.com/hajimehoshi/ebiten"
 	"image"
 	"image/color"
@@ -9,11 +10,11 @@ import (
 type ScrollDirection int
 
 const (
-	maxGridWidth = 8 * TileSize
-	maxGridHeight = 20 * TileSize
+	maxGridWidth = 8 * constants.TileSize
+	maxGridHeight = 20 * constants.TileSize
 	columnLen = 20
 
-	xGridPos = WindowSizeX / 2 - maxGridWidth - 10
+	xGridPos = constants.WindowSizeX / 2 - maxGridWidth - 10
 	yGridPos = 10
 
 	ScrollUp = 0
