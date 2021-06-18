@@ -2,8 +2,8 @@ package pok
 
 import (
 	"github.com/atemmel/pok/pkg/constants"
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image"
 	"image/color"
 	"sort"
@@ -65,7 +65,7 @@ type Renderer struct {
 }
 
 func NewRenderer(screenWidth, screenHeight int, scale float64) Renderer {
-	img, _ := ebiten.NewImage(screenWidth, screenHeight, ebiten.FilterDefault)
+	img := ebiten.NewImage(screenWidth, screenHeight)
 	return Renderer {
 		img,
 		make([]RenderTarget, 0),

@@ -1,7 +1,7 @@
 package pok
 
 import (
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"
 )
 
@@ -18,8 +18,8 @@ type TransitionState struct {
 const nTransitionTicks = 10
 
 func NewTransitionState(src *ebiten.Image, file string, exitId int) *TransitionState {
-	img, _ := ebiten.NewImageFromImage(src, ebiten.FilterDefault)
-	fade, _ := ebiten.NewImage(img.Bounds().Max.X, img.Bounds().Max.Y, ebiten.FilterDefault)
+	img := ebiten.NewImageFromImage(src)
+	fade := ebiten.NewImage(img.Bounds().Max.X, img.Bounds().Max.Y)
 	fade.Fill(color.RGBA{0, 0, 0, 0})
 	return &TransitionState{
 		0,

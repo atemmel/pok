@@ -7,7 +7,7 @@ import (
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/pok"
 	"github.com/atemmel/pok/pkg/textures"
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 var LogFileName string = "error.log"

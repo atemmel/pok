@@ -6,9 +6,9 @@ import (
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/textures"
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/sqweek/dialog"
 	"io/ioutil"
 	"image"
@@ -118,11 +118,11 @@ func NewEditor(paths []string) *Editor {
 
 	es.dieOnNextTick = false
 
-	es.selection, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
-	es.collisionMarker, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
-	es.exitMarker, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
-	es.deleteableMarker, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
-	es.backgroundGrid, _ = ebiten.NewImage(constants.TileSize, constants.TileSize, ebiten.FilterDefault)
+	es.selection = ebiten.NewImage(constants.TileSize, constants.TileSize)
+	es.collisionMarker = ebiten.NewImage(constants.TileSize, constants.TileSize)
+	es.exitMarker = ebiten.NewImage(constants.TileSize, constants.TileSize)
+	es.deleteableMarker = ebiten.NewImage(constants.TileSize, constants.TileSize)
+	es.backgroundGrid = ebiten.NewImage(constants.TileSize, constants.TileSize)
 
 	selectionClr := color.RGBA{255, 0, 0, 255}
 	collisionClr := color.RGBA{255, 0, 255, 255}
@@ -213,7 +213,7 @@ func NewEditor(paths []string) *Editor {
 	return es;
 }
 
-func (e *Editor) Update(screen *ebiten.Image) error {
+func (e *Editor) Update() error {
 	err := e.handleInputs()
 	return err
 }

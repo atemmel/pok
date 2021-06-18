@@ -3,7 +3,7 @@ package pok
 import (
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/textures"
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 	"image/color"
 )
@@ -97,7 +97,7 @@ func (og *ObjectGrid) Select(cx, cy int) int {
 
 		currentIndex := i
 		ob := &og.rects[currentIndex]
-		selection, _ := ebiten.NewImage(ob.Bounds().Dx(), ob.Bounds().Dy(), ebiten.FilterDefault)
+		selection := ebiten.NewImage(ob.Bounds().Dx(), ob.Bounds().Dy())
 
 		selectionClr := color.RGBA{255, 0, 0, 255}
 		for p := 0; p < selection.Bounds().Max.X; p++ {

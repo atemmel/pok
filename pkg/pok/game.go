@@ -4,7 +4,7 @@ import (
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/textures"
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 )
 
@@ -70,7 +70,7 @@ func (g *Game) TileIsOccupied(x int, y int, z int) bool {
 	return false
 }
 
-func (g *Game) Update(screen *ebiten.Image) error {
+func (g *Game) Update() error {
 	err := g.As.GetInputs(g)
 	if err != nil {
 		return err

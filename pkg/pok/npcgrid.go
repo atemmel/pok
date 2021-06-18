@@ -1,7 +1,7 @@
 package pok
 
 import(
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 )
 
@@ -22,7 +22,7 @@ func NewNpcGrid(npcImages []*ebiten.Image) NpcGrid {
 	rect := image.Rect(tx, ty, tx + w, ty + h)
 	n := maxGridWidth / w
 
-	img, _ := ebiten.NewImage(maxGridWidth, len(npcImages) / n * h, ebiten.FilterDefault)
+	img := ebiten.NewImage(maxGridWidth, len(npcImages) / n * h)
 
 	for _, i := range npcImages {
 
