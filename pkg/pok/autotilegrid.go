@@ -2,7 +2,7 @@ package pok
 
 import(
 	"github.com/atemmel/pok/pkg/constants"
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 )
 
@@ -12,7 +12,7 @@ type AutoTileGrid struct {
 
 func NewAutoTileGrid(tileSet *ebiten.Image, nTilesX int, atis []AutoTileInfo) AutoTileGrid {
 	w := len(atis) * constants.TileSize
-	img, _ := ebiten.NewImage(w, constants.TileSize, ebiten.FilterDefault)
+	img := ebiten.NewImage(w, constants.TileSize)
 
 	for i := range atis {
 		tx := (atis[i].Center % nTilesX) * constants.TileSize

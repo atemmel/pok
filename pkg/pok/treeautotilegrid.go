@@ -2,7 +2,7 @@ package pok
 
 import(
 	"github.com/atemmel/pok/pkg/constants"
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 )
 
@@ -14,7 +14,7 @@ func NewTreeAutoTileGrid(tileSet *ebiten.Image, tatis []TreeAutoTileInfo) TreeAu
 	w := len(tatis) * constants.TileSize * SingleTreeWidth
 	h := SingleTreeHeight * constants.TileSize
 
-	img, _ := ebiten.NewImage(w, h, ebiten.FilterDefault)
+	img := ebiten.NewImage(w, h)
 
 	for i := range tatis {
 		tx := tatis[i].SingleStart.X * constants.TileSize

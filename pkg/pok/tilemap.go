@@ -4,7 +4,7 @@ import(
 	"encoding/json"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/textures"
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 	"io/ioutil"
 	"image"
 	"strings"

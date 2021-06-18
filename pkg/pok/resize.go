@@ -3,7 +3,7 @@ package pok
 import (
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"
 	"math"
 	"errors"
@@ -42,8 +42,8 @@ func NewResize(tileMap *TileMap, offset *Vec2) Resize {
 	if tileMap == nil {
 		debug.Assert(errors.New("tileMap was nil :/"))
 	}
-	img, _ := ebiten.NewImage(32, 32, ebiten.FilterDefault)
-	img2, _ := ebiten.NewImage(32, 32, ebiten.FilterDefault)
+	img := ebiten.NewImage(32, 32)
+	img2 := ebiten.NewImage(32, 32)
 	outlineCircle(img, 16, 16, DragRadius, color.RGBA{255,0,255,255})
 	fillCircle(img2, 16, 16, DragRadius, color.RGBA{255,0,255,255})
 	r := Resize{

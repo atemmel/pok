@@ -2,7 +2,7 @@ package pok
 
 import (
 	"github.com/atemmel/pok/pkg/constants"
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 	"image/color"
 )
@@ -36,7 +36,7 @@ type Grid struct {
 }
 
 func NewGrid(tileSet *ebiten.Image, innerWidth int) Grid {
-	selection, _ := ebiten.NewImage(innerWidth, innerWidth, ebiten.FilterDefault)
+	selection := ebiten.NewImage(innerWidth, innerWidth)
 	selectionClr := color.RGBA{255, 0, 0, 255}
 	for p := 0; p < selection.Bounds().Max.X; p++ {
 		selection.Set(p, 0, selectionClr)

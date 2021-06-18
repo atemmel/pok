@@ -2,7 +2,7 @@ package pok
 
 import (
 	"github.com/atemmel/pok/pkg/constants"
-	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Player struct {
@@ -25,7 +25,7 @@ func (player *Player) Update(g *Game) {
 		player.Char.isWalking = false
 		if i := g.Ows.tileMap.HasExitAt(player.Char.X, player.Char.Y, player.Char.Z); i > -1 {
 			if g.Ows.tileMap.Exits[i].Target != "" {
-				img, _ := ebiten.NewImage(constants.DisplaySizeX, constants.DisplaySizeY, ebiten.FilterDefault);
+				img := ebiten.NewImage(constants.DisplaySizeX, constants.DisplaySizeY)
 				g.As.Draw(g, img)
 				g.As = NewTransitionState(img, constants.TileMapDir + g.Ows.tileMap.Exits[i].Target, g.Ows.tileMap.Exits[i].Id)
 				g.Audio.PlayDoor()

@@ -4,10 +4,10 @@ import (
 	"io/ioutil"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/audio/mp3"
-	"github.com/hajimehoshi/ebiten/audio/vorbis"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/audio"
+	"github.com/hajimehoshi/ebiten/v2/audio/mp3"
+	"github.com/hajimehoshi/ebiten/v2/audio/vorbis"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const volume = 0.2
@@ -39,8 +39,7 @@ func (a *Audio) PlayPlayerJump() {
 }
 
 func NewAudio() Audio {
-	ctx, err := audio.NewContext(44100)
-	debug.Assert(err)
+	ctx := audio.NewContext(44100)
 	msrc, err := loadMp3(ctx, constants.AudioDir + "apple.mp3")
 	debug.Assert(err)
 	loop := audio.NewInfiniteLoop(msrc, msrc.Length() - 2500000)

@@ -1,10 +1,12 @@
 package textures
 
 import(
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/constants"
+
+	_ "image/png"
 )
 
 var(
@@ -37,7 +39,7 @@ func Load(path string) (*ebiten.Image, int) {
 }
 
 func LoadWithError(path string) (*ebiten.Image, error) {
-	img, _, err := ebitenutil.NewImageFromFile(path, ebiten.FilterDefault)
+	img, _, err := ebitenutil.NewImageFromFile(path)
 	return img, err
 }
 
@@ -46,7 +48,7 @@ func Access(index int) *ebiten.Image {
 }
 
 func insertNewTexture(path string) (*ebiten.Image, int) {
-	img, _, err := ebitenutil.NewImageFromFile(path, ebiten.FilterDefault)
+	img, _, err := ebitenutil.NewImageFromFile(path)
 	debug.Assert(err)
 
 	for i, ptr := range textures {
