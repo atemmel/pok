@@ -10,16 +10,20 @@ import (
 
 const (
 	paddingX = 4
-	paddingY = 2
+	paddingY = 4
 )
 
 var (
 	fg = color.White
-	bg = color.RGBA{33, 34, 35, 255}
+	fgShadow = color.Black
+	bg = color.RGBA{163, 164, 165, 255}
 	border = color.Black
 
 	buttons []button
 	buttonFont font.Face
+
+	minH = 4
+	minW = 4
 )
 
 type ButtonInfo struct {
@@ -84,19 +88,55 @@ func buildBox(w, h int) *image.RGBA {
 		img.Set(w - 1, y, border)
 	}
 
+	img.Set(0, 0, color.Transparent)
+	img.Set(0, h - 1, color.Transparent)
+	img.Set(w - 1, 0, color.Transparent)
+	img.Set(w - 1, h - 1, color.Transparent)
+
+	img.Set(1, 0, color.Transparent)
+	img.Set(1, h - 1, color.Transparent)
+	img.Set(w - 2, 0, color.Transparent)
+	img.Set(w - 2, h - 1, color.Transparent)
+
+	img.Set(0, 1, color.Transparent)
+	img.Set(0, h - 2, color.Transparent)
+	img.Set(w - 1, 1, color.Transparent)
+	img.Set(w - 1, h - 2, color.Transparent)
+
+	img.Set(1, 1, border)
+	img.Set(1, h - 2, border)
+	img.Set(w - 2, 1, border)
+	img.Set(w - 2, h - 2, border)
+
 	return img
 }
 
 func buttonFromButtonInfo(buttonInfo *ButtonInfo) button {
 	r := text.BoundString(buttonFont, buttonInfo.Content)
-	w := r.Max.X + paddingX * 2
-	h := r.Max.Y + paddingY * 2
+	w := r.Dx()
+	h := r.Dy()
+
+	if w < minW {
+		w = minW
+	}
+
+	if h < minH {
+		h = minH
+	} else if h > minH {
+		minH = h
+	}
+
+	w += paddingX * 2
+	h += paddingY * 2
 
 	boundingBox := image.Rect(buttonInfo.X, buttonInfo.Y, buttonInfo.X + w, buttonInfo.Y + h)
 
 	src := buildBox(w, h)
 	img := ebiten.NewImageFromImage(src)
-	text.Draw(img, buttonInfo.Content, buttonFont, paddingX, paddingY, fg)
+
+	const extraOffset = 9
+	text.Draw(img, buttonInfo.Content, buttonFont, paddingX, paddingY + extraOffset + 1, fgShadow)
+	text.Draw(img, buttonInfo.Content, buttonFont, paddingX, paddingY + extraOffset, fg)
 
 	return button{
 		img: img,

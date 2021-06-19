@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
+	"github.com/atemmel/pok/pkg/fonts"
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -210,6 +211,50 @@ func NewEditor(paths []string) *Editor {
 		}
 	}
 
+	font, err := fonts.LoadFont(constants.FontsDir + "pokemon_pixel_font.ttf", 16)
+	debug.Assert(err)
+
+	initButtons(font)
+	AddButton(&ButtonInfo{
+		Content: "PREV",
+		OnClick: func() {
+			fmt.Println("Prev button pressed")
+		},
+		X: xGridPos, Y: yGridPos,
+	})
+
+	AddButton(&ButtonInfo{
+		Content: "NEXT",
+		OnClick: func() {
+			fmt.Println("Next button pressed")
+		},
+		X: xGridPos + 98, Y: yGridPos,
+	})
+
+	AddButton(&ButtonInfo{
+		Content: "+",
+		OnClick: func() {
+			es.doIncrementOrAppendLayer()
+		},
+		X: IconOffsetX, Y: constants.DisplaySizeY - 20,
+	})
+
+	AddButton(&ButtonInfo{
+		Content: "-",
+		OnClick: func() {
+			es.doDecrementLayer()
+		},
+		X: IconOffsetX + 16, Y: constants.DisplaySizeY - 20,
+	})
+
+	AddButton(&ButtonInfo{
+		Content: "DELETE",
+		OnClick: func() {
+			es.doRemoveLayer()
+		},
+		X: IconOffsetX + 16 + 16, Y: constants.DisplaySizeY - 20,
+	})
+
 	return es;
 }
 
@@ -246,6 +291,7 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 			e.treeAutoTileGrid.grid.Draw(screen)
 		}
 		e.drawIcons(screen)
+		drawButtons(screen)
 	}
 
 	debugStr := ""
@@ -479,6 +525,9 @@ func (e *Editor) handleInputs() error {
 
 	if len(e.activeFiles) != 0 {
 		cx, cy := ebiten.CursorPosition()
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
+			pollButtons(cx, cy)
+		}
 		index := e.getTileMapIndexAtCoord(cx, cy)
 		if index != -1 && !e.isAlreadyClicking() {
 			err := e.setActiveTileMap(index)
@@ -1310,6 +1359,26 @@ func (e *Editor) doAutotile() {
 func (e *Editor) doResize() {
 	e.resizers[e.activeTileMapIndex].Hold()
 	CurrentResizeDelta.tileMapIndex = e.activeTileMapIndex
+}
+
+func (e *Editor) doIncrementOrAppendLayer() {
+	currentLayer++
+	if currentLayer == len(e.activeTileMap.Tiles) && e.activeTileMap != nil{
+		e.activeTileMap.AppendLayer()
+	}
+}
+
+func (e *Editor) doDecrementLayer() {
+	currentLayer--
+	if currentLayer < 0 {
+		currentLayer = 0
+	}
+}
+
+func (e *Editor) doRemoveLayer() {
+	if e.activeTileMap != nil {
+		e.activeTileMap.RemoveLayer(currentLayer)
+	}
 }
 
 func (e *Editor) postDoPencil() {

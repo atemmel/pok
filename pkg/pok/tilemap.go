@@ -288,6 +288,21 @@ func (t *TileMap) AppendLayer() {
 	}
 }
 
+func (t *TileMap) RemoveLayer(index int) {
+	if len(t.Collision) == 1 {
+		return
+	} else if len(t.Collision) == index + 1 {
+		t.Collision = t.Collision[:index]
+		t.TextureIndicies = t.TextureIndicies[:index]
+		t.Textures = t.Textures[:index]
+		return
+	}
+
+	t.Collision = append(t.Collision[:index], t.Collision[index + 1:]...)
+	t.TextureIndicies = append(t.TextureIndicies[:index], t.TextureIndicies[index + 1:]...)
+	t.Textures = append(t.Textures[:index], t.Textures[index + 1:]...)
+}
+
 func (t *TileMap) Resize(dx, dy, origin int) {
 	if (t.Width == 1 && dx < 0) || (t.Height == 1 && dy < 0) || origin == -1 {
 		return
