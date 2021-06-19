@@ -2,12 +2,17 @@ package pok
 
 import(
 	"encoding/json"
+	"github.com/atemmel/pok/pkg/constants"
+	"github.com/atemmel/pok/pkg/textures"
 	"io/ioutil"
 )
 
 const Unused = -1
 
 type AutoTileInfo struct {
+	Texture string
+	textureIndex int
+
 	UpperLeft int
 	Upper int
 	UpperRight int
@@ -42,13 +47,15 @@ func ReadAllAutoTileInfo(directory string) ([]AutoTileInfo, error) {
 			return nil, err
 		}
 
+		_, ati.textureIndex = textures.Load(constants.TileMapImagesDir + ati.Texture)
+
 		atis = append(atis, ati)
 	}
 
 	return atis, nil
 }
 
-func BuildNeighbors(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInfo) [][]int {
+func BuildNeighbors(tileMap *TileMap, tile, depth int, ati *AutoTileInfo) [][]int {
 	mat := make([][]int, 0)
 	xStart := tile % tileMap.Width
 	yStart := tile / tileMap.Width
@@ -71,7 +78,7 @@ func BuildNeighbors(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInf
 			index := y * tileMap.Width + x
 
 			// Given a texture match, provide exact texture index
-			if tileMap.TextureIndicies[depth][index] == texture && ati.HasIndex(tileMap.Tiles[depth][index]) {
+			if tileMap.TextureIndicies[depth][index] == tileMap.MapReverse(ati.textureIndex) && ati.HasIndex(tileMap.Tiles[depth][index]) {
 				row = append(row, tileMap.Tiles[depth][index])
 			} else {	// Otherwise, explicitly state the disinterest in this tile
 				row = append(row, Unused)
@@ -86,8 +93,8 @@ func BuildNeighbors(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInf
 	return mat
 }
 
-func DecideTileIndicies(tileMap *TileMap, tile, depth, texture int, ati *AutoTileInfo) *AutotileDelta {
-	neighbors := BuildNeighbors(tileMap, tile, depth, texture, ati)
+func DecideTileIndicies(tileMap *TileMap, tile, depth int, ati *AutoTileInfo) *AutotileDelta {
+	neighbors := BuildNeighbors(tileMap, tile, depth, ati)
 	xStart := tile % tileMap.Width - 1
 	yStart := tile / tileMap.Width - 1
 
@@ -102,10 +109,14 @@ func DecideTileIndicies(tileMap *TileMap, tile, depth, texture int, ati *AutoTil
 		oldTextureIndex,
 	}
 
+	if !tileMap.HasTexture(ati.textureIndex) {
+		tileMap.AppendTexture(ati.textureIndex, ati.Texture)
+	}
+
 	ripple := func(x, y int) {
 		newTile := y * tileMap.Width + x
 
-		newNeighbors := BuildNeighbors(tileMap, newTile, depth, texture, ati)
+		newNeighbors := BuildNeighbors(tileMap, newTile, depth, ati)
 		newIndex := DecideTileIndex(newNeighbors, ati)
 
 		oldTile = tileMap.Tiles[depth][newTile]
@@ -120,19 +131,19 @@ func DecideTileIndicies(tileMap *TileMap, tile, depth, texture int, ati *AutoTil
 
 		newData[newTile] = ModifiedTile{
 			newIndex,
-			texture,
+			ati.textureIndex,
 		}
 
 		tileMap.Tiles[depth][newTile] = newIndex
-		tileMap.TextureIndicies[depth][newTile] = texture
+		tileMap.TextureIndicies[depth][newTile] = ati.textureIndex
 	}
 
 	tileMap.Tiles[depth][tile] = ati.Center
-	tileMap.TextureIndicies[depth][tile] = texture
+	tileMap.TextureIndicies[depth][tile] = ati.textureIndex
 
 	newData[tile] = ModifiedTile{
 		ati.Center,
-		texture,
+		ati.textureIndex,
 	}
 
 	for i := range neighbors {
@@ -145,7 +156,7 @@ func DecideTileIndicies(tileMap *TileMap, tile, depth, texture int, ati *AutoTil
 		}
 	}
 
-	neighbors = BuildNeighbors(tileMap, tile, depth, texture, ati)
+	neighbors = BuildNeighbors(tileMap, tile, depth, ati)
 	tileMap.Tiles[depth][tile] = DecideTileIndex(neighbors, ati)
 
 	return &AutotileDelta{

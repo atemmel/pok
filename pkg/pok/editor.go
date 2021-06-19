@@ -492,8 +492,9 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	e.fillObjectGrid(constants.OverworldObjectsDir)
 	var err error
 	e.autoTileInfo, err = ReadAllAutoTileInfo(constants.AutotileInfoDir)
-	e.autoTileGrid = NewAutoTileGrid(textures.Access(tileMap.textureMapping[baseIndex]), tileMap.NTilesX(baseIndex), e.autoTileInfo)
 	debug.Assert(err)
+
+	e.autoTileGrid = NewAutoTileGrid(e.autoTileInfo)
 
 	for i := range e.treeAutoTileInfo {
 		err := e.treeAutoTileInfo[i].FitToTileMap(tileMap)
@@ -1348,7 +1349,7 @@ func (e *Editor) doRemoveLink() {
 
 func (e *Editor) doAutotile() {
 	ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
-	atd := DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, baseTextureIndex, ati)
+	atd := DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, ati)
 	CurrentAutotileDelta.Join(atd)
 	CurrentAutotileDelta.tileMapIndex = e.activeTileMapIndex
 	CurrentAutotileDelta.z = currentLayer
@@ -1564,7 +1565,7 @@ func loadImages(images []string, base string) []*ebiten.Image {
 	imgs := make([]*ebiten.Image, 0, len(images))
 
 	for _, s := range images {
-		img, err := textures.LoadWithError(base + s) 
+		img, err := textures.LoadWithError(base + s)
 		if err != nil {
 			log.Println("Could not load image", s)
 		}

@@ -2,6 +2,7 @@ package pok
 
 import(
 	"github.com/atemmel/pok/pkg/constants"
+	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 )
@@ -10,11 +11,15 @@ type AutoTileGrid struct {
 	grid Grid
 }
 
-func NewAutoTileGrid(tileSet *ebiten.Image, nTilesX int, atis []AutoTileInfo) AutoTileGrid {
+func NewAutoTileGrid(atis []AutoTileInfo) AutoTileGrid {
 	w := len(atis) * constants.TileSize
 	img := ebiten.NewImage(w, constants.TileSize)
 
 	for i := range atis {
+		tex := textures.Access(atis[i].textureIndex)
+		texW, _ := tex.Size()
+		nTilesX := texW / constants.TileSize
+
 		tx := (atis[i].Center % nTilesX) * constants.TileSize
 		ty := (atis[i].Center / nTilesX) * constants.TileSize
 
@@ -22,7 +27,7 @@ func NewAutoTileGrid(tileSet *ebiten.Image, nTilesX int, atis []AutoTileInfo) Au
 		opt := &ebiten.DrawImageOptions{}
 
 		opt.GeoM.Translate(constants.TileSize * float64(i), 0)
-		img.DrawImage(tileSet.SubImage(rect).(*ebiten.Image), opt)
+		img.DrawImage(tex.SubImage(rect).(*ebiten.Image), opt)
 	}
 
 	grid := NewGrid(img, constants.TileSize)

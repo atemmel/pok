@@ -1,4 +1,5 @@
 {
+	"Texture": "base.png",
 	"UpperLeft": 64,
 	"Upper": 65,
 	"UpperRight": 66,
