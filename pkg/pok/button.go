@@ -2,6 +2,7 @@ package pok
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"image"
@@ -43,15 +44,19 @@ func AddButton(button *ButtonInfo) {
 	buttons = append(buttons, buttonFromButtonInfo(button))
 }
 
-func pollButtons(cx, cy int) {
+func pollButtons(cx, cy int) bool {
 	pt := image.Pt(cx, cy)
 
 	for i := range buttons {
 		if pt.In(buttons[i].rect) {
-			buttons[i].onClick()
-			break
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
+				buttons[i].onClick()
+			}
+			return true
 		}
 	}
+
+	return false
 }
 
 func drawButtons(target *ebiten.Image) {
@@ -135,7 +140,7 @@ func buttonFromButtonInfo(buttonInfo *ButtonInfo) button {
 	img := ebiten.NewImageFromImage(src)
 
 	const extraOffset = 9
-	text.Draw(img, buttonInfo.Content, buttonFont, paddingX, paddingY + extraOffset + 1, fgShadow)
+	text.Draw(img, buttonInfo.Content, buttonFont, paddingX + 1, paddingY + extraOffset + 1, fgShadow)
 	text.Draw(img, buttonInfo.Content, buttonFont, paddingX, paddingY + extraOffset, fg)
 
 	return button{

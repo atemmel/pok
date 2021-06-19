@@ -95,8 +95,6 @@ type Editor struct {
 	deleteableMarker *ebiten.Image
 	exitMarker *ebiten.Image
 	icons *ebiten.Image
-	addButton *ebiten.Image
-	subButton *ebiten.Image
 	activeFiles []string
 	activeFullFiles []string
 	nextFile string
@@ -186,10 +184,6 @@ func NewEditor(paths []string) *Editor {
 
 	es.icons, err = textures.LoadWithError(constants.EditorImagesDir + "editoricons.png")
 	debug.Assert(err)
-	es.addButton, err = textures.LoadWithError(constants.EditorImagesDir + "addbutton.png")
-	debug.Assert(err)
-	es.subButton, err = textures.LoadWithError(constants.EditorImagesDir + "subbutton.png")
-	debug.Assert(err)
 
 	es.tileMaps = make([]*TileMap, 0)
 	es.tileMapOffsets = make([]*Vec2, 0)
@@ -220,7 +214,7 @@ func NewEditor(paths []string) *Editor {
 		OnClick: func() {
 			fmt.Println("Prev button pressed")
 		},
-		X: xGridPos, Y: yGridPos,
+		X: xGridPos, Y: yGridPos - 18,
 	})
 
 	AddButton(&ButtonInfo{
@@ -228,7 +222,7 @@ func NewEditor(paths []string) *Editor {
 		OnClick: func() {
 			fmt.Println("Next button pressed")
 		},
-		X: xGridPos + 98, Y: yGridPos,
+		X: xGridPos + 98, Y: yGridPos - 18,
 	})
 
 	AddButton(&ButtonInfo{
@@ -525,8 +519,8 @@ func (e *Editor) handleInputs() error {
 
 	if len(e.activeFiles) != 0 {
 		cx, cy := ebiten.CursorPosition()
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
-			pollButtons(cx, cy)
+		if pollButtons(cx, cy) {
+			return nil
 		}
 		index := e.getTileMapIndexAtCoord(cx, cy)
 		if index != -1 && !e.isAlreadyClicking() {
@@ -583,17 +577,6 @@ func (e *Editor) handleInputs() error {
 		} else if i := e.containsIcon(cx, cy); i != NIcons {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 				e.switchActiveTool(i)
-			}
-		} else if e.containsAdd(cx, cy) {
-			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
-				currentLayer++
-				if currentLayer == len(e.activeTileMap.Tiles) {
-					e.activeTileMap.AppendLayer()
-				}
-			}
-		} else if e.containsSub(cx, cy) {
-			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
-				currentLayer--
 			}
 		} else {
 			e.handleMapMouseInputs()
@@ -843,12 +826,6 @@ func (e *Editor) drawIcons(screen *ebiten.Image) {
 		r := image.Rect(0, i * h, w, i * h + h)
 		screen.DrawImage(e.icons.SubImage(r).(*ebiten.Image), opt)
 	}
-
-	opt := &ebiten.DrawImageOptions{}
-	opt.GeoM.Translate(IconOffsetX, IconOffsetY + float64(NIcons * (h + IconPadding)))
-	screen.DrawImage(e.addButton, opt)
-	opt.GeoM.Translate(0, float64(h + IconPadding))
-	screen.DrawImage(e.subButton, opt)
 }
 
 func (e *Editor) containsIcon(x, y int) int {
@@ -870,24 +847,6 @@ func (e *Editor) containsIcon(x, y int) int {
 	}
 
 	return NIcons
-}
-
-func (e *Editor) containsAdd(cx, cy int) bool {
-	w, h := e.addButton.Size()
-	x1 := IconOffsetX
-	y1 := IconOffsetY + (NIcons * (h + IconPadding))
-
-	r := image.Rect(x1, y1, x1 + w, y1 + h)
-	return image.Pt(cx, cy).In(r)
-}
-
-func (e *Editor) containsSub(cx, cy int) bool {
-	w, h := e.addButton.Size()
-	x1 := IconOffsetX
-	y1 := IconOffsetY + (NIcons + 1) * (h + IconPadding)
-
-	r := image.Rect(x1, y1, x1 + w, y1 + h)
-	return image.Pt(cx, cy).In(r)
 }
 
 func (e *Editor) fillObjectGrid(dir string) {

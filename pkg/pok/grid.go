@@ -15,7 +15,8 @@ const (
 	columnLen = 20
 
 	xGridPos = constants.WindowSizeX / 2 - maxGridWidth - 10
-	yGridPos = 10
+	//yGridPos = 10
+	yGridPos = 10 + 10
 
 	ScrollUp = 0
 	ScrollDown = 1
