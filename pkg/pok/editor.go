@@ -214,10 +214,17 @@ func NewEditor(paths []string) *Editor {
 		return activeTool == Pencil
 	}
 
+	gridIndex := 0
+
 	AddButton(&ButtonInfo{
 		Content: "PREV",
 		OnClick: func() {
-			fmt.Println("Prev button pressed")
+			gridIndex--
+			if gridIndex < 0 {
+				gridIndex = len(es.activeTileMap.textureMapping) - 1
+			}
+
+			es.grid = NewGrid(textures.Access(es.activeTileMap.textureMapping[gridIndex]), constants.TileSize)
 		},
 		VisibilityCondition: vis,
 		X: xGridPos, Y: yGridPos - 18,
@@ -226,7 +233,12 @@ func NewEditor(paths []string) *Editor {
 	AddButton(&ButtonInfo{
 		Content: "NEXT",
 		OnClick: func() {
-			fmt.Println("Next button pressed")
+			gridIndex++
+			if gridIndex >= len(es.activeTileMap.textureMapping) {
+				gridIndex = 0
+			}
+
+			es.grid = NewGrid(textures.Access(es.activeTileMap.textureMapping[gridIndex]), constants.TileSize)
 		},
 		VisibilityCondition: vis,
 		X: xGridPos + 98, Y: yGridPos - 18,
