@@ -30,6 +30,7 @@ var (
 type ButtonInfo struct {
 	Content string
 	OnClick func()
+	VisibilityCondition func() bool
 	X, Y int
 }
 
@@ -37,6 +38,7 @@ type button struct {
 	img *ebiten.Image
 	rect image.Rectangle
 	onClick func()
+	condition func() bool
 	x, y float64
 }
 
@@ -48,7 +50,7 @@ func pollButtons(cx, cy int) bool {
 	pt := image.Pt(cx, cy)
 
 	for i := range buttons {
-		if pt.In(buttons[i].rect) {
+		if (buttons[i].condition == nil || buttons[i].condition()) && pt.In(buttons[i].rect) {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 				buttons[i].onClick()
 			}
@@ -61,9 +63,11 @@ func pollButtons(cx, cy int) bool {
 
 func drawButtons(target *ebiten.Image) {
 	for i := range buttons {
-		opt := &ebiten.DrawImageOptions{}
-		opt.GeoM.Translate(buttons[i].x, buttons[i].y)
-		target.DrawImage(buttons[i].img, opt)
+		if (buttons[i].condition == nil || buttons[i].condition()) {
+			opt := &ebiten.DrawImageOptions{}
+			opt.GeoM.Translate(buttons[i].x, buttons[i].y)
+			target.DrawImage(buttons[i].img, opt)
+		}
 	}
 }
 
@@ -147,6 +151,7 @@ func buttonFromButtonInfo(buttonInfo *ButtonInfo) button {
 		img: img,
 		rect: boundingBox,
 		onClick: buttonInfo.OnClick,
+		condition: buttonInfo.VisibilityCondition,
 		x: float64(buttonInfo.X),
 		y: float64(buttonInfo.Y),
 	}

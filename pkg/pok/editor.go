@@ -209,11 +209,17 @@ func NewEditor(paths []string) *Editor {
 	debug.Assert(err)
 
 	initButtons(font)
+
+	vis := func() bool {
+		return activeTool == Pencil
+	}
+
 	AddButton(&ButtonInfo{
 		Content: "PREV",
 		OnClick: func() {
 			fmt.Println("Prev button pressed")
 		},
+		VisibilityCondition: vis,
 		X: xGridPos, Y: yGridPos - 18,
 	})
 
@@ -222,6 +228,7 @@ func NewEditor(paths []string) *Editor {
 		OnClick: func() {
 			fmt.Println("Next button pressed")
 		},
+		VisibilityCondition: vis,
 		X: xGridPos + 98, Y: yGridPos - 18,
 	})
 
@@ -230,6 +237,7 @@ func NewEditor(paths []string) *Editor {
 		OnClick: func() {
 			es.doIncrementOrAppendLayer()
 		},
+		VisibilityCondition: nil,
 		X: IconOffsetX, Y: constants.DisplaySizeY - 20,
 	})
 
@@ -238,6 +246,7 @@ func NewEditor(paths []string) *Editor {
 		OnClick: func() {
 			es.doDecrementLayer()
 		},
+		VisibilityCondition: nil,
 		X: IconOffsetX + 16, Y: constants.DisplaySizeY - 20,
 	})
 
@@ -246,6 +255,7 @@ func NewEditor(paths []string) *Editor {
 		OnClick: func() {
 			es.doRemoveLayer()
 		},
+		VisibilityCondition: nil,
 		X: IconOffsetX + 16 + 16, Y: constants.DisplaySizeY - 20,
 	})
 
