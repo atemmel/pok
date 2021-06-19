@@ -40,6 +40,10 @@ var linkBegin *LinkData
 var lastSavedUndoStackLength = 0
 
 var treeArea = &TreeAreaSelection{}
+var activePalette = 0
+var availablePalettes []*ebiten.Image
+var availablePaletteIndicies []int
+var availablePalettesStrings []string
 
 type LinkData struct {
 	X, Y int
@@ -198,6 +202,16 @@ func NewEditor(paths []string) *Editor {
 		treeArea.TreeInfo = &es.treeAutoTileInfo[0]
 	}
 
+	availablePalettesStrings = listPngs(constants.TileMapImagesDir)
+	availablePaletteIndicies = make([]int, len(availablePalettesStrings))
+	availablePalettes = make([]*ebiten.Image, len(availablePalettesStrings))
+
+	for i, s := range availablePalettesStrings {
+		img, index := textures.Load(constants.TileMapImagesDir + s)
+		availablePalettes[i] = img
+		availablePaletteIndicies[i] = index
+	}
+
 	for _, s := range paths {
 		tm, err := es.loadFile(s)
 		if err == nil {
@@ -214,17 +228,15 @@ func NewEditor(paths []string) *Editor {
 		return activeTool == Pencil
 	}
 
-	gridIndex := 0
-
 	AddButton(&ButtonInfo{
 		Content: "PREV",
 		OnClick: func() {
-			gridIndex--
-			if gridIndex < 0 {
-				gridIndex = len(es.activeTileMap.textureMapping) - 1
+			activePalette--
+			if activePalette < 0 {
+				activePalette = len(availablePalettes) - 1
 			}
 
-			es.grid = NewGrid(textures.Access(es.activeTileMap.textureMapping[gridIndex]), constants.TileSize)
+			es.grid = NewGrid(availablePalettes[activePalette], constants.TileSize)
 		},
 		VisibilityCondition: vis,
 		X: xGridPos, Y: yGridPos - 18,
@@ -233,12 +245,12 @@ func NewEditor(paths []string) *Editor {
 	AddButton(&ButtonInfo{
 		Content: "NEXT",
 		OnClick: func() {
-			gridIndex++
-			if gridIndex >= len(es.activeTileMap.textureMapping) {
-				gridIndex = 0
+			activePalette++
+			if activePalette >= len(availablePalettes) {
+				activePalette = 0
 			}
 
-			es.grid = NewGrid(textures.Access(es.activeTileMap.textureMapping[gridIndex]), constants.TileSize)
+			es.grid = NewGrid(availablePalettes[activePalette], constants.TileSize)
 		},
 		VisibilityCondition: vis,
 		X: xGridPos + 98, Y: yGridPos - 18,
@@ -270,6 +282,7 @@ func NewEditor(paths []string) *Editor {
 		VisibilityCondition: nil,
 		X: IconOffsetX + 16 + 16, Y: constants.DisplaySizeY - 20,
 	})
+
 
 	return es;
 }
@@ -475,11 +488,11 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	e.activeFiles = append(e.activeFiles, filepath.Base(e.nextFile))
 	drawUi = true
 	const baseIndex = 0
-	e.grid = NewGrid(textures.Access(tileMap.textureMapping[baseIndex]), constants.TileSize)
+	e.grid = NewGrid(textures.Access(tileMap.textureMapping[activePalette]), constants.TileSize)
 	e.fillObjectGrid(constants.OverworldObjectsDir)
 	var err error
 	e.autoTileInfo, err = ReadAllAutoTileInfo(constants.AutotileInfoDir)
-	e.autoTileGrid = NewAutoTileGrid(textures.Access(tileMap.textureMapping[baseIndex]), tileMap.nTilesX[baseIndex], e.autoTileInfo)
+	e.autoTileGrid = NewAutoTileGrid(textures.Access(tileMap.textureMapping[baseIndex]), tileMap.NTilesX(baseIndex), e.autoTileInfo)
 	debug.Assert(err)
 
 	for i := range e.treeAutoTileInfo {
@@ -1194,7 +1207,7 @@ func (e *Editor) doPencil() {
 	i := e.grid.GetIndex()
 
 	// no-op
-	if oldTile == i && oldTextureIndex == baseTextureIndex {
+	if oldTile == i && oldTextureIndex == activePalette {
 		return
 	}
 
@@ -1202,8 +1215,12 @@ func (e *Editor) doPencil() {
 	CurrentPencilDelta.oldTiles = append(CurrentPencilDelta.oldTiles, oldTile)
 	CurrentPencilDelta.oldTextureIndicies = append(CurrentPencilDelta.oldTextureIndicies, oldTextureIndex)
 
+	if !e.activeTileMap.HasTexture(availablePaletteIndicies[activePalette]) {
+		e.activeTileMap.AppendTexture(availablePaletteIndicies[activePalette], availablePalettesStrings[activePalette])
+	}
+
 	e.activeTileMap.Tiles[currentLayer][selectedTile] = i
-	e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
+	e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = e.activeTileMap.MapReverse(availablePaletteIndicies[activePalette])
 }
 
 func (e *Editor) doEraser() {

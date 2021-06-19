@@ -38,7 +38,6 @@ type TileMap struct {
 	Height int
 	NpcInfo []NpcInfo
 
-	nTilesX []int
 	textureMapping []int
 
 	npcs []Npc
@@ -56,6 +55,29 @@ func (t *TileMap) HasExitAt(x, y, z int) int {
 func (t *TileMap) GetEntryWithId(id int) int {
 	for i := range t.Entries {
 		if t.Entries[i].Id == id {
+			return i
+		}
+	}
+	return -1
+}
+
+func (t *TileMap) HasTexture(index int) bool {
+	for i := range t.textureMapping {
+		if t.textureMapping[i] == index {
+			return true
+		}
+	}
+	return false
+}
+
+func (t *TileMap) AppendTexture(index int, str string) {
+	t.textureMapping = append(t.textureMapping, index)
+	t.Textures = append(t.Textures, str)
+}
+
+func (t *TileMap) MapReverse(j int) int {
+	for i := range t.textureMapping {
+		if t.textureMapping[i] == j {
 			return i
 		}
 	}
@@ -94,7 +116,8 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			x := float64(ix) * constants.TileSize
 			y := float64(iy) * constants.TileSize
 
-			nTilesX := t.nTilesX[t.TextureIndicies[j][i]]
+			img := textures.Access(t.textureMapping[t.TextureIndicies[j][i]])
+			nTilesX := img.Bounds().Dx() / constants.TileSize
 
 			tx := (n % nTilesX) * constants.TileSize
 			ty := (n / nTilesX) * constants.TileSize
@@ -104,7 +127,6 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			}
 
 			opt := &ebiten.DrawImageOptions{}
-			img := textures.Access(t.textureMapping[t.TextureIndicies[j][i]])
 
 			rect := image.Rect(tx, ty, tx + constants.TileSize, ty + constants.TileSize)
 			rend.Draw(&RenderTarget{
@@ -147,17 +169,13 @@ func (t *TileMap) OpenFile(path string) error {
 	}
 
 	indicies := make([]int, len(t.Textures))
-	nTilesX := make([]int, len(t.Textures))
 
 	for i := range indicies {
-		img, index := textures.Load(constants.TileMapImagesDir + t.Textures[i])
+		_, index := textures.Load(constants.TileMapImagesDir + t.Textures[i])
 		indicies[i] = index
-		w, _ := img.Size()
-		nTilesX[i] = w / constants.TileSize
 	}
 
 	t.textureMapping = indicies
-	t.nTilesX = nTilesX
 
 	t.npcs = t.npcs[:0]
 	err = t.createNpcs()
@@ -179,6 +197,12 @@ func (t *TileMap) SaveToFile(path string) error {
 		return err
 	}
 	return ioutil.WriteFile(path, data, 0644)
+}
+
+func (t *TileMap) NTilesX(textureIndex int) int {
+	img := textures.Access(textureIndex)
+	w, _ := img.Size()
+	return w / constants.TileSize
 }
 
 func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObjects *[]PlacedEditorObject) {
@@ -212,7 +236,7 @@ func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObje
 	for y := 0; y != obj.H; y++ {
 		gy := row + y
 
-		ty := (obj.Y + y) * t.nTilesX[obj.textureIndex]
+		ty := (obj.Y + y) * t.NTilesX(obj.textureIndex)
 
 		for x := 0; x != obj.W; x++ {
 			gx := col + x
@@ -294,13 +318,13 @@ func (t *TileMap) RemoveLayer(index int) {
 	} else if len(t.Collision) == index + 1 {
 		t.Collision = t.Collision[:index]
 		t.TextureIndicies = t.TextureIndicies[:index]
-		t.Textures = t.Textures[:index]
+		t.Tiles = t.Tiles[:index]
 		return
 	}
 
 	t.Collision = append(t.Collision[:index], t.Collision[index + 1:]...)
 	t.TextureIndicies = append(t.TextureIndicies[:index], t.TextureIndicies[index + 1:]...)
-	t.Textures = append(t.Textures[:index], t.Textures[index + 1:]...)
+	t.Tiles = append(t.Tiles[:index], t.Tiles[index + 1:]...)
 }
 
 func (t *TileMap) Resize(dx, dy, origin int) {
@@ -504,14 +528,10 @@ func (t *TileMap) FillCollision(x, y, w, h, z int) {
 
 func CreateTileMap(width int, height int, texture []string) *TileMap {
 	textureMapping := make([]int, len(texture))
-	nTilesX := make([]int, len(texture))
 
 	for i := range texture {
-		img, index := textures.Load(texture[i])
-		w, _ := img.Size()
-
+		_, index := textures.Load(texture[i])
 		textureMapping[i] = index
-		nTilesX[i] = w / constants.TileSize
 	}
 
 	tex := make([][]int, 1)
@@ -533,7 +553,6 @@ func CreateTileMap(width int, height int, texture []string) *TileMap {
 		width,
 		height,
 		make([]NpcInfo, 0),
-		nTilesX,
 		textureMapping,
 		make([]Npc, 0),
 	}
