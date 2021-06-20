@@ -21,11 +21,17 @@ type Game struct {
 func CreateGame() *Game {
 	g := &Game{}
 	g.As = &g.Ows
-	playerImg, _ = textures.Load(constants.CharacterImagesDir + "trchar000.png")
-	playerRunningImg, _ = textures.Load(constants.CharacterImagesDir + "boy_run.png")
+	var err error
+	playerImg, err = textures.LoadWithError(constants.CharacterImagesDir + "trchar000.png")
+	debug.Assert(err)
+	playerRunningImg, err = textures.LoadWithError(constants.CharacterImagesDir + "boy_run.png")
+	debug.Assert(err)
+	beachSplashImg, err= textures.LoadWithError(constants.ImagesDir + "water_effect.png")
+	debug.Assert(err)
+
 	activePlayerImg = playerImg
 	g.Dialog = NewDialogBox()
-	drawUi = true
+	drawUi = false
 
 	return g
 }
@@ -141,6 +147,32 @@ func (g *Game) DrawPlayer(player *Player) {
 		y,
 		2,
 	})
+
+	nx, ny := player.Char.X, player.Char.Y
+	n := ny * g.Ows.tileMap.Width + nx
+	index := g.Ows.tileMap.textureMapping[g.Ows.tileMap.TextureIndicies[player.Char.Z][n]]
+
+	if textures.IsWater(index) {
+		splashOpt := &ebiten.DrawImageOptions{}
+		w, h := beachSplashImg.Size()
+		sx := w / nWaterSplashFrames
+
+		splashRect := image.Rect(
+			sx * (step % nWaterSplashFrames),
+			0,
+			sx * (step % nWaterSplashFrames) + sx,
+			h,
+		)
+
+		g.Rend.Draw(&RenderTarget{
+			splashOpt,
+			beachSplashImg,
+			&splashRect,
+			x + waterSplashOffsetX,
+			y + waterSplashOffsetY,
+			2 + 1,
+		})
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

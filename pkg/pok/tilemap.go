@@ -91,8 +91,11 @@ func (t *TileMap) Draw(rend *Renderer) {
 }
 
 func (t *TileMap) Update() {
-	const maxCollectedFrames = 10
+	const maxCollectedFrames = 11
 	const nWaterFrames = 11
+
+	collectedFrames++
+
 	if collectedFrames >= maxCollectedFrames {
 		collectedFrames = 0
 		step++
@@ -100,7 +103,6 @@ func (t *TileMap) Update() {
 			step = 0
 		}
 	}
-	collectedFrames++
 }
 
 func (t *TileMap) UpdateNpcs(g *Game) {

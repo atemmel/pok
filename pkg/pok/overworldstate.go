@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/dialog"
+	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -13,6 +14,12 @@ import (
 var playerImg *ebiten.Image
 var playerRunningImg *ebiten.Image
 var activePlayerImg *ebiten.Image
+var beachSplashImg *ebiten.Image
+
+const waterSplashOffsetY = 13
+const waterSplashOffsetX = 4
+
+const nWaterSplashFrames = 3
 
 type GameState interface {
 	GetInputs(g *Game) error
@@ -83,12 +90,21 @@ func (o *OverworldState) tryInteract(g *Game) {
 			x++
 	}
 
+	// check npcs
 	for i := range o.tileMap.npcs {
 		npc := &(o.tileMap.npcs[i].Char)
 		if npc.X == x && npc.Y == y {
 			o.talkWith(g, i)
 			break
 		}
+	}
+
+	// check water
+	n := y * o.tileMap.Width + x
+	index := o.tileMap.textureMapping[o.tileMap.TextureIndicies[g.Player.Char.Z][n]]
+	if textures.IsWater(index) {
+		g.Dialog.SetString("This is water :)))")
+		g.Dialog.Hidden = false
 	}
 }
 
