@@ -1,16 +1,16 @@
 {
 	"Texture": "water.png",
-	"UpperLeft": 33,
-	"Upper": 34,
-	"UpperRight": 35,
+	"UpperLeft": 0,
+	"Upper": 1,
+	"UpperRight": 2,
 	"Left": 66,
-	"Center": 1,
+	"Center": 67,
 	"Right": 68, 
-	"LowerLeft": 99,
-	"Lower": 100,
-	"LowerRight": 101,
-	"CurveUpperLeft": 2,
-	"CurveUpperRight": 2,
-	"CurveLowerLeft": 2,
-	"CurveLowerRight": 2
+	"LowerLeft": 132,
+	"Lower": 133,
+	"LowerRight": 134,
+	"CurveUpperLeft": 265,
+	"CurveUpperRight": 264,
+	"CurveLowerLeft": 199,
+	"CurveLowerRight": 198
 }

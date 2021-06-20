@@ -1,0 +1,16 @@
+{
+	"Texture": "water.png",
+	"UpperLeft": 3,
+	"Upper": 4,
+	"UpperRight": 5,
+	"Left": 69,
+	"Center": 70,
+	"Right": 71, 
+	"LowerLeft": 135,
+	"Lower": 136,
+	"LowerRight": 137,
+	"CurveUpperLeft": 267,
+	"CurveUpperRight": 266,
+	"CurveLowerLeft": 201,
+	"CurveLowerRight": 200
+}

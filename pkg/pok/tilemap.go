@@ -41,6 +41,8 @@ type TileMap struct {
 	textureMapping []int
 
 	npcs []Npc
+	step int
+	collectedFrames int
 }
 
 func (t *TileMap) HasExitAt(x, y, z int) int {
@@ -88,6 +90,13 @@ func (t *TileMap) Draw(rend *Renderer) {
 	t.DrawWithOffset(rend, 0, 0)
 }
 
+func (t *TileMap) Update() {
+	const maxCollectedFrames = 10
+	if t.collectedFrames >= maxCollectedFrames {
+		//TODO: this
+	}
+}
+
 func (t *TileMap) UpdateNpcs(g *Game) {
 	for i := range t.npcs {
 		t.npcs[i].Update(g)
@@ -116,7 +125,8 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			x := float64(ix) * constants.TileSize
 			y := float64(iy) * constants.TileSize
 
-			img := textures.Access(t.textureMapping[t.TextureIndicies[j][i]])
+			index := t.textureMapping[t.TextureIndicies[j][i]]
+			img := textures.Access(index)
 			nTilesX := img.Bounds().Dx() / constants.TileSize
 
 			tx := (n % nTilesX) * constants.TileSize
@@ -555,6 +565,8 @@ func CreateTileMap(width int, height int, texture []string) *TileMap {
 		make([]NpcInfo, 0),
 		textureMapping,
 		make([]Npc, 0),
+		0,
+		0,
 	}
 	return tiles
 }

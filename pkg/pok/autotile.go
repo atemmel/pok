@@ -94,6 +94,10 @@ func BuildNeighbors(tileMap *TileMap, tile, depth int, ati *AutoTileInfo) [][]in
 }
 
 func DecideTileIndicies(tileMap *TileMap, tile, depth int, ati *AutoTileInfo) *AutotileDelta {
+	if !tileMap.HasTexture(ati.textureIndex) {
+		tileMap.AppendTexture(ati.textureIndex, ati.Texture)
+	}
+
 	neighbors := BuildNeighbors(tileMap, tile, depth, ati)
 	xStart := tile % tileMap.Width - 1
 	yStart := tile / tileMap.Width - 1
@@ -109,9 +113,7 @@ func DecideTileIndicies(tileMap *TileMap, tile, depth int, ati *AutoTileInfo) *A
 		oldTextureIndex,
 	}
 
-	if !tileMap.HasTexture(ati.textureIndex) {
-		tileMap.AppendTexture(ati.textureIndex, ati.Texture)
-	}
+	newTextureIndex := tileMap.MapReverse(ati.textureIndex)
 
 	ripple := func(x, y int) {
 		newTile := y * tileMap.Width + x
@@ -131,15 +133,15 @@ func DecideTileIndicies(tileMap *TileMap, tile, depth int, ati *AutoTileInfo) *A
 
 		newData[newTile] = ModifiedTile{
 			newIndex,
-			ati.textureIndex,
+			newTextureIndex,
 		}
 
 		tileMap.Tiles[depth][newTile] = newIndex
-		tileMap.TextureIndicies[depth][newTile] = ati.textureIndex
+		tileMap.TextureIndicies[depth][newTile] = newTextureIndex
 	}
 
 	tileMap.Tiles[depth][tile] = ati.Center
-	tileMap.TextureIndicies[depth][tile] = ati.textureIndex
+	tileMap.TextureIndicies[depth][tile] = newTextureIndex
 
 	newData[tile] = ModifiedTile{
 		ati.Center,
