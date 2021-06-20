@@ -289,6 +289,9 @@ func NewEditor(paths []string) *Editor {
 
 func (e *Editor) Update() error {
 	err := e.handleInputs()
+	if e.activeTileMap != nil {
+		e.activeTileMap.Update()
+	}
 	return err
 }
 
@@ -477,7 +480,7 @@ func (e *Editor) newFile() {
 		return
 	}
 
-	tm := CreateTileMap(2, 2, listPngs(constants.TileMapImagesDir))
+	tm := CreateTileMap(2, 2, []string{"base.png"})
 	e.nextFile = file
 	e.updateEditorWithNewTileMap(tm)
 }

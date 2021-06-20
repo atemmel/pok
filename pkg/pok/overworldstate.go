@@ -180,6 +180,7 @@ func (o *OverworldState) CheckDialogInputs(g *Game) {
 
 func (o *OverworldState) Update(g *Game) error {
 	g.Player.Update(g)
+	o.tileMap.Update()
 	o.tileMap.UpdateNpcs(g)
 
 	if g.Client.Active {

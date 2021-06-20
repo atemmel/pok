@@ -11,6 +11,8 @@ import(
 )
 
 var debugLoadingEnabled bool = true
+var step int = 0
+var collectedFrames int = 0
 
 type Exit struct {
 	Target string
@@ -41,8 +43,6 @@ type TileMap struct {
 	textureMapping []int
 
 	npcs []Npc
-	step int
-	collectedFrames int
 }
 
 func (t *TileMap) HasExitAt(x, y, z int) int {
@@ -92,9 +92,15 @@ func (t *TileMap) Draw(rend *Renderer) {
 
 func (t *TileMap) Update() {
 	const maxCollectedFrames = 10
-	if t.collectedFrames >= maxCollectedFrames {
-		//TODO: this
+	const nWaterFrames = 11
+	if collectedFrames >= maxCollectedFrames {
+		collectedFrames = 0
+		step++
+		if step >= nWaterFrames {
+			step = 0
+		}
 	}
+	collectedFrames++
 }
 
 func (t *TileMap) UpdateNpcs(g *Game) {
@@ -126,6 +132,11 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			y := float64(iy) * constants.TileSize
 
 			index := t.textureMapping[t.TextureIndicies[j][i]]
+
+			if textures.IsWater(index) {
+				n += step * 6
+			}
+
 			img := textures.Access(index)
 			nTilesX := img.Bounds().Dx() / constants.TileSize
 
@@ -540,7 +551,7 @@ func CreateTileMap(width int, height int, texture []string) *TileMap {
 	textureMapping := make([]int, len(texture))
 
 	for i := range texture {
-		_, index := textures.Load(texture[i])
+		_, index := textures.Load(constants.TileMapImagesDir + texture[i])
 		textureMapping[i] = index
 	}
 
@@ -565,8 +576,6 @@ func CreateTileMap(width int, height int, texture []string) *TileMap {
 		make([]NpcInfo, 0),
 		textureMapping,
 		make([]Npc, 0),
-		0,
-		0,
 	}
 	return tiles
 }

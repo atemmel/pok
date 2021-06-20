@@ -47,6 +47,10 @@ func Access(index int) *ebiten.Image {
 	return textures[index];
 }
 
+func IsWater(index int) bool {
+	return index == waterTextureIndex
+}
+
 func insertNewTexture(path string) (*ebiten.Image, int) {
 	img, _, err := ebitenutil.NewImageFromFile(path)
 	debug.Assert(err)
@@ -55,6 +59,7 @@ func insertNewTexture(path string) (*ebiten.Image, int) {
 		if ptr == nil {
 			aliases[path] = i
 			textures[i] = img
+			checkForSpecialTextures(path, i)
 			return img, i
 		}
 	}
@@ -62,6 +67,7 @@ func insertNewTexture(path string) (*ebiten.Image, int) {
 	i := len(textures)
 	aliases[path] = i
 	textures = append(textures, img)
+	checkForSpecialTextures(path, i)
 	return img, i
 }
 

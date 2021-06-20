@@ -9,8 +9,8 @@
 	"LowerLeft": 135,
 	"Lower": 136,
 	"LowerRight": 137,
-	"CurveUpperLeft": 267,
-	"CurveUpperRight": 266,
-	"CurveLowerLeft": 201,
-	"CurveLowerRight": 200
+	"CurveUpperLeft": 201,
+	"CurveUpperRight": 202,
+	"CurveLowerLeft": 267,
+	"CurveLowerRight": 268
 }

@@ -40,9 +40,15 @@ func (a *Audio) PlayPlayerJump() {
 
 func NewAudio() Audio {
 	ctx := audio.NewContext(44100)
+	/*
 	msrc, err := loadMp3(ctx, constants.AudioDir + "apple.mp3")
 	debug.Assert(err)
 	loop := audio.NewInfiniteLoop(msrc, msrc.Length() - 2500000)
+	player, err := audio.NewPlayer(ctx, loop)
+	*/
+	msrc, err := loadMp3(ctx, constants.AudioDir + "route_1.mp3")
+	debug.Assert(err)
+	loop := audio.NewInfiniteLoop(msrc, msrc.Length() - 100000)
 	player, err := audio.NewPlayer(ctx, loop)
 	debug.Assert(err)
 	msrc, err = loadMp3(ctx, constants.AudioDir + "thud.mp3")
