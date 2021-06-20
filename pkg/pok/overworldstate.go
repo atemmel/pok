@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/dialog"
-	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -100,9 +99,7 @@ func (o *OverworldState) tryInteract(g *Game) {
 	}
 
 	// check water
-	n := y * o.tileMap.Width + x
-	index := o.tileMap.textureMapping[o.tileMap.TextureIndicies[g.Player.Char.Z][n]]
-	if textures.IsWater(index) {
+	if g.Player.Char.CoordinateContainsWater(x, y, g) {
 		g.Dialog.SetString("This is water :)))")
 		g.Dialog.Hidden = false
 	}

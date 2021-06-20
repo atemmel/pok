@@ -2,6 +2,7 @@ package pok
 
 import(
 	"github.com/atemmel/pok/pkg/constants"
+	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 )
@@ -242,7 +243,7 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 					case Left:
 						nx--
 					}
-				} else if res == DoCollision {
+				} else if res == DoCollision || c.CoordinateContainsWater(nx, ny, g) {
 					if c.animationState == characterMaxCycle -1 {
 						g.Audio.PlayThud()
 					}
@@ -313,6 +314,14 @@ func (c *Character) TryJumpLedge(nx, ny int, g *Game) int {
 	}
 
 	return DoNone
+}
+
+func (c *Character) CoordinateContainsWater(x, y int, g *Game) bool {
+	const innerWaterTile = 67
+	index := y * g.Ows.tileMap.Width + x
+	textureIndex := g.Ows.tileMap.textureMapping[g.Ows.tileMap.TextureIndicies[c.Z][index]]
+
+	return textures.IsWater(textureIndex) && g.Ows.tileMap.Tiles[c.Z][index] == innerWaterTile
 }
 
 func (c *Character) EndAnim() {
