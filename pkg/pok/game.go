@@ -26,7 +26,15 @@ func CreateGame() *Game {
 	debug.Assert(err)
 	playerRunningImg, err = textures.LoadWithError(constants.CharacterImagesDir + "boy_run.png")
 	debug.Assert(err)
-	beachSplashImg, err= textures.LoadWithError(constants.ImagesDir + "water_effect.png")
+	beachSplashImg, err = textures.LoadWithError(constants.ImagesDir + "water_effect.png")
+	debug.Assert(err)
+	playerSurfingImg, err = textures.LoadWithError(constants.CharacterImagesDir + "boy_surf.png")
+	debug.Assert(err)
+	sharpedoImg, err = textures.LoadWithError(constants.ImagesDir + "surf_sharpedo.png")
+	debug.Assert(err)
+	sharpedoImg, err = textures.LoadWithError(constants.ImagesDir + "surf_sharpedo.png")
+	debug.Assert(err)
+	playerUsingHMImg, err = textures.LoadWithError(constants.ImagesDir + "hm_anim.png")
 	debug.Assert(err)
 
 	activePlayerImg = playerImg
@@ -138,6 +146,7 @@ func (g *Game) DrawPlayer(player *Player) {
 		player.Char.Tx + (constants.TileSize * 2),
 		player.Char.Ty + (constants.TileSize * 2),
 	)
+
 
 	g.Rend.Draw(&RenderTarget{
 		playerOpt,

@@ -26,6 +26,7 @@ type Character struct {
 	frames int
 	animationState int
 	turnCheck int
+	currentJumpTarget int
 	velocity float64
 }
 
@@ -117,7 +118,7 @@ func (c *Character) Update(g *Game) bool {
 	c.Step()
 
 	if c.isJumping {
-		if c.frames * int(c.velocity) >= constants.TileSize * 2 {
+		if c.frames * int(c.velocity) >= c.currentJumpTarget {
 			c.frames = 0
 			c.OffsetY = 0
 			c.isJumping = false
@@ -235,6 +236,7 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 				if res := c.TryJumpLedge(nx, ny, g); res == DoJump {
 					g.Audio.PlayPlayerJump()
 					c.isJumping = true
+					c.currentJumpTarget = constants.TileSize * 2
 					switch c.dir {
 					case Down:
 						ny++

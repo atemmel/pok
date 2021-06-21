@@ -57,7 +57,6 @@ func NewDialogBox() DialogBox {
 		Hinting: font.HintingFull,
 	})
 
-	//db.box, _, err = ebitenutil.NewImageFromFile(ImagesDir + "dialog0.png", ebiten.FilterDefault);
 	db.box, err = textures.LoadWithError(constants.ImagesDir + "dialog0.png")
 	debug.Assert(err)
 

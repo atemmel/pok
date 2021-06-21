@@ -10,7 +10,11 @@ type Player struct {
 	Char Character
 	Connected bool
 	Location string
+	isSurfing bool
 }
+
+const hmAnimFramesPerStep = 8
+const totalHMAnimSteps = 4
 
 func (player *Player) Update(g *Game) {
 	stepDone := player.Char.Update(g)

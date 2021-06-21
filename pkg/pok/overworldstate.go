@@ -12,8 +12,23 @@ import (
 
 var playerImg *ebiten.Image
 var playerRunningImg *ebiten.Image
-var activePlayerImg *ebiten.Image
+var playerSurfingImg *ebiten.Image
+var playerUsingHMImg *ebiten.Image
+var sharpedoImg *ebiten.Image
 var beachSplashImg *ebiten.Image
+
+var activePlayerImg *ebiten.Image
+
+var selectedHm int = None
+
+func aboutToUseHM() bool {
+	return selectedHm != None
+}
+
+const (
+	None = iota
+	Surf
+)
 
 const waterSplashOffsetY = 13
 const waterSplashOffsetX = 4
@@ -102,6 +117,27 @@ func (o *OverworldState) tryInteract(g *Game) {
 	if g.Player.Char.CoordinateContainsWater(x, y, g) {
 		g.Dialog.SetString("This is water :)))")
 		g.Dialog.Hidden = false
+		activePlayerImg = playerUsingHMImg
+		selectedHm = Surf
+
+		nx, ny := g.Player.Char.X, g.Player.Char.Y
+
+		switch g.Player.Char.dir {
+		case Down:
+			ny++
+		case Right:
+			nx++
+		case Left:
+			nx--
+		}
+
+		g.Player.Char.X, g.Player.Char.Y = nx, ny
+
+		g.Audio.PlayPlayerJump()
+		g.Player.Char.isJumping = true
+		g.Player.Char.velocity = WalkVelocity
+		g.Player.Char.isWalking = true
+		g.Player.Char.currentJumpTarget = constants.TileSize
 	}
 }
 
