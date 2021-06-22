@@ -136,7 +136,7 @@ func (c *Character) Step() {
 	c.frames++
 
 	if c.isJumping {
-		x := float64(c.frames) / (constants.TileSize * 2)
+		x := float64(c.frames) / float64(c.currentJumpTarget)
 		c.OffsetY = (-4.0 * ((x - 0.5) * (x - 0.5)) + 1) * -8
 	}
 
