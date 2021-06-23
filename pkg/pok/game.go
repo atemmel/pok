@@ -1,6 +1,7 @@
 package pok
 
 import (
+	"fmt"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/textures"
@@ -161,6 +162,7 @@ func (g *Game) DrawPlayer(player *Player) {
 	n := ny * g.Ows.tileMap.Width + nx
 	index := g.Ows.tileMap.textureMapping[g.Ows.tileMap.TextureIndicies[player.Char.Z][n]]
 
+	// splash effect
 	if textures.IsWater(index) && !player.Char.isSurfing && !player.Char.isJumping {
 		splashOpt := &ebiten.DrawImageOptions{}
 		w, h := beachSplashImg.Size()
@@ -180,6 +182,38 @@ func (g *Game) DrawPlayer(player *Player) {
 			x + waterSplashOffsetX,
 			y + waterSplashOffsetY,
 			2 + 1,
+		})
+	}
+
+	// surfing mount
+	if player.Char.isSurfing {
+		w, h := sharpedoImg.Size()
+
+		animWidth := w / 2
+		animHeight := h / 4
+
+		fmt.Println(player.Char.Tx, player.Char.Ty)
+		stepW := player.Char.Tx / (constants.TileSize * 4)
+		stepH := player.Char.Ty / (constants.TileSize * 2)
+
+		fmt.Println(stepW, stepH)
+
+		sharpedoRect := image.Rect(
+			animWidth * stepW,
+			stepH * animHeight,
+			animWidth * stepW + animWidth,
+			stepH * animHeight + animHeight,
+		)
+
+		sharpedoOpt := &ebiten.DrawImageOptions{}
+
+		g.Rend.Draw(&RenderTarget{
+			sharpedoOpt,
+			sharpedoImg,
+			&sharpedoRect,
+			x,
+			y,
+			1,
 		})
 	}
 }
