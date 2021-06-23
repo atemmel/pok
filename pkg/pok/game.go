@@ -161,7 +161,7 @@ func (g *Game) DrawPlayer(player *Player) {
 	n := ny * g.Ows.tileMap.Width + nx
 	index := g.Ows.tileMap.textureMapping[g.Ows.tileMap.TextureIndicies[player.Char.Z][n]]
 
-	if textures.IsWater(index) {
+	if textures.IsWater(index) && !player.Char.isSurfing && !player.Char.isJumping {
 		splashOpt := &ebiten.DrawImageOptions{}
 		w, h := beachSplashImg.Size()
 		sx := w / nWaterSplashFrames

@@ -115,21 +115,22 @@ func (o *OverworldState) tryInteract(g *Game) {
 
 	// check water
 	if g.Player.Char.CoordinateContainsWater(x, y, g) {
-		o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
-			&dialog.DialogNode{
-				Dialog: "This is water :)",
-				Next: dialog.Link(1),
-			},
-			&dialog.EffectDialogNode{
-				Effect: "surf",
-				Next: nil,
-			},
-		})
+		if !g.Player.Char.isSurfing {
+			o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
+				&dialog.DialogNode{
+					Dialog: "This is water :)",
+					Next: dialog.Link(1),
+				},
+				&dialog.EffectDialogNode{
+					Effect: "surf",
+					Next: nil,
+				},
+			})
 
-		result := o.collector.Peek()
-		g.Dialog.SetString(result.Dialog)
-		g.Dialog.Hidden = false
-
+			result := o.collector.Peek()
+			g.Dialog.SetString(result.Dialog)
+			g.Dialog.Hidden = false
+		}
 	}
 }
 
@@ -236,9 +237,6 @@ func (o *OverworldState) CheckDialogInputs(g *Game) {
 }
 
 func beginSurf(g *Game) {
-	activePlayerImg = playerUsingHMImg
-	selectedHm = Surf
-
 	nx, ny := g.Player.Char.X, g.Player.Char.Y
 
 	switch g.Player.Char.dir {
@@ -254,9 +252,33 @@ func beginSurf(g *Game) {
 
 	g.Audio.PlayPlayerJump()
 	g.Player.Char.isJumping = true
-	g.Player.Char.velocity = WalkVelocity
 	g.Player.Char.isWalking = true
+	g.Player.Char.velocity = WalkVelocity
 	g.Player.Char.currentJumpTarget = constants.TileSize
+
+	selectedHm = Surf
+}
+
+func endSurf(g *Game) {
+	nx, ny := g.Player.Char.X, g.Player.Char.Y
+
+	switch g.Player.Char.dir {
+	case Down:
+		ny++
+	case Right:
+		nx++
+	case Left:
+		nx--
+	}
+
+	g.Player.Char.X, g.Player.Char.Y = nx, ny
+
+	g.Audio.PlayPlayerJump()
+	g.Player.Char.isJumping = true
+	g.Player.Char.isWalking = true
+	g.Player.Char.velocity = WalkVelocity
+	g.Player.Char.currentJumpTarget = constants.TileSize
+	g.Player.Char.isSurfing = false
 }
 
 func (o *OverworldState) Update(g *Game) error {

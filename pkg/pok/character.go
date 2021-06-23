@@ -23,6 +23,7 @@ type Character struct {
 	isWalking bool
 	isRunning bool
 	isJumping bool
+	isSurfing bool
 	frames int
 	animationState int
 	turnCheck int
@@ -232,6 +233,9 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 				c.Animate()
 				c.isWalking = false
 			} else {
+
+				containsWater := c.CoordinateContainsWater(nx, ny, g)
+
 				// Accept new position
 				if res := c.TryJumpLedge(nx, ny, g); res == DoJump {
 					g.Audio.PlayPlayerJump()
@@ -245,7 +249,8 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 					case Left:
 						nx--
 					}
-				} else if res == DoCollision || c.CoordinateContainsWater(nx, ny, g) {
+				} else if res == DoCollision || (c.CoordinateContainsWater(nx, ny, g) && !c.isSurfing) {
+
 					if c.animationState == characterMaxCycle -1 {
 						g.Audio.PlayThud()
 					}
@@ -256,6 +261,16 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 				}
 
 				c.X, c.Y = nx, ny
+
+				if !containsWater && c.isSurfing {
+					g.Audio.PlayPlayerJump()
+					c.isJumping = true
+					c.isWalking = true
+					c.velocity = WalkVelocity
+					c.currentJumpTarget = constants.TileSize
+					c.isSurfing = false
+				}
+
 				if c.isJumping {
 					c.velocity = JumpVelocity
 				} else if c.isRunning {
