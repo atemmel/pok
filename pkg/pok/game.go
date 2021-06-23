@@ -1,7 +1,6 @@
 package pok
 
 import (
-	"fmt"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/textures"
@@ -192,11 +191,8 @@ func (g *Game) DrawPlayer(player *Player) {
 		animWidth := w / 2
 		animHeight := h / 4
 
-		fmt.Println(player.Char.Tx, player.Char.Ty)
 		stepW := player.Char.Tx / (constants.TileSize * 4)
 		stepH := player.Char.Ty / (constants.TileSize * 2)
-
-		fmt.Println(stepW, stepH)
 
 		sharpedoRect := image.Rect(
 			animWidth * stepW,
