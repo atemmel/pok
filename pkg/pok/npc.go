@@ -15,6 +15,7 @@ type Npc struct {
 	Dialog *dialog.DialogTree
 	NpcTextureIndex int
 	MovementInfo NpcMovementInfo
+	TalkedTo bool
 }
 
 type NpcInfo struct {
@@ -65,6 +66,7 @@ func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 		tree,
 		-1,
 		info.MovementInfo,
+		false,
 	}
 
 	npc.Char.Gx = float64(info.X) * constants.TileSize
@@ -79,6 +81,12 @@ func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 }
 
 func (npc* Npc) Update(g *Game) {
+	if npc.TalkedTo {
+		npc.TalkedTo = !g.Dialog.Hidden
+		npc.Char.SetDirection(Static)
+		return
+	}
+
 	switch npc.MovementInfo.Strategy {
 		case Stay:
 			return

@@ -76,3 +76,13 @@ func (p *DialogTreePrinter) VisitChoice(c *ChoiceDialogNode) {
 	p.depth--
 }
 
+
+func (p *DialogTreePrinter) VisitEffect(e *EffectDialogNode) {
+	p.pad()
+	fmt.Println("Effect:", e.Effect)
+	if e.Next != nil {
+		p.depth++
+		p.visit(*e.Next)
+		p.depth--
+	}
+}

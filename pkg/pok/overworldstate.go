@@ -115,29 +115,21 @@ func (o *OverworldState) tryInteract(g *Game) {
 
 	// check water
 	if g.Player.Char.CoordinateContainsWater(x, y, g) {
-		g.Dialog.SetString("This is water :)))")
+		o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
+			&dialog.DialogNode{
+				Dialog: "This is water :)",
+				Next: dialog.Link(1),
+			},
+			&dialog.EffectDialogNode{
+				Effect: "surf",
+				Next: nil,
+			},
+		})
+
+		result := o.collector.Peek()
+		g.Dialog.SetString(result.Dialog)
 		g.Dialog.Hidden = false
-		activePlayerImg = playerUsingHMImg
-		selectedHm = Surf
 
-		nx, ny := g.Player.Char.X, g.Player.Char.Y
-
-		switch g.Player.Char.dir {
-		case Down:
-			ny++
-		case Right:
-			nx++
-		case Left:
-			nx--
-		}
-
-		g.Player.Char.X, g.Player.Char.Y = nx, ny
-
-		g.Audio.PlayPlayerJump()
-		g.Player.Char.isJumping = true
-		g.Player.Char.velocity = WalkVelocity
-		g.Player.Char.isWalking = true
-		g.Player.Char.currentJumpTarget = constants.TileSize
 	}
 }
 
@@ -157,6 +149,7 @@ func (o *OverworldState) talkWith(g *Game, npcIndex int) {
 	}
 
 	char.SetDirection(dir)
+	o.tileMap.npcs[npcIndex].TalkedTo = true
 	tree := o.tileMap.npcs[npcIndex].Dialog
 	o.collector = dialog.MakeDialogTreeCollector(tree)
 	result := o.collector.CollectOnce()
@@ -216,15 +209,54 @@ func (o *OverworldState) CheckMovementInputs(g *Game) {
 func (o *OverworldState) CheckDialogInputs(g *Game) {
 	g.Player.Char.TryStep(Static, g)
 	if g.Dialog.IsDone() {
-		if pressedInteract() {
-			result := o.collector.CollectOnce()
-			if result == nil {
-				g.Dialog.Hidden = true
-			} else {
-				g.Dialog.SetString(result.Dialog)
-			}
+
+		COLLECT_AGAIN:
+
+		result := o.collector.Peek()
+		if result == nil {
+			g.Dialog.Hidden = true
+			return
+		}
+
+		switch result.NodeId {
+			case dialog.DialogNodeId:
+				if pressedInteract() {
+					_ = o.collector.CollectOnce()
+					goto COLLECT_AGAIN
+				}
+				break
+			case dialog.EffectDialogNodeId:
+				if result.Opt == "surf" {
+					beginSurf(g)
+				}
+				_ = o.collector.CollectOnce();
+				goto COLLECT_AGAIN
 		}
 	}
+}
+
+func beginSurf(g *Game) {
+	activePlayerImg = playerUsingHMImg
+	selectedHm = Surf
+
+	nx, ny := g.Player.Char.X, g.Player.Char.Y
+
+	switch g.Player.Char.dir {
+	case Down:
+		ny++
+	case Right:
+		nx++
+	case Left:
+		nx--
+	}
+
+	g.Player.Char.X, g.Player.Char.Y = nx, ny
+
+	g.Audio.PlayPlayerJump()
+	g.Player.Char.isJumping = true
+	g.Player.Char.velocity = WalkVelocity
+	g.Player.Char.isWalking = true
+	g.Player.Char.currentJumpTarget = constants.TileSize
 }
 
 func (o *OverworldState) Update(g *Game) error {

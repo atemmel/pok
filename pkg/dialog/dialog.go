@@ -10,14 +10,25 @@ const(
 	MaxLetters = 44
 )
 
+type NodeId int
+
+const(
+	DialogNodeId NodeId = iota
+	BinaryDialogNodeId
+	ChoiceDialogNodeId
+	EffectDialogNodeId
+)
+
 type DialogTreeVisitor interface {
 	VisitDialog(*DialogNode)
 	VisitBinary(*BinaryDialogNode)
 	VisitChoice(*ChoiceDialogNode)
+	VisitEffect(*EffectDialogNode)
 }
 
 type DialogNodeInterface interface {
 	Visit(DialogTreeVisitor)
+	GetNodeId() NodeId
 }
 
 type BinaryDialogNode struct {
@@ -37,7 +48,12 @@ type DialogBranchNode struct {
 	True, False *int
 }
 
-type DialogEffectNode struct {
+type EffectDialogNode struct {
+	Effect string
+	Next *int
+}
+
+type DialogAssignNode struct {
 	Set, To string
 	Next *int
 }
@@ -47,16 +63,40 @@ type DialogNode struct {
 	Next *int
 }
 
+func Link(index int) *int {
+	return &index
+}
+
 func (d *DialogNode) Visit(visitor DialogTreeVisitor) {
 	visitor.VisitDialog(d)
+}
+
+func (d *DialogNode) GetNodeId() NodeId {
+	return DialogNodeId
 }
 
 func (b *BinaryDialogNode) Visit(visitor DialogTreeVisitor) {
 	visitor.VisitBinary(b)
 }
 
+func (b *BinaryDialogNode) GetNodeId() NodeId {
+	return BinaryDialogNodeId
+}
+
 func (c *ChoiceDialogNode) Visit(visitor DialogTreeVisitor) {
 	visitor.VisitChoice(c)
+}
+
+func (c *ChoiceDialogNode) GetNodeId() NodeId {
+	return ChoiceDialogNodeId
+}
+
+func (e *EffectDialogNode) Visit(visitor DialogTreeVisitor) {
+	visitor.VisitEffect(e)
+}
+
+func (e *EffectDialogNode) GetNodeId() NodeId {
+	return EffectDialogNodeId
 }
 
 type DialogTree []DialogNodeInterface

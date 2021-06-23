@@ -8,6 +8,8 @@ type DialogTreeCollector struct {
 
 type DialogTreeCollectorResult struct {
 	Dialog string
+	NodeId NodeId
+	Opt string
 }
 
 func MakeDialogTreeCollector(tree *DialogTree) DialogTreeCollector {
@@ -35,13 +37,29 @@ func (coll *DialogTreeCollector) CollectOnce() *DialogTreeCollectorResult {
 	return coll.nextResult
 }
 
+func (coll *DialogTreeCollector) Peek() *DialogTreeCollectorResult {
+	old := coll.current
+	res := coll.CollectOnce()
+	coll.current = old
+	return res
+}
+
 func (coll *DialogTreeCollector) VisitDialog(d *DialogNode) {
 	coll.nextResult.Dialog = d.Dialog
+	coll.nextResult.NodeId = d.GetNodeId()
 	coll.current = d.Next
 }
 
 func (coll *DialogTreeCollector) VisitBinary(b *BinaryDialogNode) {
+	coll.nextResult.Dialog = b.Dialog
+	coll.nextResult.NodeId = b.GetNodeId()
 }
 
 func (coll *DialogTreeCollector) VisitChoice(c *ChoiceDialogNode) {
+}
+
+func (coll *DialogTreeCollector) VisitEffect(e *EffectDialogNode) {
+	coll.nextResult.NodeId = e.GetNodeId()
+	coll.nextResult.Opt = e.Effect
+	coll.current = e.Next
 }
