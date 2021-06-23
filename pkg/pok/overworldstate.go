@@ -246,6 +246,8 @@ func beginSurf(g *Game) {
 		nx++
 	case Left:
 		nx--
+	case Up:
+		ny--
 	}
 
 	g.Player.Char.X, g.Player.Char.Y = nx, ny
@@ -257,28 +259,6 @@ func beginSurf(g *Game) {
 	g.Player.Char.currentJumpTarget = constants.TileSize
 
 	selectedHm = Surf
-}
-
-func endSurf(g *Game) {
-	nx, ny := g.Player.Char.X, g.Player.Char.Y
-
-	switch g.Player.Char.dir {
-	case Down:
-		ny++
-	case Right:
-		nx++
-	case Left:
-		nx--
-	}
-
-	g.Player.Char.X, g.Player.Char.Y = nx, ny
-
-	g.Audio.PlayPlayerJump()
-	g.Player.Char.isJumping = true
-	g.Player.Char.isWalking = true
-	g.Player.Char.velocity = WalkVelocity
-	g.Player.Char.currentJumpTarget = constants.TileSize
-	g.Player.Char.isSurfing = false
 }
 
 func (o *OverworldState) Update(g *Game) error {
