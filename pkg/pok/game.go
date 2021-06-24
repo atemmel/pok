@@ -199,15 +199,22 @@ func (g *Game) DrawPlayer(player *Player) {
 		animHeight := h / 4
 
 		// Code for repeating mouth cycle
-		stepW := player.Char.Tx / (constants.TileSize * 4)
+		//stepW := player.Char.Tx / (constants.TileSize * 4)
 
 		// Code for open and closing mouth on holding sprint
 		/*
 		stepW := 0
-			if player.Char.isRunning || holdingSprint() {
+		if player.Char.isRunning || holdingSprint() {
 			stepW = 1
 		}
 		*/
+
+		// Code for repeating mouth cycle on holding sprint
+		stepW := 0
+		if player.Char.isRunning || holdingSprint() {
+			stepW = player.Char.Tx / (constants.TileSize * 4)
+		}
+
 		stepH := player.Char.Ty / (constants.TileSize * 2)
 
 		sharpedoRect := image.Rect(
