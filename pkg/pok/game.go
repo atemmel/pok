@@ -152,7 +152,7 @@ func (g *Game) DrawPlayer(player *Player) {
 	waterBobOffsetY := 0.0
 	if player.Char.isSurfing {
 		scale := float64(step) / float64(nWaterFrames)
-		waterBobOffsetY = math.Sin(scale * math.Pi) * 4
+		waterBobOffsetY = math.Sin(scale * math.Pi) * 4.0
 	}
 
 	g.Rend.Draw(&RenderTarget{
@@ -198,7 +198,16 @@ func (g *Game) DrawPlayer(player *Player) {
 		animWidth := w / 2
 		animHeight := h / 4
 
+		// Code for repeating mouth cycle
 		stepW := player.Char.Tx / (constants.TileSize * 4)
+
+		// Code for open and closing mouth on holding sprint
+		/*
+		stepW := 0
+			if player.Char.isRunning || holdingSprint() {
+			stepW = 1
+		}
+		*/
 		stepH := player.Char.Ty / (constants.TileSize * 2)
 
 		sharpedoRect := image.Rect(

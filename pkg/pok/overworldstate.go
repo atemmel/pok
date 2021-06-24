@@ -118,7 +118,7 @@ func (o *OverworldState) tryInteract(g *Game) {
 		if !g.Player.Char.isSurfing {
 			o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
 				&dialog.DialogNode{
-					Dialog: "This is water :)",
+					Dialog: "Sharpedo used Surf!",
 					Next: dialog.Link(1),
 				},
 				&dialog.EffectDialogNode{
