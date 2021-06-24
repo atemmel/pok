@@ -6,6 +6,7 @@ import (
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
+	"math"
 )
 
 type Game struct {
@@ -148,12 +149,18 @@ func (g *Game) DrawPlayer(player *Player) {
 	)
 
 
+	waterBobOffsetY := 0.0
+	if player.Char.isSurfing {
+		scale := float64(step) / float64(nWaterFrames)
+		waterBobOffsetY = math.Sin(scale * math.Pi) * 4
+	}
+
 	g.Rend.Draw(&RenderTarget{
 		playerOpt,
 		activePlayerImg,
 		&playerRect,
 		x,
-		y,
+		y + waterBobOffsetY,
 		2,
 	})
 
@@ -208,7 +215,7 @@ func (g *Game) DrawPlayer(player *Player) {
 			sharpedoImg,
 			&sharpedoRect,
 			x,
-			y,
+			y + waterBobOffsetY,
 			1,
 		})
 	}

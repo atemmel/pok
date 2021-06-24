@@ -14,6 +14,9 @@ var debugLoadingEnabled bool = true
 var step int = 0
 var collectedFrames int = 0
 
+const maxCollectedFrames = 11
+const nWaterFrames = 11
+
 type Exit struct {
 	Target string
 	Id int
@@ -91,8 +94,6 @@ func (t *TileMap) Draw(rend *Renderer) {
 }
 
 func (t *TileMap) Update() {
-	const maxCollectedFrames = 11
-	const nWaterFrames = 11
 
 	collectedFrames++
 
