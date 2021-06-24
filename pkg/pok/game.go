@@ -212,7 +212,13 @@ func (g *Game) DrawPlayer(player *Player) {
 		// Code for repeating mouth cycle on holding sprint
 		stepW := 0
 		if player.Char.isRunning || holdingSprint() {
-			stepW = player.Char.Tx / (constants.TileSize * 4)
+			// Code for twice as fast repeating mouth cycle
+			if player.Char.Tx / (constants.TileSize * 2) % 2 == 0 {
+				stepW = 0
+			} else {
+				stepW = 1
+			}
+			//stepW = player.Char.Tx / (constants.TileSize * 4)
 		}
 
 		stepH := player.Char.Ty / (constants.TileSize * 2)
