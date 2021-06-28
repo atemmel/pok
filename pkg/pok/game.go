@@ -33,8 +33,6 @@ func CreateGame() *Game {
 	debug.Assert(err)
 	sharpedoImg, err = textures.LoadWithError(constants.ImagesDir + "surf_sharpedo.png")
 	debug.Assert(err)
-	sharpedoImg, err = textures.LoadWithError(constants.ImagesDir + "surf_sharpedo.png")
-	debug.Assert(err)
 	playerUsingHMImg, err = textures.LoadWithError(constants.ImagesDir + "hm_anim.png")
 	debug.Assert(err)
 
@@ -213,9 +211,15 @@ func (g *Game) DrawPlayer(player *Player) {
 		stepW := 0
 		if player.Char.isRunning || holdingSprint() {
 			// Code for twice as fast repeating mouth cycle
+			/*
 			if player.Char.Tx / (constants.TileSize * 2) % 2 == 0 {
 				stepW = 0
 			} else {
+				stepW = 1
+			}
+			*/
+
+			if player.Char.Tx == 0 {
 				stepW = 1
 			}
 			//stepW = player.Char.Tx / (constants.TileSize * 4)
