@@ -3,6 +3,7 @@ package pok
 import (
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
+	"github.com/atemmel/pok/pkg/jobs"
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
@@ -40,8 +41,34 @@ func CreateGame() *Game {
 	g.Dialog = NewDialogBox()
 	drawUi = false
 
+	// animate water
+	jobs.Add(jobs.Job{
+		Do: WaterAnim,
+		When: 11,
+	})
+
+	// animate water splashes
+	jobs.Add(jobs.Job{
+		Do: WaterSplashAnim,
+		When: 11,
+	})
+
+	// animate sharpedo mouth 🥰
+	jobs.Add(jobs.Job{
+		Do: func() {
+			sharpedoBiteStep++
+			if sharpedoBiteStep >= nSharpedoBiteSteps {
+				sharpedoBiteStep = 0
+			}
+		},
+		When: 18,
+	})
+
 	return g
 }
+
+var sharpedoBiteStep int = 0
+const nSharpedoBiteSteps = 3
 
 func (g *Game) TileIsOccupied(x int, y int, z int) bool {
 	if x < 0 || x >= g.Ows.tileMap.Width || y < 0 ||  y >= g.Ows.tileMap.Height {
@@ -149,7 +176,7 @@ func (g *Game) DrawPlayer(player *Player) {
 
 	waterBobOffsetY := 0.0
 	if player.Char.isSurfing {
-		scale := float64(step) / float64(nWaterFrames)
+		scale := float64(waterFrameStep) / float64(nWaterFrames)
 		waterBobOffsetY = math.Sin(scale * math.Pi) * 4.0
 	}
 
@@ -162,20 +189,18 @@ func (g *Game) DrawPlayer(player *Player) {
 		2,
 	})
 
-	nx, ny := player.Char.X, player.Char.Y
-	n := ny * g.Ows.tileMap.Width + nx
-	index := g.Ows.tileMap.textureMapping[g.Ows.tileMap.TextureIndicies[player.Char.Z][n]]
+	nx, ny, nz := player.Char.X, player.Char.Y, player.Char.Z
 
 	// splash effect
-	if textures.IsWater(index) && !player.Char.isSurfing && !player.Char.isJumping {
+	if g.Ows.tileMap.IsCoordCloseToWater(nx, ny, nz) && !player.Char.isSurfing && !player.Char.isJumping {
 		splashOpt := &ebiten.DrawImageOptions{}
 		w, h := beachSplashImg.Size()
 		sx := w / nWaterSplashFrames
 
 		splashRect := image.Rect(
-			sx * (step % nWaterSplashFrames),
+			sx * waterSplashFrame,
 			0,
-			sx * (step % nWaterSplashFrames) + sx,
+			sx * waterSplashFrame + sx,
 			h,
 		)
 
@@ -219,7 +244,7 @@ func (g *Game) DrawPlayer(player *Player) {
 			}
 			*/
 
-			if player.Char.Tx == 0 {
+			if sharpedoBiteStep == 2 {
 				stepW = 1
 			}
 			//stepW = player.Char.Tx / (constants.TileSize * 4)

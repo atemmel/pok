@@ -11,11 +11,6 @@ import(
 )
 
 var debugLoadingEnabled bool = true
-var step int = 0
-var collectedFrames int = 0
-
-const maxCollectedFrames = 11
-const nWaterFrames = 11
 
 type Exit struct {
 	Target string
@@ -46,6 +41,16 @@ type TileMap struct {
 	textureMapping []int
 
 	npcs []Npc
+}
+
+var waterFrameStep int = 0
+const nWaterFrames = 11
+
+func WaterAnim() {
+	waterFrameStep++
+	if waterFrameStep >= nWaterFrames {
+		waterFrameStep = 0
+	}
 }
 
 func (t *TileMap) HasExitAt(x, y, z int) int {
@@ -93,23 +98,17 @@ func (t *TileMap) Draw(rend *Renderer) {
 	t.DrawWithOffset(rend, 0, 0)
 }
 
-func (t *TileMap) Update() {
-
-	collectedFrames++
-
-	if collectedFrames >= maxCollectedFrames {
-		collectedFrames = 0
-		step++
-		if step >= nWaterFrames {
-			step = 0
-		}
-	}
-}
-
 func (t *TileMap) UpdateNpcs(g *Game) {
 	for i := range t.npcs {
 		t.npcs[i].Update(g)
 	}
+}
+
+func (t *TileMap) IsCoordCloseToWater(x, y, z int) bool {
+	index := t.Index(x, y)
+	texIndex := t.textureMapping[t.TextureIndicies[z][index]]
+	tileInTex := t.Tiles[z][index]
+	return textures.IsWater(texIndex) && tileInTex != 70
 }
 
 func (t *TileMap) drawNpcs(rend *Renderer, offsetX, offsetY float64) {
@@ -137,7 +136,7 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			index := t.textureMapping[t.TextureIndicies[j][i]]
 
 			if textures.IsWater(index) {
-				n += step * 6
+				n += waterFrameStep * 6
 			}
 
 			img := textures.Access(index)

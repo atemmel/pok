@@ -111,6 +111,7 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	}
 
 	op := &ebiten.DrawImageOptions{}
+	//op.ColorM.Scale(0.5, 0.5, 0.8, 1.0)
 	screen.DrawImage(r.dest, op)
 	r.targets = r.targets[:0]
 	r.debugLines = r.debugLines[:0]

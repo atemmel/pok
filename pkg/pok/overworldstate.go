@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/dialog"
+	"github.com/atemmel/pok/pkg/jobs"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -33,7 +34,15 @@ const (
 const waterSplashOffsetY = 13
 const waterSplashOffsetX = 4
 
+var waterSplashFrame int = 0
 const nWaterSplashFrames = 3
+
+func WaterSplashAnim() {
+	waterSplashFrame++
+	if waterSplashFrame >= nWaterSplashFrames {
+		waterSplashFrame = 0
+	}
+}
 
 type GameState interface {
 	GetInputs(g *Game) error
@@ -263,7 +272,7 @@ func beginSurf(g *Game) {
 
 func (o *OverworldState) Update(g *Game) error {
 	g.Player.Update(g)
-	o.tileMap.Update()
+	jobs.TickAllOneFrame()
 	o.tileMap.UpdateNpcs(g)
 
 	if g.Client.Active {

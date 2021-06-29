@@ -7,6 +7,7 @@ import (
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/fonts"
 	"github.com/atemmel/pok/pkg/textures"
+	"github.com/atemmel/pok/pkg/jobs"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -283,15 +284,22 @@ func NewEditor(paths []string) *Editor {
 		X: IconOffsetX + 16 + 16, Y: constants.DisplaySizeY - 20,
 	})
 
+	jobs.Add(jobs.Job{
+		Do: WaterAnim,
+		When: 11,
+	})
+
+	jobs.Add(jobs.Job{
+		Do: WaterSplashAnim,
+		When: 11,
+	})
 
 	return es;
 }
 
 func (e *Editor) Update() error {
 	err := e.handleInputs()
-	if e.activeTileMap != nil {
-		e.activeTileMap.Update()
-	}
+	jobs.TickAllOneFrame()
 	return err
 }
 
