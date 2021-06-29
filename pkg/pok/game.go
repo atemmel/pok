@@ -64,6 +64,14 @@ func CreateGame() *Game {
 		When: 18,
 	})
 
+	jobs.Add(jobs.Job{
+		Do: func() {
+			red, green, blue := GetActiveEffect()
+			g.Rend.SetEffect(red, green, blue)
+		},
+		When: 60,
+	})
+
 	return g
 }
 

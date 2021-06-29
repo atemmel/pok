@@ -62,6 +62,7 @@ type Renderer struct {
 	targets []RenderTarget
 	debugLines []DebugLine
 	Cam Camera
+	r, g, b float64
 }
 
 func NewRenderer(screenWidth, screenHeight int, scale float64) Renderer {
@@ -71,6 +72,7 @@ func NewRenderer(screenWidth, screenHeight int, scale float64) Renderer {
 		make([]RenderTarget, 0),
 		make([]DebugLine, 0),
 		Camera{0, 0, float64(screenWidth), float64(screenHeight), scale},
+		1.0, 1.0, 1.0,
 	}
 }
 
@@ -85,6 +87,10 @@ func (r *Renderer) Draw(target *RenderTarget) {
 
 func (r *Renderer) DrawLine(line DebugLine) {
 	r.debugLines = append(r.debugLines, line)
+}
+
+func (r *Renderer) SetEffect(R, G, B float64) {
+	r.r, r.g, r.b = R, G, B
 }
 
 func (r *Renderer) Display(screen *ebiten.Image) {
@@ -111,7 +117,18 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	}
 
 	op := &ebiten.DrawImageOptions{}
+	// very night
 	//op.ColorM.Scale(0.5, 0.5, 0.8, 1.0)
+	// morning?
+	//op.ColorM.Scale(1.051, 1.051, 1.051, 1.0)
+	// day is just regular 1, 1, 1, 1
+	//  evening?
+	//op.ColorM.Scale(0.9, 0.8, 0.8, 1.0)
+	//op.ColorM.Scale(0.95, 0.95, 0.8, 1.0)
+	//op.ColorM.Scale(0.8, 0.8, 0.8, 1.0)
+
+	op.ColorM.Scale(r.r, r.g, r.b, 1.0)
+
 	screen.DrawImage(r.dest, op)
 	r.targets = r.targets[:0]
 	r.debugLines = r.debugLines[:0]

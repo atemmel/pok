@@ -1278,12 +1278,6 @@ func (e *Editor) doBucket() {
 	stack := make([]image.Point, 0, prefill)
 	stack = append(stack, image.Pt(x, y))
 
-	/*
-	shouldFill := func(index int) bool {
-		return e.activeTileMap.Tiles[currentLayer][index] == oldTile && e.activeTileMap.TextureIndicies[currentLayer][index] == oldTextureIndex
-	}
-	*/
-
 	fill := func(index int) {
 		e.activeTileMap.Tiles[currentLayer][index] = i
 		e.activeTileMap.TextureIndicies[currentLayer][index] = j
