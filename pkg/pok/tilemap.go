@@ -372,7 +372,11 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 				copy(t.Collision[i][index + 1:], t.Collision[i][index:])
 				copy(t.TextureIndicies[i][index + 1:], t.TextureIndicies[i][index:])
 
-				t.Tiles[i][index] = 0
+				if i == 0 {
+					t.Tiles[i][index] = 0
+				} else {
+					t.Tiles[i][index] = -1
+				}
 				t.Collision[i][index] = false
 				t.TextureIndicies[i][index] = 0
 			}
@@ -393,7 +397,12 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 				copy(t.Tiles[i][index + 1:], t.Tiles[i][index:])
 				copy(t.Collision[i][index + 1:], t.Collision[i][index:])
 				copy(t.TextureIndicies[i][index + 1:], t.TextureIndicies[i][index:])
-				t.Tiles[i][index] = 0
+
+				if i == 0 {
+					t.Tiles[i][index] = 0
+				} else {
+					t.Tiles[i][index] = -1
+				}
 				t.Collision[i][index] = false
 				t.TextureIndicies[i][index] = 0
 			}

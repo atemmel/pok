@@ -30,6 +30,7 @@ type Grid struct {
 	selectionY float64
 	innerWidth int
 	currentIndex int
+	maxIndex int
 	currentCol int
 	maxRow int
 	nItemsPerRow int
@@ -57,6 +58,7 @@ func NewGrid(tileSet *ebiten.Image, innerWidth int) Grid {
 		selectionY: 0,
 		innerWidth: innerWidth,
 		currentIndex: 0,
+		maxIndex: totalTilesetItems,
 		currentCol: 0,
 		maxRow: totalTilesetItems / nItemsPerRow,
 		nItemsPerRow: nItemsPerRow,
@@ -118,5 +120,8 @@ func (g *Grid) Contains(p image.Point) bool {
 }
 
 func (g *Grid) GetIndex() int {
-	return g.currentIndex
+	if g.currentIndex < g.maxIndex {
+		return g.currentIndex
+	}
+	return g.maxIndex - 1
 }
