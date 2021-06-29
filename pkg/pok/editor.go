@@ -226,7 +226,7 @@ func NewEditor(paths []string) *Editor {
 	initButtons(font)
 
 	vis := func() bool {
-		return activeTool == Pencil
+		return activeTool == Pencil || activeTool == Bucket
 	}
 
 	AddButton(&ButtonInfo{
@@ -726,7 +726,6 @@ func (e *Editor) handleMapMouseInputs() {
 						e.doAutotile()
 					case Tree:
 						//TODO: perform tree logic
-						//PlaceTree(e.activeTileMap, tati, selectionX, selectionY, currentLayer)
 						treeArea.TreeInfo = &e.treeAutoTileInfo[e.treeAutoTileGrid.GetIndex()]
 						treeArea.Hold(selectionX, selectionY)
 				}
@@ -744,6 +743,8 @@ func (e *Editor) handleMapMouseInputs() {
 		e.SelectTileFromMouse(cx, cy)
 		if e.selectedTileIsValid() {
 			switch activeTool {
+				case Bucket:
+					e.doBucket()
 				case Object:
 					e.doObject()
 				case Link:
@@ -803,6 +804,8 @@ func (e *Editor) handleMapMouseInputs() {
 				e.postDoPencil()
 			case Eraser:
 				e.postDoEraser()
+			case Bucket:
+				e.postDoBucket()
 			case Object:
 				e.postDoObject()
 			case AutoTile:
@@ -1252,6 +1255,73 @@ func (e *Editor) doEraser() {
 	e.activeTileMap.TextureIndicies[currentLayer][selectedTile] = baseTextureIndex
 }
 
+func (e *Editor) doBucket() {
+	oldTile := e.activeTileMap.Tiles[currentLayer][selectedTile]
+	oldTextureIndex := e.activeTileMap.TextureIndicies[currentLayer][selectedTile]
+
+	i := e.grid.GetIndex()
+	j := e.activeTileMap.MapReverse(availablePaletteIndicies[activePalette])
+
+	// no-op
+	if oldTile == i && oldTextureIndex == j {
+		return
+	}
+
+	x, y := e.activeTileMap.Coords(selectedTile)
+
+	const prefill = 16
+
+	CurrentBucketDelta.indicies = make([]int, 0, prefill)
+	CurrentBucketDelta.oldTiles = make([]int, 0, prefill)
+	CurrentBucketDelta.oldTextureIndicies = make([]int, 0, prefill)
+
+	stack := make([]image.Point, 0, prefill)
+	stack = append(stack, image.Pt(x, y))
+
+	/*
+	shouldFill := func(index int) bool {
+		return e.activeTileMap.Tiles[currentLayer][index] == oldTile && e.activeTileMap.TextureIndicies[currentLayer][index] == oldTextureIndex
+	}
+	*/
+
+	fill := func(index int) {
+		e.activeTileMap.Tiles[currentLayer][index] = i
+		e.activeTileMap.TextureIndicies[currentLayer][index] = j
+	}
+
+	for len(stack) > 0 {
+		pt := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if !e.activeTileMap.Contains(pt.X, pt.Y) {
+			continue
+		}
+
+		x, y = pt.X, pt.Y
+		index := e.activeTileMap.Index(x, y)
+		theTile := e.activeTileMap.Tiles[currentLayer][index]
+		theTextureIndex := e.activeTileMap.TextureIndicies[currentLayer][index]
+
+		if theTile == oldTile && theTextureIndex == oldTextureIndex {
+			CurrentBucketDelta.indicies = append(CurrentBucketDelta.indicies, index)
+			CurrentBucketDelta.oldTiles = append(CurrentBucketDelta.oldTiles, theTile)
+			CurrentBucketDelta.oldTextureIndicies = append(CurrentBucketDelta.oldTextureIndicies, theTextureIndex)
+
+			fill(index)
+			stack = append(
+				stack,
+				image.Point{x, y + 1},
+				image.Point{x, y - 1},
+				image.Point{x + 1, y},
+				image.Point{x - 1, y},
+			)
+		}
+	}
+
+	CurrentBucketDelta.newTile = i
+	CurrentBucketDelta.newTextureIndex = j
+	CurrentBucketDelta.z = currentLayer
+}
+
 func (e *Editor) doObject() {
 	obj := &e.objectGrid.objs[activeObjsIndex]
 	e.activeTileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
@@ -1388,6 +1458,9 @@ func (e *Editor) doDecrementLayer() {
 func (e *Editor) doRemoveLayer() {
 	if e.activeTileMap != nil {
 		e.activeTileMap.RemoveLayer(currentLayer)
+		if currentLayer > 0 {
+			currentLayer--
+		}
 	}
 }
 
@@ -1406,6 +1479,11 @@ func (e *Editor) postDoEraser() {
 	CurrentEraserDelta.newTextureIndex = baseTextureIndex
 	UndoStack = append(UndoStack, CurrentEraserDelta)
 	CurrentEraserDelta = &EraserDelta{}
+}
+
+func (e *Editor) postDoBucket() {
+	UndoStack = append(UndoStack, CurrentBucketDelta)
+	CurrentBucketDelta = &BucketDelta{}
 }
 
 func (e *Editor) postDoObject() {

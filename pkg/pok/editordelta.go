@@ -11,6 +11,7 @@ var RedoStack = make([]Delta, 0, preAllocDelta)
 
 var CurrentPencilDelta *PencilDelta = &PencilDelta{}
 var CurrentEraserDelta *EraserDelta = &EraserDelta{}
+var CurrentBucketDelta *BucketDelta = &BucketDelta{}
 var CurrentObjectDelta *ObjectDelta = &ObjectDelta{}
 var CurrentRemoveObjectDelta *RemoveObjectDelta = &RemoveObjectDelta{}
 var CurrentLinkDelta *LinkDelta = &LinkDelta{}
@@ -48,7 +49,6 @@ type PencilDelta struct {
 	newTile int
 	newTextureIndex int
 }
-
 
 func (dp *PencilDelta) Undo(ed *Editor) {
 	tm := ed.tileMaps[dp.tileMapIndex]
@@ -88,6 +88,32 @@ func (de *EraserDelta) Redo(ed *Editor) {
 	for _, j := range de.indicies {
 		tm.Tiles[de.z][j] = -1
 		tm.TextureIndicies[de.z][j] = 0
+	}
+}
+
+type BucketDelta struct {
+	indicies []int
+	oldTiles []int
+	oldTextureIndicies[]int
+	z int
+	tileMapIndex int
+	newTile int
+	newTextureIndex int
+}
+
+func (bd *BucketDelta) Undo(ed *Editor) {
+	tm := ed.tileMaps[bd.tileMapIndex]
+	for i, j := range bd.indicies {
+		tm.Tiles[bd.z][j] = bd.oldTiles[i]
+		tm.TextureIndicies[bd.z][j] = bd.oldTextureIndicies[i]
+	}
+}
+
+func (bd *BucketDelta) Redo(ed *Editor) {
+	tm := ed.tileMaps[bd.tileMapIndex]
+	for _, j := range bd.indicies {
+		tm.Tiles[bd.z][j] = bd.newTile
+		tm.TextureIndicies[bd.z][j] = bd.newTextureIndex
 	}
 }
 
