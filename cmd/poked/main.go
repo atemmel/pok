@@ -20,7 +20,7 @@ func main() {
 	ed := pok.NewEditor(flag.Args())
 
 	ebiten.SetWindowSize(constants.WindowSizeX, constants.WindowSizeY)
-	ebiten.SetWindowTitle("Title")
+	ebiten.SetWindowTitle("poked")
 	ebiten.SetWindowResizable(true)
 
 	if err := ebiten.RunGame(ed); err != nil {

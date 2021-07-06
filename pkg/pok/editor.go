@@ -226,7 +226,7 @@ func NewEditor(paths []string) *Editor {
 	initButtons(font)
 
 	vis := func() bool {
-		return activeTool == Pencil || activeTool == Bucket
+		return (activeTool == Pencil || activeTool == Bucket) && es.activeTileMap != nil
 	}
 
 	AddButton(&ButtonInfo{
@@ -260,10 +260,10 @@ func NewEditor(paths []string) *Editor {
 	AddButton(&ButtonInfo{
 		Content: "+",
 		OnClick: func() {
-			es.doIncrementOrAppendLayer()
+			es.doIncrementLayer()
 		},
 		VisibilityCondition: nil,
-		X: IconOffsetX, Y: constants.DisplaySizeY - 20,
+		X: IconOffsetX, Y: constants.DisplaySizeY - 20 - 20,
 	})
 
 	AddButton(&ButtonInfo{
@@ -272,16 +272,43 @@ func NewEditor(paths []string) *Editor {
 			es.doDecrementLayer()
 		},
 		VisibilityCondition: nil,
-		X: IconOffsetX + 16, Y: constants.DisplaySizeY - 20,
+		X: IconOffsetX, Y: constants.DisplaySizeY - 20,
 	})
 
 	AddButton(&ButtonInfo{
-		Content: "DELETE",
+		Content: "DELETE LAYER",
 		OnClick: func() {
 			es.doRemoveLayer()
 		},
 		VisibilityCondition: nil,
-		X: IconOffsetX + 16 + 16, Y: constants.DisplaySizeY - 20,
+		X: IconOffsetX + 16, Y: constants.DisplaySizeY - 20,
+	})
+
+	AddButton(&ButtonInfo{
+		Content: "ADD LAYER",
+		OnClick: func() {
+			es.doAppendLayer()
+		},
+		VisibilityCondition: nil,
+		X: IconOffsetX + 16, Y: constants.DisplaySizeY - 20 - 20,
+	})
+
+	AddButton(&ButtonInfo{
+		Content: "NEW MAP",
+		OnClick: func() {
+			es.newFile()
+		},
+		VisibilityCondition: nil,
+		X: IconOffsetX + 16 * 13, Y: constants.DisplaySizeY - 20,
+	})
+
+	AddButton(&ButtonInfo{
+		Content: "OPEN MAP",
+		OnClick: func() {
+			es.loadFileDialog()
+		},
+		VisibilityCondition: nil,
+		X: IconOffsetX + 16 * 16, Y: constants.DisplaySizeY - 20,
 	})
 
 	jobs.Add(jobs.Job{
@@ -334,8 +361,9 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 			e.treeAutoTileGrid.grid.Draw(screen)
 		}
 		e.drawIcons(screen)
-		drawButtons(screen)
 	}
+
+	drawButtons(screen)
 
 	debugStr := ""
 	if len(e.activeFiles) == 0 {
@@ -567,11 +595,12 @@ func (e *Editor) handleInputs() error {
 		}
 	}
 
+	cx, cy := ebiten.CursorPosition()
+	if pollButtons(cx, cy) {
+		return nil
+	}
+
 	if len(e.activeFiles) != 0 {
-		cx, cy := ebiten.CursorPosition()
-		if pollButtons(cx, cy) {
-			return nil
-		}
 		index := e.getTileMapIndexAtCoord(cx, cy)
 		if index != -1 && !e.isAlreadyClicking() {
 			err := e.setActiveTileMap(index)
@@ -1438,9 +1467,15 @@ func (e *Editor) doResize() {
 	CurrentResizeDelta.tileMapIndex = e.activeTileMapIndex
 }
 
-func (e *Editor) doIncrementOrAppendLayer() {
+func (e *Editor) doIncrementLayer() {
 	currentLayer++
-	if currentLayer == len(e.activeTileMap.Tiles) && e.activeTileMap != nil{
+	if e.activeTileMap != nil && currentLayer == len(e.activeTileMap.Tiles) {
+		currentLayer--
+	}
+}
+
+func (e *Editor) doAppendLayer() {
+	if e.activeTileMap != nil {
 		e.activeTileMap.AppendLayer()
 	}
 }
