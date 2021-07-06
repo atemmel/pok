@@ -109,10 +109,10 @@ func (r *Renderer) Display(screen *ebiten.Image) {
 	}
 
 	for _, d := range r.debugLines {
-		x1 := (float64(d.X1) * r.Cam.Scale - r.Cam.X)
-		y1 := (float64(d.Y1) * r.Cam.Scale - r.Cam.Y)
-		x2 := (float64(d.X2) * r.Cam.Scale - r.Cam.X)
-		y2 := (float64(d.Y2) * r.Cam.Scale - r.Cam.Y)
+		x1 := (float64(d.X1) - r.Cam.X) * r.Cam.Scale
+		y1 := (float64(d.Y1) - r.Cam.Y) * r.Cam.Scale
+		x2 := (float64(d.X2) - r.Cam.X) * r.Cam.Scale
+		y2 := (float64(d.Y2) - r.Cam.Y) * r.Cam.Scale
 		ebitenutil.DrawLine(r.dest, x1, y1, x2, y2, d.Clr)
 	}
 

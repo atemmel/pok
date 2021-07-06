@@ -305,7 +305,10 @@ func (e *Editor) Update() error {
 
 func (e *Editor) Draw(screen *ebiten.Image) {
 	e.DrawBackgroundGrid()
-	treeArea.Draw(&e.rend)
+	if e.activeTileMap != nil {
+		vec := e.tileMapOffsets[e.activeTileMapIndex]
+		treeArea.Draw(&e.rend, *vec)
+	}
 
 	for i := range e.tileMaps {
 		offset := e.tileMapOffsets[i]

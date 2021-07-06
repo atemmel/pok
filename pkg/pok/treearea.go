@@ -28,10 +28,12 @@ func abs(i int) int {
 	return i
 }
 
-func (t *TreeAreaSelection) Draw(rend *Renderer) {
+func (t *TreeAreaSelection) Draw(rend *Renderer, offset Vec2) {
 	if !t.IsHolding() {
 		return
 	}
+
+	const cornerOffset = 4
 
 	lineX, lineY := t.CountBoundingTiles()
 	px, py := t.Polarity()
@@ -39,17 +41,25 @@ func (t *TreeAreaSelection) Draw(rend *Renderer) {
 	x0 := float64(*t.BeginX)
 	y0 := float64(*t.BeginY)
 
-	x0 = x0 * constants.TileSize / rend.Cam.Scale
-	y0 = y0 * constants.TileSize / rend.Cam.Scale
+	x0 = (x0 * constants.TileSize + offset.X)
+	y0 = (y0 * constants.TileSize + offset.Y)
 
-	x1 := x0 + float64(lineX * px * constants.TileSize) / rend.Cam.Scale
-	y1 := y0 + float64(lineY * py * constants.TileSize) / rend.Cam.Scale
+	x1 := x0 + float64(lineX * px * constants.TileSize)
+	y1 := y0 + float64(lineY * py * constants.TileSize)
+
+	if x1 < x0 {
+		x1, x0 = x0, x1
+	}
+
+	if y1 < y0 {
+		y1, y0 = y0, y1
+	}
 
 	clr := color.RGBA{255, 0, 0, 255}
 
 	line := DebugLine{}
 	line.Clr = clr
-	line.X1 = x0
+	line.X1 = x0 + cornerOffset
 	line.Y1 = y0
 	line.X2 = x1
 	line.Y2 = y0
@@ -58,13 +68,13 @@ func (t *TreeAreaSelection) Draw(rend *Renderer) {
 
 	line.X1 = x0
 	line.Y1 = y1
-	line.X2 = x1
+	line.X2 = x1 - cornerOffset
 	line.Y2 = y1
 
 	rend.DrawLine(line)
 
 	line.X1 = x0
-	line.Y1 = y0
+	line.Y1 = y0 + cornerOffset
 	line.X2 = x0
 	line.Y2 = y1
 
@@ -73,7 +83,48 @@ func (t *TreeAreaSelection) Draw(rend *Renderer) {
 	line.X1 = x1
 	line.Y1 = y0
 	line.X2 = x1
-	line.Y2 = y1
+	line.Y2 = y1 - cornerOffset
+
+	rend.DrawLine(line)
+
+	t.drawCorner(x0, y0, cornerOffset, clr, rend)
+	if x1 == x0 && y1 == y0 {
+		x1 += constants.TileSize
+		y1 += constants.TileSize
+	}
+	t.drawCorner(x1, y1, cornerOffset, clr, rend)
+}
+
+func (t *TreeAreaSelection) drawCorner(x0, y0, cornerOffset float64, clr color.RGBA, rend *Renderer) {
+
+	line := DebugLine{}
+	line.Clr = clr
+
+	line.X1 = x0
+	line.Y1 = y0 - cornerOffset
+	line.X2 = x0 + cornerOffset
+	line.Y2 = y0
+
+	rend.DrawLine(line)
+
+	line.X1 = x0 + cornerOffset
+	line.Y1 = y0
+	line.X2 = x0
+	line.Y2 = y0 + cornerOffset
+
+	rend.DrawLine(line)
+
+	line.X1 = x0
+	line.Y1 = y0 + cornerOffset
+	line.X2 = x0 - cornerOffset
+	line.Y2 = y0
+
+	rend.DrawLine(line)
+
+	line.X1 = x0 - cornerOffset
+	line.Y1 = y0
+	line.X2 = x0
+	line.Y2 = y0 - cornerOffset
 
 	rend.DrawLine(line)
 }
