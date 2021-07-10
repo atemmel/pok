@@ -18,7 +18,9 @@ const totalHMAnimSteps = 4
 func (player *Player) Update(g *Game) {
 	stepDone := player.Char.Update(g)
 
-	if player.Char.isSurfing {
+	if player.Char.isBiking {
+		activePlayerImg = playerBikingImg
+	} else if player.Char.isSurfing {
 		activePlayerImg = playerSurfingImg
 	} else if player.Char.isWalking && player.Char.velocity > WalkVelocity {
 		activePlayerImg = playerRunningImg

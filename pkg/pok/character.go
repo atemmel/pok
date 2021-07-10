@@ -22,6 +22,7 @@ type Character struct {
 	dir Direction
 	isWalking bool
 	isRunning bool
+	isBiking bool
 	isJumping bool
 	isSurfing bool
 	frames int
@@ -62,6 +63,7 @@ func (dir *Direction) Inverse() Direction {
 const(
 	WalkVelocity = 1
 	RunVelocity = 2
+	BikeVelocity = 4
 	JumpVelocity = 1
 	characterMaxCycle = 8
 	turnCheckLimit = 5 // in frames
@@ -275,6 +277,8 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 					c.velocity = JumpVelocity
 				} else if c.isRunning {
 					c.velocity = RunVelocity
+				} else if c.isBiking {
+					c.velocity = BikeVelocity
 				} else {
 					c.velocity = WalkVelocity
 				}

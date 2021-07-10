@@ -13,6 +13,7 @@ import (
 
 var playerImg *ebiten.Image
 var playerRunningImg *ebiten.Image
+var playerBikingImg *ebiten.Image
 var playerSurfingImg *ebiten.Image
 var playerUsingHMImg *ebiten.Image
 var sharpedoImg *ebiten.Image
@@ -93,6 +94,10 @@ func holdingSprint() bool {
 
 func pressedInteract() bool {
 	return inpututil.IsKeyJustPressed(ebiten.KeyZ) || inpututil.IsKeyJustPressed(ebiten.KeyE)
+}
+
+func pressedItem() bool {
+	return inpututil.IsKeyJustPressed(ebiten.KeyX)
 }
 
 func (o *OverworldState) tryInteract(g *Game) {
@@ -214,6 +219,9 @@ func (o *OverworldState) CheckMovementInputs(g *Game) {
 		o.tryInteract(g)
 	}
 
+	if pressedItem() {
+		g.Player.Char.isBiking = !g.Player.Char.isBiking
+	}
 }
 
 func (o *OverworldState) CheckDialogInputs(g *Game) {
@@ -262,6 +270,7 @@ func beginSurf(g *Game) {
 	g.Player.Char.X, g.Player.Char.Y = nx, ny
 
 	g.Audio.PlayPlayerJump()
+	g.Player.Char.isBiking = false
 	g.Player.Char.isJumping = true
 	g.Player.Char.isWalking = true
 	g.Player.Char.velocity = WalkVelocity

@@ -28,6 +28,8 @@ func CreateGame() *Game {
 	debug.Assert(err)
 	playerRunningImg, err = textures.LoadWithError(constants.CharacterImagesDir + "boy_run.png")
 	debug.Assert(err)
+	playerBikingImg, err = textures.LoadWithError(constants.CharacterImagesDir + "boy_bike.png")
+	debug.Assert(err)
 	beachSplashImg, err = textures.LoadWithError(constants.ImagesDir + "water_effect.png")
 	debug.Assert(err)
 	playerSurfingImg, err = textures.LoadWithError(constants.CharacterImagesDir + "boy_surf.png")
@@ -155,6 +157,8 @@ func (g *Game) Load(str string, entrypoint int) {
 		constants.DisplaySizeY,
 		2,
 	)
+
+	g.Rend.SetEffect(GetActiveEffect())
 }
 
 func (g *Game) Save() {
