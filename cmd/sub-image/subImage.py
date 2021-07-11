@@ -1,4 +1,6 @@
+#!/usr/bin/python
 from PIL import Image, ImageDraw
+import sys
 
 class BoundingBox:
     
@@ -86,7 +88,11 @@ def explore_bounding_box(point, pixel_coordinates_list, img_size):
 
 
 def main():
-    path = 'hus.png'
+    if len(sys.argv) < 2:
+        return
+    
+    path = sys.argv[1]
+    #path = 'hus.png'
 
     image = Image.open(path)
     #image.convert('L')
