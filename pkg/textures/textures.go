@@ -51,6 +51,10 @@ func IsWater(index int) bool {
 	return index == waterTextureIndex
 }
 
+func IsBase(index int) bool {
+	return index == baseTextureIndex
+}
+
 func insertNewTexture(path string) (*ebiten.Image, int) {
 	img, _, err := ebitenutil.NewImageFromFile(path)
 	debug.Assert(err)

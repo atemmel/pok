@@ -295,15 +295,15 @@ func (c *Character) TryJumpLedge(nx, ny int, g *Game) int {
 
 	//TODO: Check texture index as well
 	isDownLedge := func(i int) bool {
-		return (g.Ows.tileMap.Tiles[c.Z + 1][i] == 213 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 214 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 215)
+		return textures.IsBase(g.Ows.tileMap.TextureIndicies[c.Z + 1][i]) && (g.Ows.tileMap.Tiles[c.Z + 1][i] == 213 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 214 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 215)
 	}
 
 	isRightLedge := func(i int) bool {
-		return (g.Ows.tileMap.Tiles[c.Z + 1][i] == 233 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 241 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 249)
+		return textures.IsBase(g.Ows.tileMap.TextureIndicies[c.Z + 1][i]) && (g.Ows.tileMap.Tiles[c.Z + 1][i] == 233 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 241 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 249)
 	}
 
 	isLeftLedge := func(i int) bool {
-		return (g.Ows.tileMap.Tiles[c.Z + 1][i] == 232 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 240 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 248)
+		return textures.IsBase(g.Ows.tileMap.TextureIndicies[c.Z + 1][i]) && (g.Ows.tileMap.Tiles[c.Z + 1][i] == 232 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 240 || g.Ows.tileMap.Tiles[c.Z + 1][i] == 248)
 	}
 
 	index := g.Ows.tileMap.Index(nx, ny)
