@@ -15,6 +15,7 @@ var(
 
 	baseTextureIndex = InvalidIndex
 	waterTextureIndex = InvalidIndex
+	stairTextureIndex = InvalidIndex
 )
 
 const(
@@ -23,6 +24,7 @@ const(
 	preAlloc = 8
 	baseTextureStr = constants.TileMapImagesDir + "base.png"
 	waterTextureStr = constants.TileMapImagesDir + "water.png"
+	stairTextureStr = constants.TileMapImagesDir + "stairs.png"
 )
 
 func Init() {
@@ -55,6 +57,10 @@ func IsBase(index int) bool {
 	return index == baseTextureIndex
 }
 
+func IsStair(index int) bool {
+	return index == stairTextureIndex
+}
+
 func insertNewTexture(path string) (*ebiten.Image, int) {
 	img, _, err := ebitenutil.NewImageFromFile(path)
 	debug.Assert(err)
@@ -80,5 +86,7 @@ func checkForSpecialTextures(path string, index int) {
 		baseTextureIndex = index
 	} else if waterTextureIndex == InvalidIndex && waterTextureStr == path {
 		waterTextureIndex = index
+	} else if stairTextureIndex == InvalidIndex && stairTextureStr == path {
+		stairTextureIndex = index
 	}
 }

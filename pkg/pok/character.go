@@ -5,6 +5,7 @@ import(
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
+	"fmt"
 )
 
 type Direction int
@@ -25,6 +26,7 @@ type Character struct {
 	isBiking bool
 	isJumping bool
 	isSurfing bool
+	isTraversingStaircase bool
 	frames int
 	animationState int
 	turnCheck int
@@ -141,6 +143,10 @@ func (c *Character) Step() {
 	if c.isJumping {
 		x := float64(c.frames) / float64(c.currentJumpTarget)
 		c.OffsetY = (-4.0 * ((x - 0.5) * (x - 0.5)) + 1) * -8
+	}
+
+	if c.isTraversingStaircase {
+		c.Gy -= 1.0
 	}
 
 	switch c.dir {
@@ -262,6 +268,13 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 					return
 				}
 
+				if c.isStairCase(nx, ny, c.Z, g) {
+					fmt.Println("Staircase moment");
+					c.isTraversingStaircase = true
+				} else {
+					c.isTraversingStaircase = false
+				}
+
 				c.X, c.Y = nx, ny
 
 				if !containsWater && c.isSurfing {
@@ -349,4 +362,18 @@ func (c *Character) EndAnim() {
 	c.animationState = 0
 	c.Tx = 0
 	c.isJumping = false
+}
+
+func (c *Character) isStairCase(x, y, z int, g *Game) bool {
+	if len(g.Ows.tileMap.TextureIndicies) < z + 1 {
+		return false
+	}
+	index := g.Ows.tileMap.Index(x, y)
+	if textures.IsStair(g.Ows.tileMap.TextureIndicies[z + 1][index]) {
+		return true
+	}
+	return false
+}
+
+func (c *Character) handleStairCase(g *Game) {
 }
