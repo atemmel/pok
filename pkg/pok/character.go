@@ -26,7 +26,8 @@ type Character struct {
 	isBiking bool
 	isJumping bool
 	isSurfing bool
-	isTraversingStaircase bool
+	isTraversingStaircaseDown bool
+	isTraversingStaircaseUp bool
 	frames int
 	animationState int
 	turnCheck int
@@ -145,8 +146,10 @@ func (c *Character) Step() {
 		c.OffsetY = (-4.0 * ((x - 0.5) * (x - 0.5)) + 1) * -8
 	}
 
-	if c.isTraversingStaircase {
-		c.Gy -= 1.0
+	if c.isTraversingStaircaseUp {
+		c.Gy -= 0.5
+	} else if c.isTraversingStaircaseDown {
+		c.Gy += 0.5
 	}
 
 	switch c.dir {
@@ -268,11 +271,12 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 					return
 				}
 
-				if c.isStairCase(nx, ny, c.Z, g) {
+				if c.isStairCase(nx, ny, c.Z, g) || c.isStairCase(c.X, c.Y, c.Z, g) {
 					fmt.Println("Staircase moment");
-					c.isTraversingStaircase = true
+					c.handleStairCase(g)
 				} else {
-					c.isTraversingStaircase = false
+					c.isTraversingStaircaseDown = false
+					c.isTraversingStaircaseUp = false
 				}
 
 				c.X, c.Y = nx, ny
@@ -368,12 +372,47 @@ func (c *Character) isStairCase(x, y, z int, g *Game) bool {
 	if len(g.Ows.tileMap.TextureIndicies) < z + 1 {
 		return false
 	}
+
+	stairBase := []int{
+		170,
+		192,
+		214,
+	}
+
 	index := g.Ows.tileMap.Index(x, y)
 	if textures.IsStair(g.Ows.tileMap.TextureIndicies[z + 1][index]) {
+		for _, i := range stairBase {
+			if g.Ows.tileMap.Tiles[z + 1][index] == i {
+				return false
+			}
+		}
 		return true
 	}
 	return false
 }
 
 func (c *Character) handleStairCase(g *Game) {
+	index := g.Ows.tileMap.Index(c.X, c.Y)
+
+	stairRightUp := []int{
+		170,
+		171,
+		192,
+		193,
+		214,
+		215,
+	}
+
+	for _, i := range stairRightUp {
+		if g.Ows.tileMap.Tiles[c.Z + 1][index] == i {
+			c.isTraversingStaircaseUp = false
+			c.isTraversingStaircaseDown = false
+			switch c.dir {
+				case Right:
+					c.isTraversingStaircaseUp = true
+				case Left:
+					c.isTraversingStaircaseDown = true
+			}
+		}
+	}
 }
