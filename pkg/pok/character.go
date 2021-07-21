@@ -5,7 +5,6 @@ import(
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
-	"fmt"
 )
 
 type Direction int
@@ -272,7 +271,6 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 				}
 
 				if c.isStairCase(nx, ny, c.Z, g) || c.isStairCase(c.X, c.Y, c.Z, g) {
-					fmt.Println("Staircase moment");
 					c.handleStairCase(g)
 				} else {
 					c.isTraversingStaircaseDown = false
