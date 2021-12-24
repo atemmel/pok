@@ -74,6 +74,13 @@ func CreateGame() *Game {
 		When: 60,
 	})
 
+	jobs.Add(jobs.Job{
+		Do: func() {
+			g.Ows.hailWeather.cullParticles()
+		},
+		When: 1,
+	})
+
 	return g
 }
 
@@ -159,6 +166,7 @@ func (g *Game) Load(str string, entrypoint int) {
 	)
 
 	g.Rend.SetEffect(GetActiveEffect())
+	g.Ows.hailWeather = CreateHailWeather(&g.Rend)
 }
 
 func (g *Game) Save() {
