@@ -74,27 +74,38 @@ func (r *RainWeather) cullParticles() {
 
 		if top > view.Max.Y {
 			r.particles[i].y -= float64(view.Dy() + box.Max.Y)
-		} else if bot < view.Min.X {
+			r.particles[i].x = r.randomX()
+		} else if bot < view.Min.Y {
 			r.particles[i].y += float64(view.Dy() + box.Max.Y)
+			r.particles[i].x = r.randomX()
 		}
 		if left < view.Min.X {
 			r.particles[i].x += float64(view.Dx() + box.Max.X)
+			r.particles[i].y = r.randomY()
 		} else if right > view.Max.X {
 			r.particles[i].x -= float64(view.Dx() + box.Max.X)
+			r.particles[i].y = r.randomY()
 		}
 	}
 }
 
-func (r *RainWeather) spawnOriginalSetOfParticles() {
-	h := r.renderer.Cam.H
+func (r *RainWeather) randomX() float64 {
 	w := r.renderer.Cam.W
-	y := r.renderer.Cam.Y - h / 2
 	x := r.renderer.Cam.X
 	left := x - w / 2 + 200
+	return rand.Float64() * w + left
+}
 
+func (r *RainWeather) randomY() float64 {
+	h := r.renderer.Cam.H
+	y := r.renderer.Cam.Y
+	return rand.Float64() * h + y
+}
+
+func (r *RainWeather) spawnOriginalSetOfParticles() {
 	r.particles = append(r.particles, rainParticle{
-		x: (rand.Float64() * w) + left,
-		y: (rand.Float64() * h) + y,
+		x: r.randomX(),
+		y: r.randomY(),
 		textureIndex: rand.Intn(len(r.textures)),
 	})
 }
