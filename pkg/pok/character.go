@@ -367,7 +367,7 @@ func (c *Character) EndAnim() {
 }
 
 func (c *Character) isStairCase(x, y, z int, g *Game) bool {
-	if len(g.Ows.tileMap.TextureIndicies) < z + 1 {
+	if len(g.Ows.tileMap.TextureIndicies) <= z + 1 {
 		return false
 	}
 

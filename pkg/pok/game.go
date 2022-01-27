@@ -162,6 +162,8 @@ func (g *Game) Load(str string, entrypoint int) {
 	switch g.Ows.tileMap.WeatherKind {
 	case Hail:
 		g.Ows.weather = CreateHailWeather(&g.Rend)
+	case Rain:
+		g.Ows.weather = CreateRainWeather(&g.Rend)
 	}
 }
 
