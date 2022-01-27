@@ -10,13 +10,9 @@ import (
 	"math/rand"
 )
 
-const downPourZ = 9001;
-
-var loadedHail = false;
-
-func CreateHailWeather(r* Renderer) HailWeather {
+func CreateHailWeather(r* Renderer) *HailWeather {
 	var err error
-	hail := HailWeather{}
+	hail := &HailWeather{}
 
 	hail.textures[0], err = textures.LoadWithError(constants.ImagesDir + "weather/hail_1.png")
 	debug.Assert(err)
@@ -56,7 +52,7 @@ func (h *HailWeather) Update() {
 	for i := range h.particles {
 		h.particles[i].update(h.step)
 	}
-
+	h.cullParticles();
 	h.step += 0.16667
 }
 

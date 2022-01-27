@@ -54,7 +54,8 @@ type GameState interface {
 type OverworldState struct {
 	tileMap TileMap
 	collector dialog.DialogTreeCollector
-	hailWeather HailWeather
+	weather Weather
+	//hailWeather HailWeather
 }
 
 func gamepadUp() bool {
@@ -284,7 +285,9 @@ func (o *OverworldState) Update(g *Game) error {
 	g.Player.Update(g)
 	jobs.TickAllOneFrame()
 	o.tileMap.UpdateNpcs(g)
-	o.hailWeather.Update()
+	if o.weather != nil {
+		o.weather.Update()
+	}
 
 	if g.Client.Active {
 		g.Client.WritePlayer(&g.Player)
@@ -309,7 +312,9 @@ func (o *OverworldState) Draw(g *Game, screen *ebiten.Image) {
 		g.Client.playerMap.mutex.Unlock()
 	}
 
-	o.hailWeather.Draw(&g.Rend)
+	if o.weather != nil {
+		o.weather.Draw(&g.Rend)
+	}
 
 	g.CenterRendererOnPlayer()
 	g.Rend.Display(screen)

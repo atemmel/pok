@@ -37,9 +37,10 @@ type TileMap struct {
 	Width int
 	Height int
 	NpcInfo []NpcInfo
+	WeatherKind WeatherKind
 
+	weather Weather
 	textureMapping []int
-
 	npcs []Npc
 }
 
@@ -585,6 +586,8 @@ func CreateTileMap(width int, height int, texture []string) *TileMap {
 		width,
 		height,
 		make([]NpcInfo, 0),
+		Regular,
+		nil,
 		textureMapping,
 		make([]Npc, 0),
 	}
