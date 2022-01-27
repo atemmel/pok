@@ -27,7 +27,7 @@ func CreateHailWeather(r* Renderer) HailWeather {
 
 	hail.renderer = r
 
-	for i := 0; i < 64; i++ {
+	for i := 0; i < 32; i++ {
 		hail.spawnOriginalSetOfParticles()
 	}
 
