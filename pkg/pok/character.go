@@ -146,9 +146,9 @@ func (c *Character) Step() {
 	}
 
 	if c.isTraversingStaircaseUp {
-		c.Gy -= 0.5
+		c.Gy -= 0.5 * c.velocity
 	} else if c.isTraversingStaircaseDown {
-		c.Gy += 0.5
+		c.Gy += 0.5 * c.velocity
 	}
 
 	switch c.dir {
@@ -372,9 +372,9 @@ func (c *Character) isStairCase(x, y, z int, g *Game) bool {
 	}
 
 	stairBase := []int{
-		170,
-		192,
-		214,
+		//170,
+		//192,
+		//214,
 	}
 
 	index := g.Ows.tileMap.Index(x, y)

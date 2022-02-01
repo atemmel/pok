@@ -41,7 +41,7 @@ func CreateGame() *Game {
 
 	activePlayerImg = playerImg
 	g.Dialog = NewDialogBox()
-	drawUi = false
+	drawUi = true
 
 	// animate water
 	jobs.Add(jobs.Job{
