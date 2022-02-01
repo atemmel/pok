@@ -320,16 +320,18 @@ func (o *OverworldState) Draw(g *Game, screen *ebiten.Image) {
 	g.Rend.Display(screen)
 
 	if drawUi {
+		x, y, z := g.Player.Char.X, g.Player.Char.Y, g.Player.Char.Z
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(
 `player.x: %f
 player.y: %f
 player.id: %d
+isStaircaseRightNow: %t
 currentLayer: %d
 drawOnlyCurrentLayer: %t
 selectedTexture: %d
 cam.x: %f
 cam.y: %f`,
-			g.Player.Char.Gx, g.Player.Char.Gy, g.Player.Id, currentLayer,
+			g.Player.Char.Gx, g.Player.Char.Gy, g.Player.Id, g.Player.Char.isStairCase(x, y, z, g), currentLayer,
 			drawOnlyCurrentLayer, o.tileMap.Tiles[currentLayer][selectedTile], g.Rend.Cam.X, g.Rend.Cam.Y) )
 	}
 
