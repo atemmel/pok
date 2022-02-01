@@ -379,8 +379,14 @@ func (c *Character) isStairCase(x, y, z int, g *Game) bool {
 }
 
 func (c *Character) handleStairCase(g *Game, nx, ny int) {
+	if len(g.Ows.tileMap.Tiles) <= c.Z + 1 {
+		return
+	}
+
 	index := g.Ows.tileMap.Index(c.X, c.Y)
 	nextIndex := g.Ows.tileMap.Index(nx, ny)
+
+	indicies := [2]int{index, nextIndex}
 
 	stairRight := []int{
 		171,
@@ -388,22 +394,36 @@ func (c *Character) handleStairCase(g *Game, nx, ny int) {
 		215,
 	}
 
+	stairLeft := []int {
+		175,
+		197,
+		219,
+	}
+
 	c.isTraversingStaircaseUp = false
 	c.isTraversingStaircaseDown = false
-	for _, i := range stairRight {
-		if g.Ows.tileMap.Tiles[c.Z + 1][index] == i {
-			switch c.dir {
-				case Right:
-					c.isTraversingStaircaseUp = true
-				case Left:
-					c.isTraversingStaircaseDown = true
+	for _, ind := range indicies {
+		for _, i := range stairRight {
+			if g.Ows.tileMap.Tiles[c.Z + 1][ind] == i {
+				switch c.dir {
+					case Right:
+						c.isTraversingStaircaseUp = true
+					case Left:
+						c.isTraversingStaircaseDown = true
+				}
+				return
 			}
-		} else if g.Ows.tileMap.Tiles[c.Z + 1][nextIndex] == i {
-			switch c.dir {
-				case Right:
-					c.isTraversingStaircaseUp = true
-				case Left:
-					c.isTraversingStaircaseDown = true
+		}
+
+		for _, i := range stairLeft {
+			if g.Ows.tileMap.Tiles[c.Z + 1][ind] == i {
+				switch c.dir {
+					case Right:
+						c.isTraversingStaircaseDown = true
+					case Left:
+						c.isTraversingStaircaseUp = true
+				}
+				return
 			}
 		}
 	}
