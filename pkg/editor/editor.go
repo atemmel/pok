@@ -950,7 +950,7 @@ func (e *Editor) fillObjectGrid(dir string) {
 		}
 	}
 
-	e.objectGrid = NewObjectGrid(e.activeTileMap, objs)
+	e.objectGrid = NewObjectGrid(objs, availablePalettesStrings)
 }
 
 func (e *Editor) setActiveTileMap(index int) error {

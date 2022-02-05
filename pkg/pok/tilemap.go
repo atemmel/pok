@@ -64,6 +64,21 @@ func (t *TileMap) HasExitAt(x, y, z int) int {
 	return -1
 }
 
+func (t *TileMap) MaybeAddTextureMapping(index int, str string) {
+	if !t.HasTexture(index) {
+		t.AppendTexture(index, str)
+	}
+}
+
+func (t *TileMap) GetTextureMapping(index int) int {
+	for i := range t.TextureMapping {
+		if t.TextureMapping[i] == index {
+			return i
+		}
+	}
+	return -1
+}
+
 func (t *TileMap) GetEntryWithId(id int) int {
 	for i := range t.Entries {
 		if t.Entries[i].Id == id {

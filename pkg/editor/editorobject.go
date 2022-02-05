@@ -16,6 +16,15 @@ type EditorObject struct {
 	textureIndex int
 }
 
+func (e *EditorObject) FindAndSetCorrectTexture(textures []string) {
+	e.textureIndex = 0
+	for i := range textures {
+		if textures[i] == e.Texture {
+			e.textureIndex = i
+		}
+	}
+}
+
 type PlacedEditorObject struct {
 	X, Y, Z int
 	Index int
@@ -86,12 +95,16 @@ func (edobj* EditorObject) InsertObject(t *pok.TileMap, objIndex, i, z int, plac
 		t.AppendLayer()
 	}
 
+	t.MaybeAddTextureMapping(edobj.textureIndex, edobj.Texture)
+	texIndex := t.GetTextureMapping(edobj.textureIndex)
+
 	zIndex := 0
 
 	for y := 0; y != edobj.H; y++ {
 		gy := row + y
 
 		ty := (edobj.Y + y) * t.NTilesX(edobj.textureIndex)
+		//ty := (edobj.Y + y) * t.NTilesX(texIndex)
 
 		for x := 0; x != edobj.W; x++ {
 			gx := col + x
@@ -108,7 +121,8 @@ func (edobj* EditorObject) InsertObject(t *pok.TileMap, objIndex, i, z int, plac
 			depth := z + edobj.Z[zIndex]
 
 			t.Tiles[depth][index] = tile
-			t.TextureIndicies[depth][index] = edobj.textureIndex
+			//t.TextureIndicies[depth][index] = edobj.textureIndex
+			t.TextureIndicies[depth][index] = texIndex
 
 			if (y > 0 || edobj.H == 1) && (x > 0 || edobj.W == 1) {
 				t.Collision[z][index] = true

@@ -1,7 +1,7 @@
 package editor
 
 import (
-	"github.com/atemmel/pok/pkg/pok"
+	//"github.com/atemmel/pok/pkg/pok"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/textures"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -12,7 +12,6 @@ import (
 type ObjectGrid struct {
 	objs []EditorObject
 	rects []image.Rectangle
-	tileMap *pok.TileMap
 	selection *ebiten.Image
 	selectionX, selectionY float64
 	currentIndex int
@@ -21,7 +20,7 @@ type ObjectGrid struct {
 	rect image.Rectangle
 }
 
-func NewObjectGrid(tileMap *pok.TileMap, objs []EditorObject) ObjectGrid {
+func NewObjectGrid(objs []EditorObject, textures []string) ObjectGrid {
 	maxDepth := 0
 	for i := range objs {
 		maxDepth += objs[i].H
@@ -46,12 +45,13 @@ func NewObjectGrid(tileMap *pok.TileMap, objs []EditorObject) ObjectGrid {
 		rects[i] = r
 		x += w
 		oldh = h
+
+		objs[i].FindAndSetCorrectTexture(textures)
 	}
 
 	return ObjectGrid{
 		objs,
 		rects,
-		tileMap,
 		nil,
 		0, 0,
 		0,
@@ -65,8 +65,7 @@ func (og *ObjectGrid) Draw(target *ebiten.Image) {
 	y := 0.0
 	for i, ob := range og.objs {
 		r := image.Rect(ob.X * constants.TileSize, ob.Y * constants.TileSize, (ob.X + ob.W) * constants.TileSize, (ob.Y + ob.H) * constants.TileSize)
-		//img := og.tileMap.images[ob.textureIndex]
-		img := textures.Access(og.tileMap.TextureMapping[ob.textureIndex])
+		img := textures.Access(ob.textureIndex)
 		opt := &ebiten.DrawImageOptions{}
 		dx := xGridPos + float64(og.rects[i].Min.X)
 		dy := yGridPos + float64(og.rects[i].Min.Y)
