@@ -9,4 +9,5 @@ var (
 	FgShadow = color.Black
 	Bg = color.RGBA{163, 164, 165, 255}
 	Border = color.Black
+	Hovering = color.RGBA{103, 104, 105, 255}
 )

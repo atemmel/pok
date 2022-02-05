@@ -648,6 +648,10 @@ func (e *Editor) handleInputs() error {
 		return nil
 	}
 
+	if ContextMenu.IsOpen() && ContextMenu.Poll(cx, cy) {
+		return nil
+	}
+
 	if len(e.activeFiles) != 0 {
 		index := e.getTileMapIndexAtCoord(cx, cy)
 		if index != -1 && !e.isAlreadyClicking() {
@@ -950,18 +954,35 @@ func (e *Editor) TryOpeningObjectContextMenu(cx, cy, col, row int) bool {
 	if i == -1 {
 		return false;
 	}
-	fmt.Println(i);
 	ContextMenu.Open(cx, cy, []ContextMenuItem{
 		{
 			String: "REMOVE OBJECT",
 			OnClick: func() {
-				fmt.Println("Lmaoooooooooo")
+				fmt.Println("CLICK ON 1")
 			},
 		},
 		{
 			String: "GAMING GAMING GAMING",
 			OnClick: func() {
-				fmt.Println("Gaming gaming!")
+				fmt.Println("CLICK ON 2")
+			},
+		},
+		{
+			String: "IMMACULATE GAMING",
+			OnClick: func() {
+				fmt.Println("CLICK ON 3")
+			},
+		},
+		{
+			String: "IMMACULATE GAMING",
+			OnClick: func() {
+				fmt.Println("CLICK ON 4")
+			},
+		},
+		{
+			String: "IMMACULATE GAMING",
+			OnClick: func() {
+				fmt.Println("CLICK ON 5")
 			},
 		},
 	});
