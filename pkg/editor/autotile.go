@@ -1,7 +1,8 @@
-package pok
+package editor
 
 import(
 	"encoding/json"
+	"github.com/atemmel/pok/pkg/pok"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/textures"
 	"io/ioutil"
@@ -55,7 +56,7 @@ func ReadAllAutoTileInfo(directory string) ([]AutoTileInfo, error) {
 	return atis, nil
 }
 
-func BuildNeighbors(tileMap *TileMap, tile, depth int, ati *AutoTileInfo) [][]int {
+func BuildNeighbors(tileMap *pok.TileMap, tile, depth int, ati *AutoTileInfo) [][]int {
 	mat := make([][]int, 0)
 	xStart := tile % tileMap.Width
 	yStart := tile / tileMap.Width
@@ -93,7 +94,7 @@ func BuildNeighbors(tileMap *TileMap, tile, depth int, ati *AutoTileInfo) [][]in
 	return mat
 }
 
-func DecideTileIndicies(tileMap *TileMap, tile, depth int, ati *AutoTileInfo) *AutotileDelta {
+func DecideTileIndicies(tileMap *pok.TileMap, tile, depth int, ati *AutoTileInfo) *AutotileDelta {
 	if !tileMap.HasTexture(ati.textureIndex) {
 		tileMap.AppendTexture(ati.textureIndex, ati.Texture)
 	}

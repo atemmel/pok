@@ -363,7 +363,7 @@ func (c *Character) TryJumpLedge(nx, ny int, g *Game) int {
 func (c *Character) CoordinateContainsWater(x, y int, g *Game) bool {
 	const innerWaterTile = 67
 	index := y * g.Ows.tileMap.Width + x
-	textureIndex := g.Ows.tileMap.textureMapping[g.Ows.tileMap.TextureIndicies[c.Z][index]]
+	textureIndex := g.Ows.tileMap.TextureMapping[g.Ows.tileMap.TextureIndicies[c.Z][index]]
 
 	return textures.IsWater(textureIndex) && g.Ows.tileMap.Tiles[c.Z][index] == innerWaterTile
 }

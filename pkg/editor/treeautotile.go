@@ -1,6 +1,7 @@
-package pok
+package editor
 
 import(
+	"github.com/atemmel/pok/pkg/pok"
 	"encoding/json"
 	"errors"
 	"image"
@@ -29,7 +30,7 @@ type TreeAutoTileInfo struct {
 	textureWidth int
 }
 
-func (self *TreeAutoTileInfo) FillArea(tm *TileMap, x, y, nx, ny, depth int) {
+func (self *TreeAutoTileInfo) FillArea(tm *pok.TileMap, x, y, nx, ny, depth int) {
 	outerRightBorder := self.GetCrowd(CrowdTreeWidth - 2, 2)
 	innerRightBorder := self.GetCrowd(CrowdTreeWidth - 1, 2)
 
@@ -123,7 +124,7 @@ func SelectJoinPatternFromX(x int) (int, int) {
 	return 2, 3
 }
 
-func (self *TreeAutoTileInfo) JoinTreesUp(tileMap *TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
+func (self *TreeAutoTileInfo) JoinTreesUp(tileMap *pok.TileMap, tati *TreeAutoTileInfo, x, y, depth int) {
 	for tx := 1; tx < SingleTreeWidth - 1; tx++ {
 		tile := self.GetCrowd(tx, 2)
 		ex, ey := tx + x, 0 + y
@@ -143,7 +144,7 @@ func (self *TreeAutoTileInfo) JoinTreesUp(tileMap *TileMap, tati *TreeAutoTileIn
 	}
 }
 
-func (self *TreeAutoTileInfo) JoinTreesLeftDown(tileMap *TileMap, x, y, depth int) {
+func (self *TreeAutoTileInfo) JoinTreesLeftDown(tileMap *pok.TileMap, x, y, depth int) {
 	ltile, rtile := SelectJoinPatternFromX(x)
 
 	for ty := 0; ty < SingleTreeHeight - 1; ty++ {
@@ -165,7 +166,7 @@ func (self *TreeAutoTileInfo) JoinTreesLeftDown(tileMap *TileMap, x, y, depth in
 	}
 }
 
-func (self *TreeAutoTileInfo) JoinTreesLeft(tileMap *TileMap, x, y, depth int) {
+func (self *TreeAutoTileInfo) JoinTreesLeft(tileMap *pok.TileMap, x, y, depth int) {
 	tile1, tile2 := SelectJoinPatternFromX(x)
 
 	for ty := 0; ty < SingleTreeHeight - 2; ty++ {
@@ -198,7 +199,7 @@ func (self *TreeAutoTileInfo) JoinTreesLeft(tileMap *TileMap, x, y, depth int) {
 	}
 }
 
-func (self *TreeAutoTileInfo) DoTreeDownBorder(tileMap *TileMap, x, y, depth int) {
+func (self *TreeAutoTileInfo) DoTreeDownBorder(tileMap *pok.TileMap, x, y, depth int) {
 	for tx := 1; tx < SingleTreeWidth; tx++ {
 		tile := self.GetCrowd(tx, 5)
 		ex, ey := tx + x - 2, y + 3
@@ -209,7 +210,7 @@ func (self *TreeAutoTileInfo) DoTreeDownBorder(tileMap *TileMap, x, y, depth int
 	}
 }
 
-func (self *TreeAutoTileInfo) DoTreeLeftBorder(tileMap *TileMap, x, y, depth int) {
+func (self *TreeAutoTileInfo) DoTreeLeftBorder(tileMap *pok.TileMap, x, y, depth int) {
 	tile := self.GetCrowd(0, 2)
 	ex, ey := x, y + 2
 	if tileMap.Contains(ex, ey) {
@@ -218,7 +219,7 @@ func (self *TreeAutoTileInfo) DoTreeLeftBorder(tileMap *TileMap, x, y, depth int
 	}
 }
 
-func (self *TreeAutoTileInfo) PlaceSingularTree(tileMap *TileMap, x, y, depth int) {
+func (self *TreeAutoTileInfo) PlaceSingularTree(tileMap *pok.TileMap, x, y, depth int) {
 	for tx := 0; tx < SingleTreeWidth; tx++ {
 		for ty := 0; ty < SingleTreeHeight; ty++ {
 			tile := self.GetSingle(tx, ty)
@@ -231,7 +232,7 @@ func (self *TreeAutoTileInfo) PlaceSingularTree(tileMap *TileMap, x, y, depth in
 	}
 }
 
-func (self *TreeAutoTileInfo) FitToTileMap(tm *TileMap) error {
+func (self *TreeAutoTileInfo) FitToTileMap(tm *pok.TileMap) error {
 	i := 0
 	for i = range tm.Textures {
 		if tm.Textures[i] == self.Texture {

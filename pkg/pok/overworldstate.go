@@ -121,8 +121,8 @@ func (o *OverworldState) tryInteract(g *Game) {
 	}
 
 	// check npcs
-	for i := range o.tileMap.npcs {
-		npc := &(o.tileMap.npcs[i].Char)
+	for i := range o.tileMap.Npcs {
+		npc := &(o.tileMap.Npcs[i].Char)
 		if npc.X == x && npc.Y == y {
 			o.talkWith(g, i)
 			break
@@ -151,7 +151,7 @@ func (o *OverworldState) tryInteract(g *Game) {
 }
 
 func (o *OverworldState) talkWith(g *Game, npcIndex int) {
-	char := &(o.tileMap.npcs[npcIndex].Char)
+	char := &(o.tileMap.Npcs[npcIndex].Char)
 	dx, dy := g.Player.Char.X - char.X, g.Player.Char.Y - char.Y
 	dir := Static
 
@@ -166,8 +166,8 @@ func (o *OverworldState) talkWith(g *Game, npcIndex int) {
 	}
 
 	char.SetDirection(dir)
-	o.tileMap.npcs[npcIndex].TalkedTo = true
-	tree := o.tileMap.npcs[npcIndex].Dialog
+	o.tileMap.Npcs[npcIndex].TalkedTo = true
+	tree := o.tileMap.Npcs[npcIndex].Dialog
 	o.collector = dialog.MakeDialogTreeCollector(tree)
 	result := o.collector.CollectOnce()
 	if result != nil {
@@ -299,7 +299,7 @@ func (o *OverworldState) Update(g *Game) error {
 }
 
 func (o *OverworldState) Draw(g *Game, screen *ebiten.Image) {
-	o.tileMap.Draw(&g.Rend)
+	o.tileMap.Draw(&g.Rend, false, 0)
 	g.DrawPlayer(&g.Player)
 
 	if g.Client.Active {
@@ -327,13 +327,10 @@ player.y: %f
 player.z: %d
 player.id: %d
 isStaircaseRightNow: %t
-currentLayer: %d
-drawOnlyCurrentLayer: %t
-selectedTexture: %d
 cam.x: %f
 cam.y: %f`,
-			g.Player.Char.Gx, g.Player.Char.Gy, g.Player.Char.Z, g.Player.Id, g.Player.Char.isStairCase(x, y, z, g), currentLayer,
-			drawOnlyCurrentLayer, o.tileMap.Tiles[currentLayer][selectedTile], g.Rend.Cam.X, g.Rend.Cam.Y) )
+			g.Player.Char.Gx, g.Player.Char.Gy, g.Player.Char.Z, g.Player.Id, g.Player.Char.isStairCase(x, y, z, g),
+			g.Rend.Cam.X, g.Rend.Cam.Y) )
 	}
 
 	g.Dialog.Draw(screen)

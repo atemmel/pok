@@ -10,6 +10,8 @@ import (
 	"math"
 )
 
+var DrawDebugInfo = false
+
 type Game struct {
 	Ows OverworldState
 	As GameState
@@ -105,8 +107,8 @@ func (g *Game) TileIsOccupied(x int, y int, z int) bool {
 		}
 	}
 
-	for i := range g.Ows.tileMap.npcs {
-		c := &g.Ows.tileMap.npcs[i].Char
+	for i := range g.Ows.tileMap.Npcs {
+		c := &g.Ows.tileMap.Npcs[i].Char
 		if c.X == x && c.Y == y && c.Z == z {
 			return true
 		}
@@ -138,8 +140,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) Load(str string, entrypoint int) {
 	err := g.Ows.tileMap.OpenFile(str)
 	debug.Assert(err)
-	currentLayer = 0
-	selectedTile = 0
 	g.Player.Location = str
 	index := g.Ows.tileMap.GetEntryWithId(entrypoint)
 	if index >= 0 {

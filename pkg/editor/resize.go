@@ -1,6 +1,7 @@
-package pok
+package editor
 
 import (
+	"github.com/atemmel/pok/pkg/pok"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -17,7 +18,7 @@ type Corner struct {
 type Resize struct {
 	outlined *ebiten.Image
 	filled *ebiten.Image
-	tileMap *TileMap
+	tileMap *pok.TileMap
 	offset *Vec2
 	holding [4]bool
 	holdStart Corner
@@ -31,14 +32,9 @@ type Resize struct {
 
 const (
 	DragRadius = 8
-
-	TopLeftCorner  = 0
-	TopRightCorner = 1
-	BotLeftCorner  = 2
-	BotRightCorner = 3
 )
 
-func NewResize(tileMap *TileMap, offset *Vec2) Resize {
+func NewResize(tileMap *pok.TileMap, offset *Vec2) Resize {
 	if tileMap == nil {
 		debug.Assert(errors.New("tileMap was nil :/"))
 	}
@@ -142,7 +138,7 @@ func (r *Resize) GetCorners() [4]Corner {
 	return corners
 }
 
-func (r *Resize) Draw(rend *Renderer) {
+func (r *Resize) Draw(rend *pok.Renderer) {
 	if !r.HasCorners() {
 		return
 	}
@@ -156,7 +152,7 @@ func (r *Resize) Draw(rend *Renderer) {
 		} else {
 			target = r.outlined
 		}
-		rend.Draw(&RenderTarget{
+		rend.Draw(&pok.RenderTarget{
 			&ebiten.DrawImageOptions{},
 			target,
 			nil,
@@ -173,7 +169,7 @@ func circleIntersect(x1, y1, x2, y2, r float64) bool {
 	return math.Abs(dx*dx + dy*dy) < r*r
 }
 
-func (r *Resize) tryClick(px, py int, cam *Camera) bool {
+func (r *Resize) tryClick(px, py int, cam *pok.Camera) bool {
 	if !r.HasCorners() {
 		return false
 	}
@@ -230,13 +226,13 @@ func (r *Resize) Release() (int, int, int) {
 	r.holdIndex = -1
 
 	switch i {
-		case TopLeftCorner:
+		case constants.TopLeftCorner:
 			return -x, -y, i
-		case TopRightCorner:
+		case constants.TopRightCorner:
 			return x, -y, i
-		case BotLeftCorner:
+		case constants.BotLeftCorner:
 			return -x, y, i
-		case BotRightCorner:
+		case constants.BotRightCorner:
 			return x, y, i
 	}
 
@@ -245,48 +241,48 @@ func (r *Resize) Release() (int, int, int) {
 
 func (r *Resize) moveCorners(corners [4]Corner, dx, dy float64) [4]Corner {
 	switch r.holdIndex {
-		case TopLeftCorner:
+		case constants.TopLeftCorner:
 			if !(dx < 0 && dy > 0) && !(dx > 0 && dy < 0) {
-				corners[TopLeftCorner].x += dx
-				corners[TopLeftCorner].y += dy
+				corners[constants.TopLeftCorner].x += dx
+				corners[constants.TopLeftCorner].y += dy
 				if dy != 0 {
-					corners[TopRightCorner].y += dy
+					corners[constants.TopRightCorner].y += dy
 				}
 				if dx != 0 {
-					corners[BotLeftCorner].x += dx
+					corners[constants.BotLeftCorner].x += dx
 				}
 			}
-		case TopRightCorner:
+		case constants.TopRightCorner:
 			if !(dx > 0 && dy > 0) && !(dx < 0 && dy < 0) {
-				corners[TopRightCorner].x += dx
-				corners[TopRightCorner].y += dy
+				corners[constants.TopRightCorner].x += dx
+				corners[constants.TopRightCorner].y += dy
 				if dy != 0 {
-					corners[TopLeftCorner].y += dy
+					corners[constants.TopLeftCorner].y += dy
 				}
 				if dx != 0 {
-					corners[BotRightCorner].x += dx
+					corners[constants.BotRightCorner].x += dx
 				}
 			}
-		case BotLeftCorner:
+		case constants.BotLeftCorner:
 			if !(dx < 0 && dy < 0) && !(dx > 0 && dy > 0) {
-				corners[BotLeftCorner].x += dx
-				corners[BotLeftCorner].y += dy
+				corners[constants.BotLeftCorner].x += dx
+				corners[constants.BotLeftCorner].y += dy
 				if dy != 0 {
-					corners[BotRightCorner].y += dy
+					corners[constants.BotRightCorner].y += dy
 				}
 				if dx != 0 {
-					corners[TopLeftCorner].x += dx
+					corners[constants.TopLeftCorner].x += dx
 				}
 			}
-		case BotRightCorner:
+		case constants.BotRightCorner:
 			if !(dx > 0 && dy < 0) && !(dx < 0 && dy > 0) {
-				corners[BotRightCorner].x += dx
-				corners[BotRightCorner].y += dy
+				corners[constants.BotRightCorner].x += dx
+				corners[constants.BotRightCorner].y += dy
 				if dy != 0 {
-					corners[BotLeftCorner].y += dy
+					corners[constants.BotLeftCorner].y += dy
 				}
 				if dx != 0 {
-					corners[TopRightCorner].x += dx
+					corners[constants.TopRightCorner].x += dx
 				}
 			}
 	}

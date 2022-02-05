@@ -39,9 +39,10 @@ type TileMap struct {
 	NpcInfo []NpcInfo
 	WeatherKind WeatherKind
 
+	// Internal information
+	TextureMapping []int `json:"-"`
+	Npcs []Npc `json:"-"`
 	weather Weather
-	textureMapping []int
-	npcs []Npc
 }
 
 var waterFrameStep int = 0
@@ -73,8 +74,8 @@ func (t *TileMap) GetEntryWithId(id int) int {
 }
 
 func (t *TileMap) HasTexture(index int) bool {
-	for i := range t.textureMapping {
-		if t.textureMapping[i] == index {
+	for i := range t.TextureMapping {
+		if t.TextureMapping[i] == index {
 			return true
 		}
 	}
@@ -82,44 +83,44 @@ func (t *TileMap) HasTexture(index int) bool {
 }
 
 func (t *TileMap) AppendTexture(index int, str string) {
-	t.textureMapping = append(t.textureMapping, index)
+	t.TextureMapping = append(t.TextureMapping, index)
 	t.Textures = append(t.Textures, str)
 }
 
 func (t *TileMap) MapReverse(j int) int {
-	for i := range t.textureMapping {
-		if t.textureMapping[i] == j {
+	for i := range t.TextureMapping {
+		if t.TextureMapping[i] == j {
 			return i
 		}
 	}
 	return -1
 }
 
-func (t *TileMap) Draw(rend *Renderer) {
-	t.DrawWithOffset(rend, 0, 0)
+func (t *TileMap) Draw(rend *Renderer, drawOnlyCurrentLayer bool, currentLayer int) {
+	t.DrawWithOffset(rend, 0, 0, drawOnlyCurrentLayer, currentLayer)
 }
 
 func (t *TileMap) UpdateNpcs(g *Game) {
-	for i := range t.npcs {
-		t.npcs[i].Update(g)
+	for i := range t.Npcs {
+		t.Npcs[i].Update(g)
 	}
 }
 
 func (t *TileMap) IsCoordCloseToWater(x, y, z int) bool {
 	index := t.Index(x, y)
-	texIndex := t.textureMapping[t.TextureIndicies[z][index]]
+	texIndex := t.TextureMapping[t.TextureIndicies[z][index]]
 	tileInTex := t.Tiles[z][index]
 	return textures.IsWater(texIndex) && tileInTex != 70
 }
 
 func (t *TileMap) drawNpcs(rend *Renderer, offsetX, offsetY float64) {
-	for i := range t.npcs {
-		index := t.npcs[i].NpcTextureIndex
-		t.npcs[i].Char.Draw(textures.Access(index), rend, offsetX, offsetY)
+	for i := range t.Npcs {
+		index := t.Npcs[i].NpcTextureIndex
+		t.Npcs[i].Char.Draw(textures.Access(index), rend, offsetX, offsetY)
 	}
 }
 
-func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
+func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64, drawOnlyCurrentLayer bool, currentLayer int) {
 	for j := range t.Tiles {
 		if drawOnlyCurrentLayer && j != currentLayer {
 			continue
@@ -134,7 +135,7 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64) {
 			x := float64(ix) * constants.TileSize
 			y := float64(iy) * constants.TileSize
 
-			index := t.textureMapping[t.TextureIndicies[j][i]]
+			index := t.TextureMapping[t.TextureIndicies[j][i]]
 
 			if textures.IsWater(index) {
 				n += waterFrameStep * 6
@@ -199,9 +200,9 @@ func (t *TileMap) OpenFile(path string) error {
 		indicies[i] = index
 	}
 
-	t.textureMapping = indicies
+	t.TextureMapping = indicies
 
-	t.npcs = t.npcs[:0]
+	t.Npcs = t.Npcs[:0]
 	err = t.createNpcs()
 
 	return err
@@ -229,6 +230,7 @@ func (t *TileMap) NTilesX(textureIndex int) int {
 	return w / constants.TileSize
 }
 
+/*
 func (t *TileMap) InsertObject(obj *EditorObject, objIndex, i, z int, placedObjects *[]PlacedEditorObject) {
 	col, row := t.Coords(i)
 
@@ -323,6 +325,7 @@ func (t *TileMap) EraseObject(pob PlacedEditorObject, obj *EditorObject) {
 		}
 	}
 }
+*/
 
 func (t *TileMap) AppendLayer() {
 	t.Tiles = append(t.Tiles, make([]int, len(t.Tiles[0])))
@@ -442,7 +445,7 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 		}
 	}
 
-	if origin == TopLeftCorner || origin == BotLeftCorner {
+	if origin == constants.TopLeftCorner || origin == constants.BotLeftCorner {
 		if dx < 0 {	// Crop left side
 			for ; dx < 0; dx++ {
 				eraseCol(0)
@@ -452,7 +455,7 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 				insertCol(0)
 			}
 		}
-	} else if origin == TopRightCorner || origin == BotRightCorner {
+	} else if origin == constants.TopRightCorner || origin == constants.BotRightCorner {
 		if dx < 0 { // Crop right side 
 			for ; dx < 0; dx++ {
 				eraseCol(t.Width - 1)
@@ -464,7 +467,7 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 		}
 	}
 
-	if origin == TopLeftCorner || origin == TopRightCorner {
+	if origin == constants.TopLeftCorner || origin == constants.TopRightCorner {
 		if dy < 0 {	// Crop top side
 			for ; dy < 0; dy++ {
 				eraseRow(0)
@@ -474,7 +477,7 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 				insertRow(0)
 			}
 		}
-	} else if origin == BotLeftCorner || origin == BotRightCorner {
+	} else if origin == constants.BotLeftCorner || origin == constants.BotRightCorner {
 		if dy < 0 { // Crop bot side 
 			for ; dy < 0; dy++ {
 				eraseRow(t.Height - 1)
@@ -486,11 +489,11 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 		}
 	}
 
-	if origin == BotLeftCorner || origin == BotRightCorner {
+	if origin == constants.BotLeftCorner || origin == constants.BotRightCorner {
 		ndy = 0
 	}
 
-	if origin == BotRightCorner || origin == TopRightCorner {
+	if origin == constants.BotRightCorner || origin == constants.TopRightCorner {
 		ndx = 0
 	}
 
@@ -498,8 +501,8 @@ func (t *TileMap) Resize(dx, dy, origin int) {
 }
 
 func (t *TileMap) moveNpcs(dx, dy int) {
-	for i := range t.npcs {
-		nx, ny := t.npcs[i].Char.X + dx, t.npcs[i].Char.Y + dy
+	for i := range t.Npcs {
+		nx, ny := t.Npcs[i].Char.X + dx, t.Npcs[i].Char.Y + dy
 
 		if nx < 0 {
 			dx += nx
@@ -513,11 +516,11 @@ func (t *TileMap) moveNpcs(dx, dy int) {
 			dy += t.Height - ny - 1
 		}
 
-		t.npcs[i].Char.Gx += float64(dx * constants.TileSize)
-		t.npcs[i].Char.Gy += float64(dy * constants.TileSize)
+		t.Npcs[i].Char.Gx += float64(dx * constants.TileSize)
+		t.Npcs[i].Char.Gy += float64(dy * constants.TileSize)
 
-		t.npcs[i].Char.X += dx
-		t.npcs[i].Char.Y += dy
+		t.Npcs[i].Char.X += dx
+		t.Npcs[i].Char.Y += dy
 
 		t.NpcInfo[i].X += dx
 		t.NpcInfo[i].Y += dy
@@ -534,14 +537,14 @@ func (t *TileMap) PlaceExit(exit Exit) {
 
 func (t *TileMap) PlaceNpc(ni *NpcInfo) {
 	t.NpcInfo = append(t.NpcInfo, *ni)
-	t.npcs = append(t.npcs, BuildNpcFromNpcInfo(t, ni))
+	t.Npcs = append(t.Npcs, BuildNpcFromNpcInfo(t, ni))
 }
 
 func (t *TileMap) RemoveNpc(index int) {
 	t.NpcInfo[index] = t.NpcInfo[len(t.NpcInfo)-1]
-	t.npcs[index] = t.npcs[len(t.npcs)-1]
+	t.Npcs[index] = t.Npcs[len(t.Npcs)-1]
 	t.NpcInfo = t.NpcInfo[:len(t.NpcInfo) - 1]
-	t.npcs = t.npcs[:len(t.npcs) - 1]
+	t.Npcs = t.Npcs[:len(t.Npcs) - 1]
 }
 
 func (t *TileMap) Contains(x, y int) bool {
@@ -587,9 +590,9 @@ func CreateTileMap(width int, height int, texture []string) *TileMap {
 		height,
 		make([]NpcInfo, 0),
 		Regular,
-		nil,
 		textureMapping,
 		make([]Npc, 0),
+		nil,
 	}
 	return tiles
 }
@@ -598,7 +601,7 @@ func (t *TileMap) createNpcs() error {
 
 	for i := range t.NpcInfo {
 		npc := BuildNpcFromNpcInfo(t, &t.NpcInfo[i])
-		t.npcs = append(t.npcs, npc)
+		t.Npcs = append(t.Npcs, npc)
 	}
 
 	return nil

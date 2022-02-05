@@ -1,6 +1,7 @@
-package pok
+package editor
 
 import (
+	"github.com/atemmel/pok/pkg/pok"
 	"github.com/atemmel/pok/pkg/constants"
 	"image/color"
 )
@@ -28,7 +29,7 @@ func abs(i int) int {
 	return i
 }
 
-func (t *TreeAreaSelection) Draw(rend *Renderer, offset Vec2) {
+func (t *TreeAreaSelection) Draw(rend *pok.Renderer, offset Vec2) {
 	if !t.IsHolding() {
 		return
 	}
@@ -57,7 +58,7 @@ func (t *TreeAreaSelection) Draw(rend *Renderer, offset Vec2) {
 
 	clr := color.RGBA{255, 0, 0, 255}
 
-	line := DebugLine{}
+	line := pok.DebugLine{}
 	line.Clr = clr
 	line.X1 = x0 + cornerOffset
 	line.Y1 = y0
@@ -95,9 +96,9 @@ func (t *TreeAreaSelection) Draw(rend *Renderer, offset Vec2) {
 	t.drawCorner(x1, y1, cornerOffset, clr, rend)
 }
 
-func (t *TreeAreaSelection) drawCorner(x0, y0, cornerOffset float64, clr color.RGBA, rend *Renderer) {
+func (t *TreeAreaSelection) drawCorner(x0, y0, cornerOffset float64, clr color.RGBA, rend *pok.Renderer) {
 
-	line := DebugLine{}
+	line := pok.DebugLine{}
 	line.Clr = clr
 
 	line.X1 = x0
@@ -184,7 +185,7 @@ func (t *TreeAreaSelection) IsHolding() bool {
 	return t.BeginX != nil && t.BeginY != nil
 }
 
-func (t *TreeAreaSelection) Release(tm *TileMap, depth int) {
+func (t *TreeAreaSelection) Release(tm *pok.TileMap, depth int) {
 	if t.BeginX == nil || t.BeginY == nil {
 		return
 	}
@@ -194,7 +195,7 @@ func (t *TreeAreaSelection) Release(tm *TileMap, depth int) {
 	t.BeginY = nil
 }
 
-func (t *TreeAreaSelection) PopulateWithTrees(tm *TileMap, depth int) {
+func (t *TreeAreaSelection) PopulateWithTrees(tm *pok.TileMap, depth int) {
 	tx, ty := t.CountBoundingTiles()
 
 	if tx <= 0 || ty <= 0 {

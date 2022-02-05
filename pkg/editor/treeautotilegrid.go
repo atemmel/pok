@@ -1,4 +1,4 @@
-package pok
+package editor
 
 import(
 	"github.com/atemmel/pok/pkg/constants"

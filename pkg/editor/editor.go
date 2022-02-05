@@ -1,8 +1,9 @@
-package pok
+package editor
 
 import (
 	"errors"
 	"fmt"
+	"github.com/atemmel/pok/pkg/pok"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/fonts"
@@ -86,12 +87,12 @@ type Vec2 struct {
 }
 
 type Editor struct {
-	tileMaps []*TileMap
+	tileMaps []*pok.TileMap
 	tileMapOffsets  []*Vec2
 	activeTileMapIndex int
 
-	activeTileMap *TileMap
-	rend Renderer
+	activeTileMap *pok.TileMap
+	rend pok.Renderer
 	grid Grid
 	objectGrid ObjectGrid
 	selection *ebiten.Image
@@ -182,7 +183,7 @@ func NewEditor(paths []string) *Editor {
 		es.backgroundGrid.Set(es.backgroundGrid.Bounds().Max.Y - 1, p, backgroundGridClr)
 	}
 
-	es.rend = NewRenderer(constants.DisplaySizeX, constants.DisplaySizeY, 1)
+	es.rend = pok.NewRenderer(constants.DisplaySizeX, constants.DisplaySizeY, 1)
 
 	es.clickStartX = -1
 	es.clickStartY = -1
@@ -190,7 +191,7 @@ func NewEditor(paths []string) *Editor {
 	es.icons, err = textures.LoadWithError(constants.EditorImagesDir + "editoricons.png")
 	debug.Assert(err)
 
-	es.tileMaps = make([]*TileMap, 0)
+	es.tileMaps = make([]*pok.TileMap, 0)
 	es.tileMapOffsets = make([]*Vec2, 0)
 
 	es.npcImagesStrings = listPngs(constants.CharacterImagesDir)
@@ -312,12 +313,12 @@ func NewEditor(paths []string) *Editor {
 	})
 
 	jobs.Add(jobs.Job{
-		Do: WaterAnim,
+		Do: pok.WaterAnim,
 		When: 11,
 	})
 
 	jobs.Add(jobs.Job{
-		Do: WaterSplashAnim,
+		Do: pok.WaterSplashAnim,
 		When: 11,
 	})
 
@@ -339,7 +340,7 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 
 	for i := range e.tileMaps {
 		offset := e.tileMapOffsets[i]
-		e.tileMaps[i].DrawWithOffset(&e.rend, offset.X, offset.Y)
+		e.tileMaps[i].DrawWithOffset(&e.rend, offset.X, offset.Y, drawOnlyCurrentLayer, currentLayer)
 	}
 	if DrawDebugInfo && len(e.activeFiles) != 0 {
 		e.drawLinksFromActiveTileMap()
@@ -392,7 +393,7 @@ func (e *Editor) DrawBackgroundGrid() {
 		y := e.rend.Cam.Y - float64(int(e.rend.Cam.Y) % constants.TileSize) - constants.TileSize
 		yLeft := y + constants.TileSize
 		for y < yLeft + yMax {
-			e.rend.Draw(&RenderTarget{
+			e.rend.Draw(&pok.RenderTarget{
 				&ebiten.DrawImageOptions{},
 				e.backgroundGrid,
 				nil,
@@ -417,7 +418,7 @@ func (e *Editor) DrawTileMapDetail() {
 			y := float64(i / e.activeTileMap.Width) * constants.TileSize
 
 			if currentLayer == j && e.activeTileMap.Collision[j][i] {
-				e.rend.Draw(&RenderTarget{
+				e.rend.Draw(&pok.RenderTarget{
 					&ebiten.DrawImageOptions{},
 					e.collisionMarker,
 					nil,
@@ -431,7 +432,7 @@ func (e *Editor) DrawTileMapDetail() {
 
 	if DrawDebugInfo {
 		for i := range e.activeTileMap.Exits {
-			e.rend.Draw(&RenderTarget{
+			e.rend.Draw(&pok.RenderTarget{
 				&ebiten.DrawImageOptions{},
 				e.exitMarker,
 				nil,
@@ -443,7 +444,7 @@ func (e *Editor) DrawTileMapDetail() {
 
 		if activeTool == Eraser {
 			for i := range placedObjects[e.activeTileMapIndex] {
-				e.rend.Draw(&RenderTarget{
+				e.rend.Draw(&pok.RenderTarget{
 					&ebiten.DrawImageOptions{},
 					e.deleteableMarker,
 					nil,
@@ -454,7 +455,7 @@ func (e *Editor) DrawTileMapDetail() {
 			}
 		}
 
-		e.rend.Draw(&RenderTarget{
+		e.rend.Draw(&pok.RenderTarget{
 			&ebiten.DrawImageOptions{},
 			e.selection,
 			nil,
@@ -495,7 +496,7 @@ func (e *Editor) loadFileDialog() {
 	if err != nil {
 		doNewFile := dialog.Message("Could not open file %s. Create new file?", file).Title("Create new file?").YesNo()
 		if doNewFile {
-			tm = CreateTileMap(2, 2, listPngs(constants.TileMapImagesDir))
+			tm = pok.CreateTileMap(2, 2, listPngs(constants.TileMapImagesDir))
 			e.updateEditorWithNewTileMap(tm)
 		}
 	} else {
@@ -503,9 +504,9 @@ func (e *Editor) loadFileDialog() {
 	}
 }
 
-func (e *Editor) loadFile(file string) (*TileMap, error) {
+func (e *Editor) loadFile(file string) (*pok.TileMap, error) {
 	e.nextFile = file
-	tm := &TileMap{}
+	tm := &pok.TileMap{}
 	err := tm.OpenFile(file)
 	return tm, err
 }
@@ -519,18 +520,18 @@ func (e *Editor) newFile() {
 		return
 	}
 
-	tm := CreateTileMap(2, 2, []string{"base.png"})
+	tm := pok.CreateTileMap(2, 2, []string{"base.png"})
 	e.nextFile = file
 	e.updateEditorWithNewTileMap(tm)
 }
 
-func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
+func (e *Editor) updateEditorWithNewTileMap(tileMap *pok.TileMap) {
 	e.appendTileMap(tileMap)
 	e.activeFullFiles = append(e.activeFiles, e.nextFile)
 	e.activeFiles = append(e.activeFiles, filepath.Base(e.nextFile))
 	DrawDebugInfo = true
 	const baseIndex = 0
-	e.grid = NewGrid(textures.Access(tileMap.textureMapping[activePalette]), constants.TileSize)
+	e.grid = NewGrid(textures.Access(tileMap.TextureMapping[activePalette]), constants.TileSize)
 	e.fillObjectGrid(constants.OverworldObjectsDir)
 	var err error
 	e.autoTileInfo, err = ReadAllAutoTileInfo(constants.AutotileInfoDir)
@@ -543,10 +544,10 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 		debug.Assert(err)
 	}
 
-	e.treeAutoTileGrid = NewTreeAutoTileGrid(textures.Access(tileMap.textureMapping[baseIndex]), e.treeAutoTileInfo)
+	e.treeAutoTileGrid = NewTreeAutoTileGrid(textures.Access(tileMap.TextureMapping[baseIndex]), e.treeAutoTileInfo)
 }
 
-func (e *Editor) appendTileMap(tileMap *TileMap) {
+func (e *Editor) appendTileMap(tileMap *pok.TileMap) {
 	placedObjects = append(placedObjects, make([]PlacedEditorObject, 0))
 	e.tileMaps = append(e.tileMaps, tileMap)
 	e.tileMapOffsets = append(e.tileMapOffsets, &Vec2{0, 0})
@@ -1048,14 +1049,14 @@ func (e *Editor) tryConnectTileMaps(start, end *LinkData) {
 		}
 	}
 
-	entryA := Entry{
+	entryA := pok.Entry{
 		startEntryIndex,
 		start.X,
 		start.Y,
 		currentLayer,
 	}
 
-	exitA := Exit{
+	exitA := pok.Exit{
 		e.activeFiles[end.TileMapIndex],
 		endEntryIndex,
 		start.X,
@@ -1063,14 +1064,14 @@ func (e *Editor) tryConnectTileMaps(start, end *LinkData) {
 		currentLayer,
 	}
 
-	entryB := Entry{
+	entryB := pok.Entry{
 		endEntryIndex,
 		end.X,
 		end.Y,
 		currentLayer,
 	}
 
-	exitB := Exit{
+	exitB := pok.Exit{
 		e.activeFiles[start.TileMapIndex],
 		startEntryIndex,
 		end.X,
@@ -1122,7 +1123,7 @@ func (e *Editor) drawLinksFromActiveTileMap() {
 	for _, ex := range e.activeTileMap.Exits {
 		for i := range e.activeFiles {
 			if e.activeFiles[i] == ex.Target {
-				line := DebugLine{}
+				line := pok.DebugLine{}
 				line.Clr = clr
 				line.X1 = float64(ex.X) * constants.TileSize + e.tileMapOffsets[e.activeTileMapIndex].X + constants.TileSize / 2
 				line.Y1 = float64(ex.Y) * constants.TileSize + e.tileMapOffsets[e.activeTileMapIndex].Y + constants.TileSize / 2
@@ -1141,12 +1142,12 @@ func (e *Editor) drawLinksFromActiveTileMap() {
 	}
 }
 
-func (e *Editor) removeInvalidLinks(tileMapIndex int) (map[int]Exit, map[int]Entry, []int, []int) {
+func (e *Editor) removeInvalidLinks(tileMapIndex int) (map[int]pok.Exit, map[int]pok.Entry, []int, []int) {
 	tm := e.tileMaps[tileMapIndex]
 	exs := tm.Exits[:]
 
-	oldExits := make(map[int]Exit)
-	oldEntries := make(map[int]Entry)
+	oldExits := make(map[int]pok.Exit)
+	oldEntries := make(map[int]pok.Entry)
 
 	exitsToRemove := make([]int, 0)
 	entriesToRemove := make([]int, 0)
@@ -1208,7 +1209,7 @@ func (e *Editor) removeLink(tileMapIndex, exitIndex int) (*int, *int){
 	ex := exs[exitIndex]
 	e.tileMaps[tileMapIndex].Exits = append(exs[:exitIndex], exs[exitIndex+1:]...)
 
-	var otherTileMap *TileMap
+	var otherTileMap *pok.TileMap
 	for i := range e.activeFiles {
 		if e.activeFiles[i] == ex.Target {
 			otherTileMap = e.tileMaps[i]
@@ -1350,7 +1351,8 @@ func (e *Editor) doBucket() {
 
 func (e *Editor) doObject() {
 	obj := &e.objectGrid.objs[activeObjsIndex]
-	e.activeTileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
+	//e.activeTileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
+	obj.InsertObject(e.activeTileMap, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
 
 	CurrentObjectDelta.placedObjectIndex = len(placedObjects[e.activeTileMapIndex]) - 1
 	CurrentObjectDelta.objectIndex = activeObjsIndex
@@ -1375,7 +1377,8 @@ func (e *Editor) doRemoveObject() {
 		currentLayer,
 	}
 
-	e.activeTileMap.EraseObject(placedObjects[e.activeTileMapIndex][i], &e.objectGrid.objs[placedObjects[e.activeTileMapIndex][i].Index])
+	//e.activeTileMap.EraseObject(placedObjects[e.activeTileMapIndex][i], &e.objectGrid.objs[placedObjects[e.activeTileMapIndex][i].Index])
+	e.objectGrid.objs[placedObjects[e.activeTileMapIndex][i].Index].EraseObject(e.activeTileMap, placedObjects[e.activeTileMapIndex][i])
 	placedObjects[e.activeTileMapIndex][i] = placedObjects[e.activeTileMapIndex][len(placedObjects[e.activeTileMapIndex]) - 1]
 	placedObjects[e.activeTileMapIndex] = placedObjects[e.activeTileMapIndex][:len(placedObjects[e.activeTileMapIndex]) - 1]
 
@@ -1558,12 +1561,12 @@ func (e *Editor) postDoResize(x, y, origin int) {
 	offsetX := 0.0
 	offsetY := 0.0
 
-	if origin == TopLeftCorner || origin == TopRightCorner {
+	if origin == constants.TopLeftCorner || origin == constants.TopRightCorner {
 		offsetY = -float64(y * constants.TileSize)
 		e.tileMapOffsets[e.activeTileMapIndex].Y += offsetY
 	}
 
-	if origin == TopLeftCorner || origin == BotLeftCorner {
+	if origin == constants.TopLeftCorner || origin == constants.BotLeftCorner {
 		offsetX = -float64(x * constants.TileSize)
 		e.tileMapOffsets[e.activeTileMapIndex].X += offsetX
 	}
@@ -1617,19 +1620,19 @@ func (e *Editor) doPlaceNpc() {
 
 		file = filepath.Base(file)
 		//TODO: Implement NpcMovementInfo properly
-		ni := &NpcInfo{
+		ni := &pok.NpcInfo{
 			e.npcImagesStrings[i],
 			file,
 			x,
 			y,
 			currentLayer,
-			NpcMovementInfo{},
+			pok.NpcMovementInfo{},
 		}
 
 		e.activeTileMap.PlaceNpc(ni)
 
 		CurrentNpcDelta.npcInfo = ni
-		CurrentNpcDelta.npcIndex = len(e.activeTileMap.npcs) -1
+		CurrentNpcDelta.npcIndex = len(e.activeTileMap.Npcs) -1
 		CurrentNpcDelta.tileMapIndex = e.activeTileMapIndex
 	}
 }
@@ -1653,7 +1656,7 @@ func (e *Editor) doRemoveNpc() {
 
 	nd := &NpcDelta{
 		&ni,
-		len(e.activeTileMap.npcs) - 1,
+		len(e.activeTileMap.Npcs) - 1,
 		e.activeTileMapIndex,
 	}
 

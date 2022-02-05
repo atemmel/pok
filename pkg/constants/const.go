@@ -22,4 +22,9 @@ const (
 	OverworldObjectsDir = EditorResourceDir + "overworldobjects/"
 	AutotileInfoDir = EditorResourceDir + "autotileinfo/"
 	TreeAutotileInfoDir = EditorResourceDir + "treeautotileinfo/"
+
+	TopLeftCorner  = 0
+	TopRightCorner = 1
+	BotLeftCorner  = 2
+	BotRightCorner = 3
 )

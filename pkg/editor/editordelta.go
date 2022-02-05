@@ -1,4 +1,8 @@
-package pok
+package editor
+
+import(
+	"github.com/atemmel/pok/pkg/pok"
+)
 
 type Delta interface {
 	Undo(ed *Editor)
@@ -129,7 +133,8 @@ func (do *ObjectDelta) Undo(ed *Editor) {
 	tm := ed.tileMaps[do.tileMapIndex]
 	pobj := placedObjects[do.tileMapIndex][do.placedObjectIndex]
 	obj := &ed.objectGrid.objs[do.objectIndex]
-	tm.EraseObject(pobj, obj)
+	//tm.EraseObject(pobj, obj)
+	obj.EraseObject(tm, pobj)
 	copy(placedObjects[do.tileMapIndex][do.placedObjectIndex:], placedObjects[do.tileMapIndex][do.placedObjectIndex+1:])
 	placedObjects[do.tileMapIndex] = placedObjects[do.tileMapIndex][:len(placedObjects[do.tileMapIndex])-1]
 }
@@ -137,7 +142,8 @@ func (do *ObjectDelta) Undo(ed *Editor) {
 func (do *ObjectDelta) Redo(ed *Editor) {
 	tm := ed.tileMaps[do.tileMapIndex]
 	obj := &ed.objectGrid.objs[do.objectIndex]
-	tm.InsertObject(obj, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex])
+	//tm.InsertObject(obj, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex])
+	obj.InsertObject(tm, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex])
 }
 
 type RemoveObjectDelta struct {
@@ -184,8 +190,8 @@ func (dl *LinkDelta) Redo(ed *Editor) {
 }
 
 type RemoveLinkDelta struct {
-	entry *Entry
-	exit *Exit
+	entry *pok.Entry
+	exit *pok.Exit
 	tileMapIndex int
 }
 
@@ -284,8 +290,8 @@ func (dat *AutotileDelta) Redo(ed *Editor) {
 }
 
 type ResizeDelta struct {
-	oldExits map[int]Exit
-	oldEntries map[int]Entry
+	oldExits map[int]pok.Exit
+	oldEntries map[int]pok.Entry
 	exitIndicies []int
 	entryIndicies []int
 
@@ -294,7 +300,7 @@ type ResizeDelta struct {
 	tileMapIndex int
 }
 
-func (dr *ResizeDelta) InsertExitsAndEntries(tm *TileMap) {
+func (dr *ResizeDelta) InsertExitsAndEntries(tm *pok.TileMap) {
 
 	findIndexLessThan := func(value int, span []int) *int {
 		if len(span) == 0 {
@@ -354,7 +360,7 @@ func (dr *ResizeDelta) Redo(ed *Editor) {
 }
 
 type NpcDelta struct {
-	npcInfo *NpcInfo
+	npcInfo *pok.NpcInfo
 	tileMapIndex int
 	npcIndex int
 }
@@ -366,7 +372,7 @@ func (dn *NpcDelta) Undo(ed *Editor) {
 
 func (dn *NpcDelta) Redo(ed *Editor) {
 	tm := ed.tileMaps[dn.tileMapIndex]
-	dn.npcIndex = len(tm.npcs)
+	dn.npcIndex = len(tm.Npcs)
 	tm.PlaceNpc(dn.npcInfo)
 }
 
