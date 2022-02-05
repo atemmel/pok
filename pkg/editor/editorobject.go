@@ -104,7 +104,6 @@ func (edobj* EditorObject) InsertObject(t *pok.TileMap, objIndex, i, z int, plac
 		gy := row + y
 
 		ty := (edobj.Y + y) * t.NTilesX(edobj.textureIndex)
-		//ty := (edobj.Y + y) * t.NTilesX(texIndex)
 
 		for x := 0; x != edobj.W; x++ {
 			gx := col + x
@@ -121,7 +120,6 @@ func (edobj* EditorObject) InsertObject(t *pok.TileMap, objIndex, i, z int, plac
 			depth := z + edobj.Z[zIndex]
 
 			t.Tiles[depth][index] = tile
-			//t.TextureIndicies[depth][index] = edobj.textureIndex
 			t.TextureIndicies[depth][index] = texIndex
 
 			if (y > 0 || edobj.H == 1) && (x > 0 || edobj.W == 1) {

@@ -442,7 +442,7 @@ func (e *Editor) DrawTileMapDetail() {
 			})
 		}
 
-		if activeTool == Eraser {
+		if activeTool == Object {
 			for i := range placedObjects[e.activeTileMapIndex] {
 				e.rend.Draw(&pok.RenderTarget{
 					Op: &ebiten.DrawImageOptions{},
