@@ -1,12 +1,14 @@
 package editor
 
 import(
+	"fmt"
 	"github.com/atemmel/pok/pkg/pok"
 )
 
 type Delta interface {
 	Undo(ed *Editor)
 	Redo(ed *Editor)
+	Name() string
 }
 
 const preAllocDelta = 16
@@ -30,6 +32,7 @@ func PerformUndo(ed *Editor) {
 	if len(UndoStack) > 0 {
 		top := UndoStack[len(UndoStack) - 1]
 		top.Undo(ed)
+		fmt.Println("Undoing::", top.Name())
 		RedoStack = append(RedoStack, top)
 		UndoStack = UndoStack[:len(UndoStack) - 1]
 	}
@@ -70,6 +73,10 @@ func (dp *PencilDelta) Redo(ed *Editor) {
 	}
 }
 
+func (dp *PencilDelta) Name() string {
+	return "Pencil"
+}
+
 type EraserDelta struct {
 	indicies []int
 	oldTiles []int
@@ -93,6 +100,10 @@ func (de *EraserDelta) Redo(ed *Editor) {
 		tm.Tiles[de.z][j] = -1
 		tm.TextureIndicies[de.z][j] = 0
 	}
+}
+
+func (de *EraserDelta) Name() string {
+	return "Eraser"
 }
 
 type BucketDelta struct {
@@ -121,6 +132,10 @@ func (bd *BucketDelta) Redo(ed *Editor) {
 	}
 }
 
+func (bd *BucketDelta) Name() string {
+	return "Bucket"
+}
+
 type ObjectDelta struct {
 	placedObjectIndex int
 	objectIndex int
@@ -145,6 +160,10 @@ func (do *ObjectDelta) Redo(ed *Editor) {
 	obj.InsertObject(tm, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex], ed.objectGrid.objs)
 }
 
+func (do *ObjectDelta) Name() string {
+	return "Object"
+}
+
 type RemoveObjectDelta struct {
 	objectDelta *ObjectDelta
 }
@@ -155,6 +174,10 @@ func (dor *RemoveObjectDelta) Undo(ed *Editor) {
 
 func (dor *RemoveObjectDelta) Redo(ed *Editor) {
 	dor.objectDelta.Undo(ed)
+}
+
+func (dor *RemoveObjectDelta) Name() string {
+	return "RemoveObject"
 }
 
 type LinkDelta struct {
@@ -186,6 +209,10 @@ func (dl *LinkDelta) Undo(ed *Editor) {
 
 func (dl *LinkDelta) Redo(ed *Editor) {
 	ed.tryConnectTileMaps(dl.linkBegin, dl.linkEnd)
+}
+
+func (dl *LinkDelta) Name() string {
+	return "Link"
 }
 
 type RemoveLinkDelta struct {
@@ -238,6 +265,10 @@ func (drl *RemoveLinkDelta) Redo(ed *Editor) {
 	}
 }
 
+func (drl *RemoveLinkDelta) Name() string {
+	return "RemoveLink"
+}
+
 type AutotileDelta struct {
 	oldValues map[int]ModifiedTile
 	newValues map[int]ModifiedTile
@@ -286,6 +317,10 @@ func (dat *AutotileDelta) Redo(ed *Editor) {
 		tm.Tiles[dat.z][i] = j.tile
 		tm.TextureIndicies[dat.z][i] = j.textureIndex
 	}
+}
+
+func (dat *AutotileDelta) Name() string {
+	return "Autotile"
 }
 
 type ResizeDelta struct {
@@ -358,6 +393,10 @@ func (dr *ResizeDelta) Redo(ed *Editor) {
 	ed.tileMapOffsets[dr.tileMapIndex].Y += dr.offsetDeltaY
 }
 
+func (dr *ResizeDelta) Name() string {
+	return "Resize"
+}
+
 type NpcDelta struct {
 	npcInfo *pok.NpcInfo
 	tileMapIndex int
@@ -375,6 +414,10 @@ func (dn *NpcDelta) Redo(ed *Editor) {
 	tm.PlaceNpc(dn.npcInfo)
 }
 
+func (dn *NpcDelta) Name() string {
+	return "Npc"
+}
+
 type RemoveNpcDelta struct {
 	npcDelta *NpcDelta
 }
@@ -385,4 +428,8 @@ func (drn *RemoveNpcDelta) Undo(ed *Editor) {
 
 func (drn *RemoveNpcDelta) Redo(ed *Editor) {
 	drn.npcDelta.Undo(ed)
+}
+
+func (drn *RemoveNpcDelta) Name() string {
+	return "RemoveNpc"
 }

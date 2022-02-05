@@ -34,6 +34,7 @@ const(
 type ContextMenuItem struct {
 	String string
 	OnClick func()
+	OnRelease func()
 }
 
 func (menu *ContextMenuInfo) Init(font font.Face) {
@@ -326,13 +327,22 @@ func (menu *ContextMenuInfo) IsOpen() bool {
 
 // returns true if click is consumed
 func (menu *ContextMenuInfo) Poll(cx, cy int) bool {
+	if !menu.IsOpen() {
+		return false
+	}
+
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButton(0)) {
+		menu.tryRelease()
+		menu.Close()
+		return false
+	}
+
 	pt := image.Pt(cx, cy)
 	for i, r := range menu.clickBoxes {
 		if pt.In(r) {
 			menu.hover(i)
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 				menu.items[i].OnClick()
-				menu.Close();
 				return true
 			}
 			return false
@@ -342,6 +352,17 @@ func (menu *ContextMenuInfo) Poll(cx, cy int) bool {
 	// failed to hover
 	menu.hover(-1)
 	return false
+}
+
+func (menu *ContextMenuInfo) tryRelease() {
+	if menu.selectedItem < 0 || menu.selectedItem >= len(menu.items) {
+		return
+	}
+
+	fn := menu.items[menu.selectedItem].OnRelease
+	if fn != nil {
+		fn()
+	}
 }
 
 func (menu *ContextMenuInfo) hover(what int) {

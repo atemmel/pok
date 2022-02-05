@@ -48,6 +48,9 @@ var availablePalettes []*ebiten.Image
 var availablePaletteIndicies []int
 var availablePalettesStrings []string
 
+var justDidSomethingOfInterest = false
+var justDidSomethingOfInterestLock = false
+
 type LinkData struct {
 	X, Y int
 	TileMapIndex int
@@ -648,7 +651,16 @@ func (e *Editor) handleInputs() error {
 		return nil
 	}
 
-	if ContextMenu.IsOpen() && ContextMenu.Poll(cx, cy) {
+	if ContextMenu.Poll(cx, cy) {
+		return nil
+	}
+
+	if justDidSomethingOfInterest {
+		return nil
+	}
+
+	if justDidSomethingOfInterestLock {
+		justDidSomethingOfInterestLock = false
 		return nil
 	}
 
@@ -954,35 +966,32 @@ func (e *Editor) TryOpeningObjectContextMenu(cx, cy, col, row int) bool {
 	if i == -1 {
 		return false;
 	}
+
+	tileMapIndex := e.activeTileMapIndex
+	toRemoveInstanceIndex := i
+	toRemoveInstance := placedObjects[tileMapIndex][toRemoveInstanceIndex]
+	toRemoveTypeIndex := toRemoveInstance.Index
+	tile := selectedTile
+	layer := currentLayer
+
+	// Open a context menu in which one can remove objects
 	ContextMenu.Open(cx, cy, []ContextMenuItem{
 		{
 			String: "REMOVE OBJECT",
 			OnClick: func() {
-				fmt.Println("CLICK ON 1")
+				justDidSomethingOfInterest = true
+				justDidSomethingOfInterestLock = true
 			},
-		},
-		{
-			String: "GAMING GAMING GAMING",
-			OnClick: func() {
-				fmt.Println("CLICK ON 2")
-			},
-		},
-		{
-			String: "IMMACULATE GAMING",
-			OnClick: func() {
-				fmt.Println("CLICK ON 3")
-			},
-		},
-		{
-			String: "IMMACULATE GAMING",
-			OnClick: func() {
-				fmt.Println("CLICK ON 4")
-			},
-		},
-		{
-			String: "IMMACULATE GAMING",
-			OnClick: func() {
-				fmt.Println("CLICK ON 5")
+			OnRelease: func() {
+				e.doRemoveObjectWithInfo(
+					toRemoveInstanceIndex,
+					toRemoveTypeIndex,
+					tileMapIndex,
+					tile,
+					layer,
+				)
+				e.postDoRemoveObject()
+				justDidSomethingOfInterest = false
 			},
 		},
 	});
@@ -1490,6 +1499,9 @@ func (e *Editor) doRemoveObject() {
 		return
 	}
 
+	e.doRemoveObjectWithInfo(i, placedObjects[e.activeTileMapIndex][i].Index, e.activeTileMapIndex, selectedTile, currentLayer)
+
+	/*
 	od := &ObjectDelta{
 		i,
 		placedObjects[e.activeTileMapIndex][i].Index,
@@ -1502,6 +1514,24 @@ func (e *Editor) doRemoveObject() {
 	e.objectGrid.objs[placedObjects[e.activeTileMapIndex][i].Index].EraseObject(e.activeTileMap, placedObjects[e.activeTileMapIndex][i])
 	placedObjects[e.activeTileMapIndex][i] = placedObjects[e.activeTileMapIndex][len(placedObjects[e.activeTileMapIndex]) - 1]
 	placedObjects[e.activeTileMapIndex] = placedObjects[e.activeTileMapIndex][:len(placedObjects[e.activeTileMapIndex]) - 1]
+
+	CurrentRemoveObjectDelta.objectDelta = od
+	*/
+}
+
+func (e *Editor) doRemoveObjectWithInfo(objectInstanceIndex, objectTypeIndex, activeTileMapIndex, tile, layer int) {
+	od := &ObjectDelta{
+		objectInstanceIndex,
+		objectTypeIndex,
+		activeTileMapIndex,
+		tile,
+		layer,
+	}
+
+	objectInstance := placedObjects[activeTileMapIndex][objectInstanceIndex]
+	objectType := &e.objectGrid.objs[objectInstance.Index]
+	tileMap := e.tileMaps[activeTileMapIndex]
+	objectType.EraseObject(tileMap, objectInstance)
 
 	CurrentRemoveObjectDelta.objectDelta = od
 }
