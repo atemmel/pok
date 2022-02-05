@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/atemmel/pok/pkg/pok"
@@ -225,6 +226,7 @@ func NewEditor(paths []string) *Editor {
 	debug.Assert(err)
 
 	initButtons(font)
+	ContextMenu.Init(font)
 
 	vis := func() bool {
 		return (activeTool == Pencil || activeTool == Bucket) && es.activeTileMap != nil
@@ -365,6 +367,7 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 	}
 
 	drawButtons(screen)
+	ContextMenu.Draw(screen)
 
 	debugStr := ""
 	if len(e.activeFiles) == 0 {
@@ -545,6 +548,8 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *pok.TileMap) {
 	}
 
 	e.treeAutoTileGrid = NewTreeAutoTileGrid(textures.Access(tileMap.TextureMapping[baseIndex]), e.treeAutoTileInfo)
+	edobjs := e.loadFileMetadata(e.nextFile)
+	placedObjects[len(placedObjects) - 1] = edobjs
 }
 
 func (e *Editor) appendTileMap(tileMap *pok.TileMap) {
@@ -562,7 +567,49 @@ func (e *Editor) saveFile() {
 		return
 	}
 
+	e.saveFileMetadata()
+
 	lastSavedUndoStackLength = len(UndoStack)
+}
+
+func (e *Editor) saveFileMetadata() {
+	objs := placedObjects[e.activeTileMapIndex]
+	exportedFile := e.activeFullFiles[e.activeTileMapIndex] + ".objmeta"
+	data, err := json.Marshal(objs)
+	if err != nil {
+		goto BAD
+	}
+
+	err = ioutil.WriteFile(exportedFile, data, 0644)
+	if err != nil {
+		goto BAD
+	}
+
+	goto GOOD
+
+BAD:
+	dialog.Message("Could not save metadata file %s, %s", exportedFile, err.Error())
+
+GOOD:
+	return
+}
+
+func (e *Editor) loadFileMetadata(originalFilePath string) []PlacedEditorObject {
+	edobjs := make([]PlacedEditorObject, 0)
+	path := originalFilePath + ".objmeta"
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		goto FIN
+	}
+
+	err = json.Unmarshal(data, &edobjs)
+	if err != nil {
+		dialog.Message("Could not parse metadata file %s, %s", path,
+			err.Error())
+	}
+
+FIN:
+	return edobjs
 }
 
 func (e *Editor) hasSaved() bool {
@@ -738,6 +785,13 @@ func (e *Editor) handleMapMouseInputs() {
 		}
 	}
 
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) || inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(2)) {
+		if ContextMenu.IsOpen() { 
+			ContextMenu.Close()
+			return
+		}
+	}
+
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
 		cx, cy := ebiten.CursorPosition();
 		e.resizers[e.activeTileMapIndex].tryClick(cx, cy, &e.rend.Cam)
@@ -790,6 +844,12 @@ func (e *Editor) handleMapMouseInputs() {
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
 		cx, cy := ebiten.CursorPosition();
+		e.TryOpeningContextMenu(cx, cy)
+	}
+
+	/* OLD STUFF
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
+		cx, cy := ebiten.CursorPosition();
 		e.SelectTileFromMouse(cx, cy)
 		if e.selectedTileIsValid() {
 			switch activeTool {
@@ -802,6 +862,7 @@ func (e *Editor) handleMapMouseInputs() {
 			}
 		}
 	}
+	*/
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) || (ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && ebiten.IsKeyPressed(ebiten.KeyControl)) {
 		cx, cy := ebiten.CursorPosition();
@@ -856,6 +917,7 @@ func (e *Editor) handleMapMouseInputs() {
 		offset.Y = math.Round(offset.Y / constants.TileSize) * constants.TileSize
 	}
 
+	/* EQUALLY OLD STUFF
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButton(1)) {
 		switch activeTool {
 			case Object:
@@ -866,6 +928,44 @@ func (e *Editor) handleMapMouseInputs() {
 				e.postDoRemoveNpc()
 		}
 	}
+	*/
+}
+
+func (e *Editor) TryOpeningContextMenu(cx, cy int) {
+	e.SelectTileFromMouse(cx, cy)
+	if !e.selectedTileIsValid() {
+		return
+	}
+
+	col, row := e.activeTileMap.Coords(selectedTile)
+	if e.TryOpeningObjectContextMenu(cx, cy, col, row)  {
+		return
+	}
+
+	ContextMenu.Close();
+}
+
+func (e *Editor) TryOpeningObjectContextMenu(cx, cy, col, row int) bool {
+	i := HasPlacedObjectAt(placedObjects[e.activeTileMapIndex], col, row)
+	if i == -1 {
+		return false;
+	}
+	fmt.Println(i);
+	ContextMenu.Open(cx, cy, []ContextMenuItem{
+		{
+			String: "REMOVE OBJECT",
+			OnClick: func() {
+				fmt.Println("Lmaoooooooooo")
+			},
+		},
+		{
+			String: "GAMING GAMING GAMING",
+			OnClick: func() {
+				fmt.Println("Gaming gaming!")
+			},
+		},
+	});
+	return true;
 }
 
 func (e *Editor) isAlreadyClicking() bool {

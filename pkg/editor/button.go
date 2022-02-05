@@ -15,10 +15,10 @@ const (
 )
 
 var (
-	fg = color.White
-	fgShadow = color.Black
-	bg = color.RGBA{163, 164, 165, 255}
-	border = color.Black
+	//fg = color.White
+	//fgShadow = color.Black
+	//bg = color.RGBA{163, 164, 165, 255}
+	//border = color.Black
 
 	buttons []button
 	buttonFont font.Face
@@ -82,19 +82,19 @@ func buildBox(w, h int) *image.RGBA {
 	// fill
 	for x := 0; x < w; x++ {
 		for y := 0; y < h; y++ {
-			img.Set(x, y, bg)
+			img.Set(x, y, Bg)
 		}
 	}
 
 	// border
 	for x := 0; x < w; x++ {
-		img.Set(x, 0, border)
-		img.Set(x, h - 1, border)
+		img.Set(x, 0, Border)
+		img.Set(x, h - 1, Border)
 	}
 
 	for y := 0; y < h; y++ {
-		img.Set(0, y, border)
-		img.Set(w - 1, y, border)
+		img.Set(0, y, Border)
+		img.Set(w - 1, y, Border)
 	}
 
 	img.Set(0, 0, color.Transparent)
@@ -112,10 +112,10 @@ func buildBox(w, h int) *image.RGBA {
 	img.Set(w - 1, 1, color.Transparent)
 	img.Set(w - 1, h - 2, color.Transparent)
 
-	img.Set(1, 1, border)
-	img.Set(1, h - 2, border)
-	img.Set(w - 2, 1, border)
-	img.Set(w - 2, h - 2, border)
+	img.Set(1, 1, Border)
+	img.Set(1, h - 2, Border)
+	img.Set(w - 2, 1, Border)
+	img.Set(w - 2, h - 2, Border)
 
 	return img
 }
@@ -144,8 +144,8 @@ func buttonFromButtonInfo(buttonInfo *ButtonInfo) button {
 	img := ebiten.NewImageFromImage(src)
 
 	const extraOffset = 9
-	text.Draw(img, buttonInfo.Content, buttonFont, paddingX + 1, paddingY + extraOffset + 1, fgShadow)
-	text.Draw(img, buttonInfo.Content, buttonFont, paddingX, paddingY + extraOffset, fg)
+	text.Draw(img, buttonInfo.Content, buttonFont, paddingX + 1, paddingY + extraOffset + 1, FgShadow)
+	text.Draw(img, buttonInfo.Content, buttonFont, paddingX, paddingY + extraOffset, Fg)
 
 	return button{
 		img: img,
