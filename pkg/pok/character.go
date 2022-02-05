@@ -146,9 +146,17 @@ func (c *Character) Step() {
 	}
 
 	if c.isTraversingStaircaseUp {
-		c.Gy -= 0.5
+		if c.dir == Up || c.dir == Down {
+			c.Gy -= 0.25 * c.velocity
+		} else {
+			c.Gy -= 0.5 * c.velocity
+		}
 	} else if c.isTraversingStaircaseDown {
-		c.Gy += 0.5
+		if c.dir == Up || c.dir == Down {
+			c.Gy += 0.25 * c.velocity
+		} else {
+			c.Gy += 0.5 * c.velocity
+		}
 	}
 
 	switch c.dir {
@@ -270,12 +278,12 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 					return
 				}
 
-				if c.isStairCase(nx, ny, c.Z, g) || c.isStairCase(c.X, c.Y, c.Z, g) {
-					c.handleStairCase(g)
-				} else {
-					c.isTraversingStaircaseDown = false
-					c.isTraversingStaircaseUp = false
-				}
+				//if c.isStairCase(nx, ny, c.Z, g) || c.isStairCase(c.X, c.Y, c.Z, g) {
+					c.handleStairCase(g, nx, ny)
+					//} else {
+					//c.isTraversingStaircaseDown = false
+					//c.isTraversingStaircaseUp = false
+					//}
 
 				c.X, c.Y = nx, ny
 
@@ -371,46 +379,91 @@ func (c *Character) isStairCase(x, y, z int, g *Game) bool {
 		return false
 	}
 
-	stairBase := []int{
-		170,
-		192,
-		214,
-	}
-
 	index := g.Ows.tileMap.Index(x, y)
 	if textures.IsStair(g.Ows.tileMap.TextureIndicies[z + 1][index]) {
-		for _, i := range stairBase {
-			if g.Ows.tileMap.Tiles[z + 1][index] == i {
-				return false
-			}
-		}
 		return true
 	}
 	return false
 }
 
-func (c *Character) handleStairCase(g *Game) {
-	index := g.Ows.tileMap.Index(c.X, c.Y)
+//TODO: This should not be like this
+var stairRight = []int{
+	171,
+	193,
+	215,
+}
 
-	stairRightUp := []int{
-		170,
-		171,
-		192,
-		193,
-		214,
-		215,
+var stairLeft = []int {
+	175,
+	197,
+	219,
+}
+
+var stairUp = []int {
+	194,
+	195,
+}
+
+func (c *Character) handleStairCase(g *Game, nx, ny int) {
+
+	index := g.Ows.tileMap.Index(c.X, c.Y)
+	nextIndex := g.Ows.tileMap.Index(nx, ny)
+
+	indicies := [2]int{index, nextIndex}
+
+	c.isTraversingStaircaseUp = false
+	c.isTraversingStaircaseDown = false
+
+	c.handleStairCaseWithOffset(g, indicies[:], 0)
+	if len(g.Ows.tileMap.Tiles) > c.Z + 1 {
+		c.handleStairCaseWithOffset(g, indicies[:], 1)
+	} else if c.Z - 1 >= 0 {
+		c.handleStairCaseWithOffset(g, indicies[:], -1)
 	}
 
-	for _, i := range stairRightUp {
-		if g.Ows.tileMap.Tiles[c.Z + 1][index] == i {
-			c.isTraversingStaircaseUp = false
-			c.isTraversingStaircaseDown = false
-			switch c.dir {
-				case Right:
-					c.isTraversingStaircaseUp = true
-				case Left:
-					c.isTraversingStaircaseDown = true
+	if c.isTraversingStaircaseUp {
+		c.Z += 1
+	} else if c.isTraversingStaircaseDown {
+		c.Z -= 1
+	}
+}
+
+func (c *Character) handleStairCaseWithOffset(g *Game, indiciesToCheck []int, zOffset int) {
+	for _, ind := range indiciesToCheck {
+		for _, i := range stairRight {
+			if g.Ows.tileMap.Tiles[c.Z + zOffset][ind] == i {
+				switch c.dir {
+					case Right:
+						c.isTraversingStaircaseUp = true
+					case Left:
+						c.isTraversingStaircaseDown = true
+				}
+				return
+			}
+		}
+
+		for _, i := range stairLeft {
+			if g.Ows.tileMap.Tiles[c.Z + zOffset][ind] == i {
+				switch c.dir {
+					case Right:
+						c.isTraversingStaircaseDown = true
+					case Left:
+						c.isTraversingStaircaseUp = true
+				}
+				return
+			}
+		}
+
+		for _, i := range stairUp {
+			if g.Ows.tileMap.Tiles[c.Z + zOffset][ind] == i {
+				switch c.dir {
+					case Up:
+						c.isTraversingStaircaseUp = true
+					case Down:
+						c.isTraversingStaircaseDown = true
+				}
 			}
 		}
 	}
 }
+
