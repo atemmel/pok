@@ -34,7 +34,7 @@ var activeObjsIndex = 0
 var activeAtiIndex = -1
 
 var drawOnlyCurrentLayer = false
-var drawUi = false
+var DrawDebugInfo = false
 var activeTool = Pencil
 var placedObjects [][]PlacedEditorObject = make([][]PlacedEditorObject, 0)
 var linkBegin *LinkData
@@ -341,14 +341,14 @@ func (e *Editor) Draw(screen *ebiten.Image) {
 		offset := e.tileMapOffsets[i]
 		e.tileMaps[i].DrawWithOffset(&e.rend, offset.X, offset.Y)
 	}
-	if drawUi && len(e.activeFiles) != 0 {
+	if DrawDebugInfo && len(e.activeFiles) != 0 {
 		e.drawLinksFromActiveTileMap()
 		e.DrawTileMapDetail()
 		e.resizers[e.activeTileMapIndex].Draw(&e.rend)
 	}
 	e.rend.Display(screen)
 
-	if drawUi && len(e.activeFiles) != 0 {
+	if DrawDebugInfo && len(e.activeFiles) != 0 {
 		if e.gridIsVisible() {
 			e.grid.Draw(screen)
 		} else if e.objectGridIsVisible() {
@@ -429,7 +429,7 @@ func (e *Editor) DrawTileMapDetail() {
 		}
 	}
 
-	if drawUi {
+	if DrawDebugInfo {
 		for i := range e.activeTileMap.Exits {
 			e.rend.Draw(&RenderTarget{
 				&ebiten.DrawImageOptions{},
@@ -528,7 +528,7 @@ func (e *Editor) updateEditorWithNewTileMap(tileMap *TileMap) {
 	e.appendTileMap(tileMap)
 	e.activeFullFiles = append(e.activeFiles, e.nextFile)
 	e.activeFiles = append(e.activeFiles, filepath.Base(e.nextFile))
-	drawUi = true
+	DrawDebugInfo = true
 	const baseIndex = 0
 	e.grid = NewGrid(textures.Access(tileMap.textureMapping[activePalette]), constants.TileSize)
 	e.fillObjectGrid(constants.OverworldObjectsDir)
@@ -664,7 +664,7 @@ func (e *Editor) handleInputs() error {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
-		drawUi = !drawUi
+		DrawDebugInfo = !DrawDebugInfo
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyO) {

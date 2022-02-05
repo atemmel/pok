@@ -319,7 +319,7 @@ func (o *OverworldState) Draw(g *Game, screen *ebiten.Image) {
 	g.CenterRendererOnPlayer()
 	g.Rend.Display(screen)
 
-	if drawUi {
+	if DrawDebugInfo {
 		x, y, z := g.Player.Char.X, g.Player.Char.Y, g.Player.Char.Z
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(
 `player.x: %f

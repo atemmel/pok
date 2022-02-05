@@ -21,6 +21,7 @@ func init() {
 	debug.InitAssert(&LogFileName, false)
 	flag.BoolVar(&isServing, "serve", false, "Run as game server")
 	flag.BoolVar(&disableAudio, "disable-audio", false, "Toggle audio")
+	flag.BoolVar(&pok.DrawDebugInfo, "draw-debug-info", false, "Draw debug info")
 	flag.Parse()
 
 	if onlineEnabled {
