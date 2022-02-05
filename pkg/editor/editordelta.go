@@ -142,8 +142,7 @@ func (do *ObjectDelta) Undo(ed *Editor) {
 func (do *ObjectDelta) Redo(ed *Editor) {
 	tm := ed.tileMaps[do.tileMapIndex]
 	obj := &ed.objectGrid.objs[do.objectIndex]
-	//tm.InsertObject(obj, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex])
-	obj.InsertObject(tm, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex])
+	obj.InsertObject(tm, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex], ed.objectGrid.objs)
 }
 
 type RemoveObjectDelta struct {

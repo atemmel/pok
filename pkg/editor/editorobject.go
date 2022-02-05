@@ -4,6 +4,7 @@ import(
 	"github.com/atemmel/pok/pkg/pok"
 	"encoding/json"
 	"io/ioutil"
+	"image"
 	"strings"
 )
 
@@ -59,19 +60,24 @@ func ReadAllObjects(directory string) ([]EditorObject, error) {
 	return objs, nil
 }
 
-func HasPlacedObjectAt(pobs []PlacedEditorObject, x, y int) int {
+func HasPlacedObjectAt(pobs []PlacedEditorObject, edobjs []EditorObject, x, y int) int {
+	prospect := image.Pt(x, y)
 	for i := range pobs {
-		if pobs[i].X == x && pobs[i].Y == y {
+		obj := edobjs[pobs[i].Index]
+
+		r := image.Rect(0, 0, obj.W, obj.H).Add(image.Pt(pobs[i].X, pobs[i].Y))
+		if prospect.In(r) {
 			return i
 		}
 	}
 	return -1
 }
 
-func (edobj* EditorObject) InsertObject(t *pok.TileMap, objIndex, i, z int, placedObjects *[]PlacedEditorObject) {
+//TODO: This looks gross, what is even going on inside here?
+func (edobj* EditorObject) InsertObject(t *pok.TileMap, objIndex, i, z int, placedObjects *[]PlacedEditorObject, edobjs []EditorObject) {
 	col, row := t.Coords(i)
 
-	existingObjectIndex := HasPlacedObjectAt(*placedObjects, col, row)
+	existingObjectIndex := HasPlacedObjectAt(*placedObjects, edobjs, col, row)
 	if existingObjectIndex != -1 {
 		//t.EraseObject((*placedObjects)[existingObjectIndex], edobj)
 		edobj.EraseObject(t, (*placedObjects)[existingObjectIndex])

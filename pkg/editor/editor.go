@@ -950,7 +950,7 @@ func (e *Editor) TryOpeningContextMenu(cx, cy int) {
 }
 
 func (e *Editor) TryOpeningObjectContextMenu(cx, cy, col, row int) bool {
-	i := HasPlacedObjectAt(placedObjects[e.activeTileMapIndex], col, row)
+	i := HasPlacedObjectAt(placedObjects[e.activeTileMapIndex], e.objectGrid.objs, col, row)
 	if i == -1 {
 		return false;
 	}
@@ -1472,8 +1472,8 @@ func (e *Editor) doBucket() {
 
 func (e *Editor) doObject() {
 	obj := &e.objectGrid.objs[activeObjsIndex]
-	//e.activeTileMap.InsertObject(obj, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
-	obj.InsertObject(e.activeTileMap, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex])
+	// What the actual fuck 
+	obj.InsertObject(e.activeTileMap, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex], e.objectGrid.objs)
 
 	CurrentObjectDelta.placedObjectIndex = len(placedObjects[e.activeTileMapIndex]) - 1
 	CurrentObjectDelta.objectIndex = activeObjsIndex
@@ -1485,7 +1485,7 @@ func (e *Editor) doObject() {
 func (e *Editor) doRemoveObject() {
 	col := selectedTile % e.activeTileMap.Width
 	row := selectedTile / e.activeTileMap.Width
-	i := HasPlacedObjectAt(placedObjects[e.activeTileMapIndex], col, row)
+	i := HasPlacedObjectAt(placedObjects[e.activeTileMapIndex], e.objectGrid.objs, col, row)
 	if i == -1 {
 		return
 	}
