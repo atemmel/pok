@@ -394,12 +394,12 @@ func (e *Editor) DrawBackgroundGrid() {
 		yLeft := y + constants.TileSize
 		for y < yLeft + yMax {
 			e.rend.Draw(&pok.RenderTarget{
-				&ebiten.DrawImageOptions{},
-				e.backgroundGrid,
-				nil,
-				x,
-				y,
-				-1337,
+				Op: &ebiten.DrawImageOptions{},
+				Src: e.backgroundGrid,
+				SubImage: nil,
+				X: x,
+				Y: y,
+				Z: -1337,
 			})
 			y += float64(e.backgroundGrid.Bounds().Max.Y)
 		}
@@ -419,12 +419,12 @@ func (e *Editor) DrawTileMapDetail() {
 
 			if currentLayer == j && e.activeTileMap.Collision[j][i] {
 				e.rend.Draw(&pok.RenderTarget{
-					&ebiten.DrawImageOptions{},
-					e.collisionMarker,
-					nil,
-					x + offset.X,
-					y + offset.Y,
-					100,
+					Op: &ebiten.DrawImageOptions{},
+					Src: e.collisionMarker,
+					SubImage: nil,
+					X: x + offset.X,
+					Y: y + offset.Y,
+					Z: 100,
 				})
 			}
 		}
@@ -433,35 +433,35 @@ func (e *Editor) DrawTileMapDetail() {
 	if DrawDebugInfo {
 		for i := range e.activeTileMap.Exits {
 			e.rend.Draw(&pok.RenderTarget{
-				&ebiten.DrawImageOptions{},
-				e.exitMarker,
-				nil,
-				float64(e.activeTileMap.Exits[i].X * constants.TileSize) + offset.X,
-				float64(e.activeTileMap.Exits[i].Y * constants.TileSize) + offset.Y,
-				100,
+				Op: &ebiten.DrawImageOptions{},
+				Src: e.exitMarker,
+				SubImage: nil,
+				X: float64(e.activeTileMap.Exits[i].X * constants.TileSize) + offset.X,
+				Y: float64(e.activeTileMap.Exits[i].Y * constants.TileSize) + offset.Y,
+				Z: 100,
 			})
 		}
 
 		if activeTool == Eraser {
 			for i := range placedObjects[e.activeTileMapIndex] {
 				e.rend.Draw(&pok.RenderTarget{
-					&ebiten.DrawImageOptions{},
-					e.deleteableMarker,
-					nil,
-					float64(placedObjects[e.activeTileMapIndex][i].X * constants.TileSize) + offset.X,
-					float64(placedObjects[e.activeTileMapIndex][i].Y * constants.TileSize) + offset.Y,
-					100,
+					Op: &ebiten.DrawImageOptions{},
+					Src: e.deleteableMarker,
+					SubImage: nil,
+					X: float64(placedObjects[e.activeTileMapIndex][i].X * constants.TileSize) + offset.X,
+					Y: float64(placedObjects[e.activeTileMapIndex][i].Y * constants.TileSize) + offset.Y,
+					Z: 100,
 				})
 			}
 		}
 
 		e.rend.Draw(&pok.RenderTarget{
-			&ebiten.DrawImageOptions{},
-			e.selection,
-			nil,
-			float64(selectionX * constants.TileSize) + offset.X,
-			float64(selectionY * constants.TileSize) + offset.Y,
-			100,
+			Op: &ebiten.DrawImageOptions{},
+			Src: e.selection,
+			SubImage: nil,
+			X: float64(selectionX * constants.TileSize) + offset.X,
+			Y: float64(selectionY * constants.TileSize) + offset.Y,
+			Z: 100,
 		})
 	}
 }
@@ -1050,33 +1050,33 @@ func (e *Editor) tryConnectTileMaps(start, end *LinkData) {
 	}
 
 	entryA := pok.Entry{
-		startEntryIndex,
-		start.X,
-		start.Y,
-		currentLayer,
+		Id: startEntryIndex,
+		X: start.X,
+		Y: start.Y,
+		Z: currentLayer,
 	}
 
 	exitA := pok.Exit{
-		e.activeFiles[end.TileMapIndex],
-		endEntryIndex,
-		start.X,
-		start.Y,
-		currentLayer,
+		Target: e.activeFiles[end.TileMapIndex],
+		Id: endEntryIndex,
+		X: start.X,
+		Y: start.Y,
+		Z: currentLayer,
 	}
 
 	entryB := pok.Entry{
-		endEntryIndex,
-		end.X,
-		end.Y,
-		currentLayer,
+		Id: endEntryIndex,
+		X: end.X,
+		Y: end.Y,
+		Z: currentLayer,
 	}
 
 	exitB := pok.Exit{
-		e.activeFiles[start.TileMapIndex],
-		startEntryIndex,
-		end.X,
-		end.Y,
-		currentLayer,
+		Target: e.activeFiles[start.TileMapIndex],
+		Id: startEntryIndex,
+		X: end.X,
+		Y: end.Y,
+		Z: currentLayer,
 	}
 
 	e.tileMaps[start.TileMapIndex].PlaceEntry(entryA)
@@ -1621,12 +1621,12 @@ func (e *Editor) doPlaceNpc() {
 		file = filepath.Base(file)
 		//TODO: Implement NpcMovementInfo properly
 		ni := &pok.NpcInfo{
-			e.npcImagesStrings[i],
-			file,
-			x,
-			y,
-			currentLayer,
-			pok.NpcMovementInfo{},
+			Texture: e.npcImagesStrings[i],
+			DialogPath: file,
+			X: x,
+			Y: y,
+			Z: currentLayer,
+			MovementInfo: pok.NpcMovementInfo{},
 		}
 
 		e.activeTileMap.PlaceNpc(ni)
