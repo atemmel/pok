@@ -31,8 +31,8 @@ var CurrentResizeDelta *ResizeDelta = &ResizeDelta{}
 func PerformUndo(ed *Editor) {
 	if len(UndoStack) > 0 {
 		top := UndoStack[len(UndoStack) - 1]
-		top.Undo(ed)
 		fmt.Println("Undoing::", top.Name())
+		top.Undo(ed)
 		RedoStack = append(RedoStack, top)
 		UndoStack = UndoStack[:len(UndoStack) - 1]
 	}
@@ -41,6 +41,7 @@ func PerformUndo(ed *Editor) {
 func PerformRedo(ed *Editor) {
 	if len(RedoStack) > 0 {
 		top := RedoStack[len(RedoStack)-1]
+		fmt.Println("Redoing::", top.Name())
 		top.Redo(ed)
 		UndoStack = append(UndoStack, top)
 		RedoStack = RedoStack[:len(RedoStack) - 1]
@@ -137,7 +138,7 @@ func (bd *BucketDelta) Name() string {
 }
 
 type ObjectDelta struct {
-	placedObjectIndex int
+	//placedObjectIndex int
 	objectIndex int
 	tileMapIndex int
 	origin int
@@ -148,15 +149,21 @@ func (do *ObjectDelta) Undo(ed *Editor) {
 	fmt.Println(do)
 	// get tilemap
 	tm := ed.tileMaps[do.tileMapIndex]
+	x, y := tm.Coords(do.origin)
+	placedObjectIndex := HasPlacedObjectExactlyAt(placedObjects[do.tileMapIndex], x, y)
+	if placedObjectIndex == -1 {
+		// very bad
+		return
+	}
 	// get object instance
-	pobj := placedObjects[do.tileMapIndex][do.placedObjectIndex]
+	pobj := placedObjects[do.tileMapIndex][placedObjectIndex]
 	// get object type
 	obj := &ed.objectGrid.objs[do.objectIndex]
 	// erase the object
 	obj.EraseObject(tm, pobj)
 
-	slc1 := placedObjects[do.tileMapIndex][do.placedObjectIndex:]
-	slc2 := placedObjects[do.tileMapIndex][do.placedObjectIndex+1:]
+	slc1 := placedObjects[do.tileMapIndex][placedObjectIndex:]
+	slc2 := placedObjects[do.tileMapIndex][placedObjectIndex+1:]
 	copy(slc1, slc2)
 	placedObjects[do.tileMapIndex] = placedObjects[do.tileMapIndex][:len(placedObjects[do.tileMapIndex])-1]
 }

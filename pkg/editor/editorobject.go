@@ -8,6 +8,8 @@ import(
 	"strings"
 )
 
+var ObjectIdIncrementer = 0
+
 type EditorObject struct {
 	Texture string
 	X, Y int
@@ -67,6 +69,15 @@ func HasPlacedObjectAt(pobs []PlacedEditorObject, edobjs []EditorObject, x, y in
 
 		r := image.Rect(0, 0, obj.W, obj.H).Add(image.Pt(instance.X, instance.Y))
 		if prospect.In(r) {
+			return i
+		}
+	}
+	return -1
+}
+
+func HasPlacedObjectExactlyAt(pobs []PlacedEditorObject, x, y int) int {
+	for i, obj := range pobs {
+		if obj.X == x && obj.Y == y {
 			return i
 		}
 	}

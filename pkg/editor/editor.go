@@ -1485,7 +1485,7 @@ func (e *Editor) doObject() {
 	// What the actual fuck 
 	obj.InsertObject(e.activeTileMap, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex], e.objectGrid.objs)
 
-	CurrentObjectDelta.placedObjectIndex = len(placedObjects[e.activeTileMapIndex]) - 1
+	//CurrentObjectDelta.placedObjectIndex = len(placedObjects[e.activeTileMapIndex]) - 1
 	CurrentObjectDelta.objectIndex = activeObjsIndex
 	CurrentObjectDelta.tileMapIndex = e.activeTileMapIndex
 	CurrentObjectDelta.origin = selectedTile
@@ -1522,7 +1522,7 @@ func (e *Editor) doRemoveObject() {
 
 func (e *Editor) doRemoveObjectWithInfo(objectInstanceIndex, objectTypeIndex, activeTileMapIndex, tile, layer int) {
 	od := &ObjectDelta{
-		objectInstanceIndex,
+		//objectInstanceIndex,
 		objectTypeIndex,
 		activeTileMapIndex,
 		tile,
