@@ -82,6 +82,9 @@ func NewScrollBar(x, y, rows int) *Scrollbar {
 func (s *Scrollbar) Draw(target *ebiten.Image) {
 	opt := &ebiten.DrawImageOptions{}
 	opt.GeoM.Translate(float64(s.x), float64(s.y))
+	if s.isHolding {
+		opt.ColorM.Scale(0.5, 0.5, 0.5, 1.0)
+	}
 	target.DrawImage(s.img, opt)
 }
 

@@ -13,13 +13,13 @@ var (
 	Hovering = color.RGBA{103, 104, 105, 255}
 )
 
-func CreateNeatImageWithBorder(w, h int) *image.RGBA {
+func CreateNeatImageWithBorderBg(w, h int, bg color.RGBA) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
 	// fill
 	for x := 0; x < w; x++ {
 		for y := 0; y < h; y++ {
-			img.Set(x, y, Bg)
+			img.Set(x, y, bg)
 		}
 	}
 
@@ -55,4 +55,8 @@ func CreateNeatImageWithBorder(w, h int) *image.RGBA {
 	img.Set(w - 2, h - 2, Border)
 
 	return img
+}
+
+func CreateNeatImageWithBorder(w, h int) *image.RGBA {
+	return CreateNeatImageWithBorderBg(w, h, Bg)
 }
