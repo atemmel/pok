@@ -661,6 +661,12 @@ func (e *Editor) handleInputs() error {
 		}
 	}
 
+	if e.npcGridIsVisible() {
+		if e.npcGrid.grid.PollScrollBar(cx ,cy) {
+			return nil
+		}
+	}
+
 	if justDidSomethingOfInterest {
 		return nil
 	}
