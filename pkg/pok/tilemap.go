@@ -21,6 +21,7 @@ type Exit struct {
 }
 
 type Entry struct {
+	Source string
 	Id int
 	X int
 	Y int

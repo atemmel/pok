@@ -970,6 +970,10 @@ func (e *Editor) TryOpeningContextMenu(cx, cy int) {
 		return
 	}
 
+	if e.TryOpeningLinkContextMenu(cx, cy, col, row) {
+		return
+	}
+
 	ContextMenu.Close();
 }
 
@@ -1009,6 +1013,74 @@ func (e *Editor) TryOpeningObjectContextMenu(cx, cy, col, row int) bool {
 		},
 	});
 	return true;
+}
+
+func (e *Editor) TryOpeningLinkContextMenu(cx, cy, col, row int) bool {
+	exi, eni := e.FindExitsAndEntriesAtPosition(col, row)
+	if len(exi) == 0 && len(eni) == 0 {
+		return false
+	}
+
+	tileMapIndex := e.activeTileMapIndex
+	items := make([]ContextMenuItem, 0, 2)
+
+	// create option to remove exit
+	for _, i := range exi {
+		exit := &e.activeTileMap.Exits[i]
+		entryTileMapIndex := e.FindCorrespondingEntryTileMap(exit)
+		items = append(items, ContextMenuItem{
+			String: "REMOVE LINK TO " + exit.Target,
+			OnClick: func() {
+				justDidSomethingOfInterest = true
+				justDidSomethingOfInterestLock = true
+			},
+			OnRelease: func() {
+				e.doRemoveLinkWithData(entryTileMapIndex, tileMapIndex, exit.Id)
+				e.postDoRemoveLink()
+				justDidSomethingOfInterest = false
+			},
+		})
+	}
+
+	// create option to remove entry
+	for _, i := range eni {
+		entry := &e.activeTileMap.Entries[i]
+		exitTileMapIndex := e.FindCorrespondingExitTileMap(entry)
+		items = append(items, ContextMenuItem{
+			String: "REMOVE LINK FROM " + entry.Source,
+			OnClick: func() {
+				justDidSomethingOfInterest = true
+				justDidSomethingOfInterestLock = true
+			},
+			OnRelease: func() {
+				e.doRemoveLinkWithData(tileMapIndex, exitTileMapIndex, entry.Id)
+				e.postDoRemoveLink()
+				justDidSomethingOfInterest = false
+			},
+		})
+	}
+
+	ContextMenu.Open(cx, cy, items)
+	return true
+}
+
+func (e *Editor) FindExitsAndEntriesAtPosition(x, y int) ([]int, []int) {
+	exitIndex := make([]int, 0)
+	entryIndex := make([]int, 0)
+
+	for i := range e.activeTileMap.Exits {
+		if e.activeTileMap.Exits[i].X == x && e.activeTileMap.Exits[i].Y == y {
+			exitIndex = append(exitIndex, i)
+		}
+	}
+
+	for i := range e.activeTileMap.Entries {
+		if e.activeTileMap.Entries[i].X == x && e.activeTileMap.Entries[i].Y == y {
+			entryIndex = append(entryIndex, i)
+		}
+	}
+
+	return exitIndex, entryIndex
 }
 
 func (e *Editor) isAlreadyClicking() bool {
@@ -1193,6 +1265,7 @@ func (e *Editor) tryConnectTileMaps(start, end *LinkData) {
 	}
 
 	entryA := pok.Entry{
+		Source: e.activeFiles[start.TileMapIndex],
 		Id: startEntryIndex,
 		X: start.X,
 		Y: start.Y,
@@ -1208,6 +1281,7 @@ func (e *Editor) tryConnectTileMaps(start, end *LinkData) {
 	}
 
 	entryB := pok.Entry{
+		Source: e.activeFiles[start.TileMapIndex],
 		Id: endEntryIndex,
 		X: end.X,
 		Y: end.Y,
@@ -1621,6 +1695,30 @@ func (e *Editor) doRemoveLink() {
 	CurrentRemoveLinkDelta.tileMapIndex = e.activeTileMapIndex
 }
 
+func (e *Editor) doRemoveLinkWithData(entryTileMapIndex, exitTileMapIndex, id int) {
+	t0 := e.tileMaps[entryTileMapIndex]
+	t1 := e.tileMaps[exitTileMapIndex]
+
+	for i := range t0.Entries {
+		if t0.Entries[i].Id == id {
+			entry := t0.Entries[i]
+			CurrentRemoveLinkDelta.entry = &entry
+			t0.Entries[i] = t0.Entries[len(t0.Entries) - 1]
+			t0.Entries = t0.Entries[:len(t0.Entries) - 1]
+		}
+	}
+
+	for i := range t1.Exits {
+		if t1.Exits[i].Id == id {
+			exit := t1.Exits[i]
+			CurrentRemoveLinkDelta.exit = &exit
+			t1.Exits[i] = t1.Exits[len(t1.Exits) - 1]
+			t1.Exits = t1.Exits[:len(t1.Exits) - 1]
+		}
+	}
+	CurrentRemoveLinkDelta.tileMapIndex = e.activeTileMapIndex
+}
+
 func (e *Editor) doAutotile() {
 	ati := &e.autoTileInfo[e.autoTileGrid.GetIndex()]
 	atd := DecideTileIndicies(e.activeTileMap, selectedTile, currentLayer, ati)
@@ -1847,6 +1945,24 @@ func listWithExtension(dir string, ext string) []string {
 		valid = append(valid, dirs[i].Name())
 	}
 	return valid
+}
+
+func (e *Editor) FindCorrespondingEntryTileMap(exit *pok.Exit) int {
+	for i, s := range e.activeFiles {
+		if exit.Target == s {
+			return i
+		}
+	}
+	return -1
+}
+
+func (e *Editor) FindCorrespondingExitTileMap(entry *pok.Entry) int {
+	for i, s := range e.activeFiles {
+		if entry.Source == s {
+			return i
+		}
+	}
+	return -1
 }
 
 func loadImages(images []string, base string) []*ebiten.Image {
