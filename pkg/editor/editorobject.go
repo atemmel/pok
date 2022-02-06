@@ -62,15 +62,96 @@ func ReadAllObjects(directory string) ([]EditorObject, error) {
 
 func HasPlacedObjectAt(pobs []PlacedEditorObject, edobjs []EditorObject, x, y int) int {
 	prospect := image.Pt(x, y)
-	for i := range pobs {
-		obj := edobjs[pobs[i].Index]
+	for i, instance := range pobs {
+		obj := edobjs[instance.Index]
 
-		r := image.Rect(0, 0, obj.W, obj.H).Add(image.Pt(pobs[i].X, pobs[i].Y))
+		r := image.Rect(0, 0, obj.W, obj.H).Add(image.Pt(instance.X, instance.Y))
 		if prospect.In(r) {
 			return i
 		}
 	}
 	return -1
+}
+
+type ObjectInsertionParameters struct {
+	TileMap *pok.TileMap
+	ObjectInstances *[]PlacedEditorObject
+	ObjectTypes []EditorObject
+	ObjectTypeIndex int
+	xyIndex int
+	zIndex int
+}
+
+func InsertObjectIntoTileMap(params *ObjectInsertionParameters) {
+	t := params.TileMap
+	col, row := t.Coords(params.xyIndex)
+	edobj := &params.ObjectTypes[params.ObjectTypeIndex]
+	objectInstances := params.ObjectInstances
+	existingObjectIndex := HasPlacedObjectAt(*objectInstances, params.ObjectTypes, col ,row)
+	// if exists
+	if existingObjectIndex != -1 {
+		edobj.EraseObject(t, (*objectInstances)[existingObjectIndex])
+
+		// fast pop? does order matter? it might
+		(*objectInstances)[existingObjectIndex] = (*objectInstances)[len(*objectInstances) - 1]
+		*objectInstances = (*objectInstances)[:len(*objectInstances) - 1]
+	}
+
+	// get max depth
+	maxZ := 0
+	for _, z := range edobj.Z {
+		if z > maxZ {
+			maxZ = z
+		}
+	}
+	maxZ++
+
+	// Append layers as necessary
+	for maxZ > len(t.Tiles) {
+		t.AppendLayer()
+	}
+
+	t.MaybeAddTextureMapping(edobj.textureIndex, edobj.Texture)
+	texIndex := t.GetTextureMapping(edobj.textureIndex)
+
+	zIndex := 0
+
+	for y := 0; y != edobj.H; y++ {
+		gy := row + y
+
+		ty := (edobj.Y + y) * t.NTilesX(edobj.textureIndex)
+
+		for x := 0; x != edobj.W; x++ {
+			gx := col + x
+
+			if (gx < 0 || gx >= t.Width) || (gy < 0 || gy >= t.Height) {
+				zIndex++
+				continue
+			}
+
+			tx := edobj.X + x
+
+			tile := ty + tx
+			index := t.Index(gx, gy)
+			depth := params.zIndex + edobj.Z[zIndex]
+
+			t.Tiles[depth][index] = tile
+			t.TextureIndicies[depth][index] = texIndex
+
+			if (y > 0 || edobj.H == 1) && (x > 0 || edobj.W == 1) {
+				t.Collision[params.zIndex][index] = true
+			}
+
+			zIndex++
+		}
+	}
+
+	p := PlacedEditorObject{
+		col, row, params.zIndex,
+		params.ObjectTypeIndex,
+	}
+
+	*objectInstances = append(*objectInstances, p)
 }
 
 //TODO: This looks gross, what is even going on inside here?

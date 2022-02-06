@@ -145,19 +145,37 @@ type ObjectDelta struct {
 }
 
 func (do *ObjectDelta) Undo(ed *Editor) {
+	fmt.Println(do)
+	// get tilemap
 	tm := ed.tileMaps[do.tileMapIndex]
+	// get object instance
 	pobj := placedObjects[do.tileMapIndex][do.placedObjectIndex]
+	// get object type
 	obj := &ed.objectGrid.objs[do.objectIndex]
-	//tm.EraseObject(pobj, obj)
+	// erase the object
 	obj.EraseObject(tm, pobj)
-	copy(placedObjects[do.tileMapIndex][do.placedObjectIndex:], placedObjects[do.tileMapIndex][do.placedObjectIndex+1:])
+
+	slc1 := placedObjects[do.tileMapIndex][do.placedObjectIndex:]
+	slc2 := placedObjects[do.tileMapIndex][do.placedObjectIndex+1:]
+	copy(slc1, slc2)
 	placedObjects[do.tileMapIndex] = placedObjects[do.tileMapIndex][:len(placedObjects[do.tileMapIndex])-1]
 }
 
 func (do *ObjectDelta) Redo(ed *Editor) {
+	fmt.Println(do)
+	// get tilemap
 	tm := ed.tileMaps[do.tileMapIndex]
-	obj := &ed.objectGrid.objs[do.objectIndex]
-	obj.InsertObject(tm, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex], ed.objectGrid.objs)
+	// insert object
+	InsertObjectIntoTileMap(&ObjectInsertionParameters{
+		TileMap: tm,
+		ObjectInstances: &placedObjects[do.tileMapIndex],
+		ObjectTypes: ed.objectGrid.objs,
+		xyIndex: do.origin,
+		zIndex: do.z,
+	})
+
+
+	//obj.InsertObject(tm, do.placedObjectIndex, do.origin, do.z, &placedObjects[do.tileMapIndex], ed.objectGrid.objs)
 }
 
 func (do *ObjectDelta) Name() string {

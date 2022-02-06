@@ -990,6 +990,7 @@ func (e *Editor) TryOpeningObjectContextMenu(cx, cy, col, row int) bool {
 					tile,
 					layer,
 				)
+				fmt.Println(CurrentRemoveObjectDelta.objectDelta)
 				e.postDoRemoveObject()
 				justDidSomethingOfInterest = false
 			},
