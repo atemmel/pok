@@ -5,7 +5,7 @@ import(
 	"flag"
 	"fmt"
 	"github.com/atemmel/pok/pkg/constants"
-	"github.com/atemmel/pok/pkg/pok"
+	"github.com/atemmel/pok/pkg/editor"
 	"io/ioutil"
 	"image"
 	"image/color"
@@ -161,7 +161,7 @@ func process(img image.Image) []image.Rectangle {
 	return boxes
 }
 
-func outputImage(boxes []image.Rectangle, edobjs []pok.EditorObject, img image.Image, str string) {
+func outputImage(boxes []image.Rectangle, edobjs []editor.EditorObject, img image.Image, str string) {
 	result := image.NewNRGBA(img.Bounds())
 	w, h := img.Bounds().Dx(), img.Bounds().Dy()
 	for x := 0; x < w; x++ {
@@ -228,7 +228,7 @@ func outputImage(boxes []image.Rectangle, edobjs []pok.EditorObject, img image.I
 	saveImage(result, outpath)
 }
 
-func writeEditorObjectToFile(edobj *pok.EditorObject, path string) {
+func writeEditorObjectToFile(edobj *editor.EditorObject, path string) {
 	bytes, err := json.Marshal(edobj)
 	if err != nil {
 		panic(err)
@@ -239,8 +239,8 @@ func writeEditorObjectToFile(edobj *pok.EditorObject, path string) {
 	}
 }
 
-func outputEditorObjects(boxes []image.Rectangle, s string) []pok.EditorObject {
-	edobj := pok.EditorObject{
+func outputEditorObjects(boxes []image.Rectangle, s string) []editor.EditorObject {
+	edobj := editor.EditorObject{
 		Texture: "",
 		X: 0,
 		Y: 0,
@@ -256,7 +256,7 @@ func outputEditorObjects(boxes []image.Rectangle, s string) []pok.EditorObject {
 
 	edobj.Texture = s
 
-	edobjs := make([]pok.EditorObject, 0, len(boxes))
+	edobjs := make([]editor.EditorObject, 0, len(boxes))
 
 	for _, box := range boxes {
 		edobj.X = box.Min.X / constants.TileSize
