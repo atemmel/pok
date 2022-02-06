@@ -6,7 +6,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"image"
-	"image/color"
 )
 
 const (
@@ -15,11 +14,6 @@ const (
 )
 
 var (
-	//fg = color.White
-	//fgShadow = color.Black
-	//bg = color.RGBA{163, 164, 165, 255}
-	//border = color.Black
-
 	buttons []button
 	buttonFont font.Face
 
@@ -76,50 +70,6 @@ func initButtons(font font.Face) {
 	buttons = make([]button, 0, 4)
 }
 
-func buildBox(w, h int) *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-
-	// fill
-	for x := 0; x < w; x++ {
-		for y := 0; y < h; y++ {
-			img.Set(x, y, Bg)
-		}
-	}
-
-	// border
-	for x := 0; x < w; x++ {
-		img.Set(x, 0, Border)
-		img.Set(x, h - 1, Border)
-	}
-
-	for y := 0; y < h; y++ {
-		img.Set(0, y, Border)
-		img.Set(w - 1, y, Border)
-	}
-
-	img.Set(0, 0, color.Transparent)
-	img.Set(0, h - 1, color.Transparent)
-	img.Set(w - 1, 0, color.Transparent)
-	img.Set(w - 1, h - 1, color.Transparent)
-
-	img.Set(1, 0, color.Transparent)
-	img.Set(1, h - 1, color.Transparent)
-	img.Set(w - 2, 0, color.Transparent)
-	img.Set(w - 2, h - 1, color.Transparent)
-
-	img.Set(0, 1, color.Transparent)
-	img.Set(0, h - 2, color.Transparent)
-	img.Set(w - 1, 1, color.Transparent)
-	img.Set(w - 1, h - 2, color.Transparent)
-
-	img.Set(1, 1, Border)
-	img.Set(1, h - 2, Border)
-	img.Set(w - 2, 1, Border)
-	img.Set(w - 2, h - 2, Border)
-
-	return img
-}
-
 func buttonFromButtonInfo(buttonInfo *ButtonInfo) button {
 	r := text.BoundString(buttonFont, buttonInfo.Content)
 	w := r.Dx()
@@ -140,7 +90,7 @@ func buttonFromButtonInfo(buttonInfo *ButtonInfo) button {
 
 	boundingBox := image.Rect(buttonInfo.X, buttonInfo.Y, buttonInfo.X + w, buttonInfo.Y + h)
 
-	src := buildBox(w, h)
+	src := CreateNeatImageWithBorder(w, h)
 	img := ebiten.NewImageFromImage(src)
 
 	const extraOffset = 9

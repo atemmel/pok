@@ -65,11 +65,11 @@ func NewScrollBar(x, y, rows int) *Scrollbar {
 	}
 
 	scrollBarHeight := int((maxGridHeight + columnLen) * scale)
-	img := ebiten.NewImage(scrollBarWidth, scrollBarHeight)
-	img.Fill(color.RGBA{255, 255, 255, 255})
+	img := CreateNeatImageWithBorder(scrollBarWidth, scrollBarHeight)
+	ebitenImg := ebiten.NewImageFromImage(img)
 
 	return &Scrollbar{
-		img,
+		ebitenImg,
 		x,
 		y,
 		y,
