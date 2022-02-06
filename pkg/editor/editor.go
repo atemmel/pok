@@ -655,6 +655,12 @@ func (e *Editor) handleInputs() error {
 		return nil
 	}
 
+	if e.gridIsVisible() {
+		if e.grid.PollScrollBar(cx, cy) {
+			return nil
+		}
+	}
+
 	if justDidSomethingOfInterest {
 		return nil
 	}
