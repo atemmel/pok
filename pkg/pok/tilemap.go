@@ -581,3 +581,17 @@ func (t *TileMap) createNpcs() error {
 
 	return nil
 }
+
+func (t *TileMap) HasRockAt(x, y, z int) bool {
+	z += 1
+	for _, rock := range t.Rocks {
+		if rock.smashed {
+			continue
+		}
+
+		if rock.X == x && rock.Y == y && rock.Z == z {
+			return true
+		}
+	}
+	return false
+}
