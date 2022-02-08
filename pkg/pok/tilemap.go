@@ -212,6 +212,25 @@ func (t *TileMap) drawCuttableTrees(rend *Renderer, offsetX, offsetY float64) {
 	}
 }
 
+func (t *TileMap) drawBoulders(rend *Renderer, offsetX, offsetY float64) {
+	img := textures.GetBoulderImage()
+	for _, boulder := range t.Boulders {
+		tx := float64(boulder.X * constants.TileSize)
+		ty := float64(boulder.Y * constants.TileSize)
+
+		target := &RenderTarget{
+			Op: &ebiten.DrawImageOptions{},
+			Src: img,
+			SubImage: nil,
+			X: tx,
+			Y: ty,
+			Z: boulder.Z,
+		}
+
+		rend.Draw(target)
+	}
+}
+
 func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64, drawOnlyCurrentLayer bool, currentLayer int) {
 	for j := range t.Tiles {
 		if drawOnlyCurrentLayer && j != currentLayer {
@@ -260,6 +279,7 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64, drawO
 	t.drawNpcs(rend, offsetX, offsetY)
 	t.drawRocks(rend, offsetX, offsetY)
 	t.drawCuttableTrees(rend, offsetX, offsetY)
+	t.drawBoulders(rend, offsetX, offsetY)
 }
 
 func (t *TileMap) OpenFile(path string) error {
@@ -639,6 +659,21 @@ func (t *TileMap) GetUncutTreeIndexAt(x, y, z int) int {
 		}
 
 		if tree.X == x && tree.Y == y && tree.Z == z {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (t *TileMap) HasBoulderAt(x, y, z int) bool {
+	return t.GetBoulderIndexAt(x, y, z) != -1
+}
+
+func (t *TileMap) GetBoulderIndexAt(x, y, z int) int {
+	z += 1
+	for i, boulder := range t.Boulders {
+		if boulder.X == x && boulder.Y == y && boulder.Z == z {
 			return i
 		}
 	}

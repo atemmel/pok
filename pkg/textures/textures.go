@@ -28,11 +28,13 @@ const(
 
 	rockTextureStr = constants.PropsImagesDir + "object_rock.png"
 	cutTextureStr = constants.PropsImagesDir + "object_cut.png"
+	boulderTextureStr = constants.PropsImagesDir + "object_boulder.png"
 )
 
 var(
 	rockImg *ebiten.Image = nil
 	cutImg *ebiten.Image = nil
+	boulderImg *ebiten.Image = nil
 )
 
 func Init() {
@@ -42,6 +44,8 @@ func Init() {
 	rockImg, _, err = ebitenutil.NewImageFromFile(rockTextureStr)
 	debug.Assert(err)
 	cutImg, _, err = ebitenutil.NewImageFromFile(cutTextureStr)
+	debug.Assert(err)
+	boulderImg, _, err = ebitenutil.NewImageFromFile(boulderTextureStr)
 	debug.Assert(err)
 }
 
@@ -59,6 +63,10 @@ func GetRockImage() *ebiten.Image {
 
 func GetCutImage() *ebiten.Image {
 	return cutImg
+}
+
+func GetBoulderImage() *ebiten.Image {
+	return boulderImg
 }
 
 func LoadWithError(path string) (*ebiten.Image, error) {
