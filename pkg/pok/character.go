@@ -25,6 +25,7 @@ type Character struct {
 	isBiking bool
 	isJumping bool
 	isSurfing bool
+	hasUsedStrength bool
 	isTraversingStaircaseDown bool
 	isTraversingStaircaseUp bool
 	frames int

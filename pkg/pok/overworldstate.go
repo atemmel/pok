@@ -138,6 +138,9 @@ func (o *OverworldState) tryInteract(g *Game) {
 
 	// check trees to cut
 	o.tryInteractCut(x, y, z, g)
+
+	// check to trigger strength
+	o.tryInteractTriggerStrength(x, y, z ,g)
 }
 
 func (o *OverworldState) tryInteractWater(x, y, z int, g *Game) {
@@ -190,6 +193,25 @@ func (o *OverworldState) tryInteractCut(x, y, z int, g *Game) {
 		},
 		&dialog.EffectDialogNode{
 			Effect: "cut",
+			Next: nil,
+		},
+	})
+
+	g.Dialog.PeekCollector(&o.collector)
+}
+
+func (o *OverworldState) tryInteractTriggerStrength(x, y, z int, g *Game) {
+	if g.Player.Char.hasUsedStrength || !o.tileMap.HasBoulderAt(x, y, z) {
+		return
+	}
+
+	o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
+		&dialog.DialogNode{
+			Dialog: "Machamp used Strength!",
+			Next: dialog.Link(1),
+		},
+		&dialog.EffectDialogNode{
+			Effect: "strength",
 			Next: nil,
 		},
 	})
@@ -299,6 +321,8 @@ func (o *OverworldState) CheckDialogInputs(g *Game) {
 					beginRockSmash(g)
 				} else if result.Opt == "cut" {
 					beginCut(g)
+				} else if result.Opt == "strength" {
+					beginStrength(g)
 				}
 				_ = o.collector.CollectOnce();
 				goto COLLECT_AGAIN
@@ -381,6 +405,10 @@ func beginCut(g *Game) {
 	}
 
 	g.Ows.tileMap.CuttableTrees[treeIndex].cut = true
+}
+
+func beginStrength(g *Game) {
+	g.Player.Char.hasUsedStrength = true
 }
 
 func (o *OverworldState) Update(g *Game) error {
