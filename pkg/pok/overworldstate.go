@@ -152,7 +152,20 @@ func (o *OverworldState) tryInteract(g *Game) {
 	// check rocks to smash
 	rockIndex := o.tileMap.GetUnsmashedRockIndexAt(x, y, g.Player.Char.Z)
 	if rockIndex != -1 {
-		o.tileMap.Rocks[rockIndex].smashed = true
+		o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
+			&dialog.DialogNode{
+				Dialog: "Bidoof used Rock Smash!",
+				Next: dialog.Link(1),
+			},
+			&dialog.EffectDialogNode{
+				Effect: "rocksmash",
+				Next: nil,
+			},
+		})
+
+		result := o.collector.Peek()
+		g.Dialog.SetString(result.Dialog)
+		g.Dialog.Hidden = false
 	}
 
 	// check trees to cut
@@ -260,6 +273,8 @@ func (o *OverworldState) CheckDialogInputs(g *Game) {
 			case dialog.EffectDialogNodeId:
 				if result.Opt == "surf" {
 					beginSurf(g)
+				} else if result.Opt == "rocksmash" {
+					beginRockSmash(g)
 				}
 				_ = o.collector.CollectOnce();
 				goto COLLECT_AGAIN
@@ -291,6 +306,30 @@ func beginSurf(g *Game) {
 	g.Player.Char.currentJumpTarget = constants.TileSize
 
 	selectedHm = Surf
+}
+
+func beginRockSmash(g *Game) {
+	x, y := g.Player.Char.X, g.Player.Char.Y
+
+	switch g.Player.Char.dir {
+		case Down:
+			y++
+		case Right:
+			x++
+		case Left:
+			x--
+		case Up:
+			y--
+	}
+
+	z := g.Player.Char.Z
+
+	rockIndex := g.Ows.tileMap.GetUnsmashedRockIndexAt(x, y, z)
+	if rockIndex == -1 {
+		return
+	}
+
+	g.Ows.tileMap.Rocks[rockIndex].smashed = true
 }
 
 func (o *OverworldState) Update(g *Game) error {
