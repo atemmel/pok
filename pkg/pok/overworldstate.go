@@ -148,6 +148,12 @@ func (o *OverworldState) tryInteract(g *Game) {
 			g.Dialog.Hidden = false
 		}
 	}
+
+	// check rocks to smash
+	rockIndex := o.tileMap.GetUnsmashedRockIndexAt(x, y, g.Player.Char.Z)
+	if rockIndex != -1 {
+		o.tileMap.Rocks[rockIndex].smashed = true
+	}
 }
 
 func (o *OverworldState) talkWith(g *Game, npcIndex int) {

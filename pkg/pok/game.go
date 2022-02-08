@@ -118,7 +118,7 @@ func (g *Game) TileIsOccupied(x int, y int, z int) bool {
 		return true
 	}
 
-	if g.Ows.tileMap.HasRockAt(x, y, z) {
+	if g.Ows.tileMap.HasUnsmashedRockAt(x, y, z) {
 		return true
 	}
 
