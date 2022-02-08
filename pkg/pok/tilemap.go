@@ -28,6 +28,28 @@ type Entry struct {
 	Z int
 }
 
+type Rock struct {
+	X int
+	Y int
+	Z int
+	smashed bool
+}
+
+type Boulder struct {
+	X int
+	Y int
+	Z int
+}
+
+type CuttableTree struct {
+	X int
+	Y int
+	Z int
+	cut bool
+}
+
+//TODO: Generic item struct
+
 type TileMap struct {
 	Tiles [][]int
 	Collision [][]bool
@@ -39,6 +61,11 @@ type TileMap struct {
 	Height int
 	NpcInfo []NpcInfo
 	WeatherKind WeatherKind
+
+	// "Smashable" rocks
+	Rocks []Rock
+	Boulders []Boulder
+	CuttableTrees []CuttableTree
 
 	// Internal information
 	TextureMapping []int `json:"-"`
@@ -136,6 +163,29 @@ func (t *TileMap) drawNpcs(rend *Renderer, offsetX, offsetY float64) {
 	}
 }
 
+func (t *TileMap) drawRocks(rend *Renderer, offsetX, offsetY float64) {
+	img := textures.GetRockImage()
+	for _, r := range t.Rocks {
+		if r.smashed {
+			continue
+		}
+
+		tx := float64(r.X * constants.TileSize)
+		ty := float64(r.Y * constants.TileSize)
+
+		target := &RenderTarget{
+			Op: &ebiten.DrawImageOptions{},
+			Src: img,
+			SubImage: nil,
+			X: tx,
+			Y: ty,
+			Z: r.Z,
+		}
+
+		rend.Draw(target)
+	}
+}
+
 func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64, drawOnlyCurrentLayer bool, currentLayer int) {
 	for j := range t.Tiles {
 		if drawOnlyCurrentLayer && j != currentLayer {
@@ -182,6 +232,7 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64, drawO
 	}
 
 	t.drawNpcs(rend, offsetX, offsetY)
+	t.drawRocks(rend, offsetX, offsetY)
 }
 
 func (t *TileMap) OpenFile(path string) error {
@@ -509,6 +560,11 @@ func CreateTileMap(width int, height int, texture []string) *TileMap {
 		height,
 		make([]NpcInfo, 0),
 		Regular,
+
+		make([]Rock, 0),
+		make([]Boulder, 0),
+		make([]CuttableTree, 0),
+
 		textureMapping,
 		make([]Npc, 0),
 		nil,

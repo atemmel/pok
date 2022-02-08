@@ -16,6 +16,7 @@ const (
 	DialogDir = ResourceDir + "dialog/"
 	TileMapImagesDir = ImagesDir + "overworld/"
 	CharacterImagesDir = ImagesDir + "characters/"
+	PropsImagesDir = ImagesDir + "props/"
 
 	EditorResourceDir = "./editorresources/"
 	EditorImagesDir = EditorResourceDir + "images/"

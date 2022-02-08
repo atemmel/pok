@@ -25,11 +25,21 @@ const(
 	baseTextureStr = constants.TileMapImagesDir + "base.png"
 	waterTextureStr = constants.TileMapImagesDir + "water.png"
 	stairTextureStr = constants.TileMapImagesDir + "stairs.png"
+
+	rockTextureStr = constants.PropsImagesDir + "object_rock.png"
+)
+
+var(
+	rockImg *ebiten.Image = nil
 )
 
 func Init() {
 	aliases = make(map[string]int, preAlloc)
 	textures = make([]*ebiten.Image, 0, preAlloc)
+	var err error
+	rockImg, _, err = ebitenutil.NewImageFromFile(rockTextureStr)
+
+	debug.Assert(err)
 }
 
 func Load(path string) (*ebiten.Image, int) {
@@ -38,6 +48,10 @@ func Load(path string) (*ebiten.Image, int) {
 		return insertNewTexture(path);
 	}
 	return Access(index), index
+}
+
+func GetRockImage() *ebiten.Image {
+	return rockImg
 }
 
 func LoadWithError(path string) (*ebiten.Image, error) {
