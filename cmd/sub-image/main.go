@@ -3,7 +3,6 @@ package main
 import(
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/editor"
 	"io/ioutil"
@@ -295,7 +294,6 @@ func main() {
 		edobjs := outputEditorObjects(boxes, s)
 		if shouldOutputImage {
 			outputImage(boxes, edobjs, img, s)
-			fmt.Println(boxes, edobjs)
 		}
 
 		preStr := ""
