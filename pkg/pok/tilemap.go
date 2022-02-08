@@ -186,6 +186,32 @@ func (t *TileMap) drawRocks(rend *Renderer, offsetX, offsetY float64) {
 	}
 }
 
+func (t *TileMap) drawCuttableTrees(rend *Renderer, offsetX, offsetY float64) {
+	img := textures.GetCutImage()
+	for _, tree := range t.CuttableTrees {
+		if tree.cut {
+			continue
+		}
+
+		tx := float64(tree.X * constants.TileSize)
+		ty := float64(tree.Y * constants.TileSize)
+
+		tx += NpcOffsetX
+		ty += NpcOffsetY
+
+		target := &RenderTarget{
+			Op: &ebiten.DrawImageOptions{},
+			Src: img,
+			SubImage: nil,
+			X: tx, 
+			Y: ty,
+			Z: tree.Z,
+		}
+
+		rend.Draw(target)
+	}
+}
+
 func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64, drawOnlyCurrentLayer bool, currentLayer int) {
 	for j := range t.Tiles {
 		if drawOnlyCurrentLayer && j != currentLayer {
@@ -233,6 +259,7 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64, drawO
 
 	t.drawNpcs(rend, offsetX, offsetY)
 	t.drawRocks(rend, offsetX, offsetY)
+	t.drawCuttableTrees(rend, offsetX, offsetY)
 }
 
 func (t *TileMap) OpenFile(path string) error {
@@ -597,5 +624,24 @@ func (t *TileMap) GetUnsmashedRockIndexAt(x, y, z int) int {
 			return i
 		}
 	}
+	return -1
+}
+
+func (t *TileMap) HasUncutTreeAt(x, y, z int) bool {
+	return t.GetUncutTreeIndexAt(x, y, z) != -1
+}
+
+func (t *TileMap) GetUncutTreeIndexAt(x, y, z int) int {
+	z += 1
+	for i, tree := range t.CuttableTrees {
+		if tree.cut {
+			continue
+		}
+
+		if tree.X == x && tree.Y == y && tree.Z == z {
+			return i
+		}
+	}
+
 	return -1
 }

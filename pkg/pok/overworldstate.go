@@ -154,6 +154,12 @@ func (o *OverworldState) tryInteract(g *Game) {
 	if rockIndex != -1 {
 		o.tileMap.Rocks[rockIndex].smashed = true
 	}
+
+	// check trees to cut
+	treeIndex := o.tileMap.GetUncutTreeIndexAt(x, y, g.Player.Char.Z)
+	if treeIndex != -1 {
+		o.tileMap.CuttableTrees[treeIndex].cut = true
+	}
 }
 
 func (o *OverworldState) talkWith(g *Game, npcIndex int) {

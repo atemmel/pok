@@ -122,6 +122,10 @@ func (g *Game) TileIsOccupied(x int, y int, z int) bool {
 		return true
 	}
 
+	if g.Ows.tileMap.HasUncutTreeAt(x, y, z) {
+		return true
+	}
+
 	return false
 }
 
