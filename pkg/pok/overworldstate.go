@@ -131,60 +131,70 @@ func (o *OverworldState) tryInteract(g *Game) {
 	}
 
 	// check water
-	if g.Player.Char.CoordinateContainsWater(x, y, g) {
-		if !g.Player.Char.isSurfing {
-			o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
-				&dialog.DialogNode{
-					Dialog: "Sharpedo used Surf!",
-					Next: dialog.Link(1),
-				},
-				&dialog.EffectDialogNode{
-					Effect: "surf",
-					Next: nil,
-				},
-			})
-
-			result := o.collector.Peek()
-			g.Dialog.SetString(result.Dialog)
-			g.Dialog.Hidden = false
-		}
-	}
+	o.tryInteractWater(x, y, z, g)
 
 	// check rocks to smash
-	if o.tileMap.HasUnsmashedRockAt(x, y, z) {
-		o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
-			&dialog.DialogNode{
-				Dialog: "Bidoof used Rock Smash!",
-				Next: dialog.Link(1),
-			},
-			&dialog.EffectDialogNode{
-				Effect: "rocksmash",
-				Next: nil,
-			},
-		})
-
-		result := o.collector.Peek()
-		g.Dialog.SetString(result.Dialog)
-		g.Dialog.Hidden = false
-	}
+	o.tryInteractRock(x, y, z, g)
 
 	// check trees to cut
-	if o.tileMap.HasUncutTreeAt(x, y, z) {
-		o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
-			&dialog.DialogNode{
-				Dialog: "Bidoof used Cut!",
-				Next: dialog.Link(1),
-			},
-			&dialog.EffectDialogNode{
-				Effect: "cut",
-				Next: nil,
-			},
-		})
+	o.tryInteractCut(x, y, z, g)
+}
 
-		result := o.collector.Peek()
-		g.Dialog.SetString(result.Dialog)
-		g.Dialog.Hidden = false
+func (o *OverworldState) tryInteractWater(x, y, z int, g *Game) {
+	if !(g.Player.Char.CoordinateContainsWater(x, y, g) && !g.Player.Char.isSurfing) {
+		return
 	}
+
+	o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
+		&dialog.DialogNode{
+			Dialog: "Sharpedo used Surf!",
+			Next: dialog.Link(1),
+		},
+		&dialog.EffectDialogNode{
+			Effect: "surf",
+			Next: nil,
+		},
+	})
+
+	g.Dialog.PeekCollector(&o.collector)
+}
+
+func (o *OverworldState) tryInteractRock(x, y, z int, g *Game) {
+	if !o.tileMap.HasUnsmashedRockAt(x, y, z) {
+		return
+	}
+
+	o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
+		&dialog.DialogNode{
+			Dialog: "Bidoof used Rock Smash!",
+			Next: dialog.Link(1),
+		},
+		&dialog.EffectDialogNode{
+			Effect: "rocksmash",
+			Next: nil,
+		},
+	})
+
+	g.Dialog.PeekCollector(&o.collector)
+}
+
+func (o *OverworldState) tryInteractCut(x, y, z int, g *Game) {
+	if !o.tileMap.HasUncutTreeAt(x, y, z) {
+		return
+	}
+
+	o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
+		&dialog.DialogNode{
+			Dialog: "Bidoof used Cut!",
+			Next: dialog.Link(1),
+		},
+		&dialog.EffectDialogNode{
+			Effect: "cut",
+			Next: nil,
+		},
+	})
+
+	g.Dialog.PeekCollector(&o.collector)
 }
 
 func (o *OverworldState) talkWith(g *Game, npcIndex int) {

@@ -66,6 +66,12 @@ func NewDialogBox() DialogBox {
 	return db
 }
 
+func (d *DialogBox) PeekCollector(coll *dialog.DialogTreeCollector) {
+	result := coll.Peek()
+	d.SetString(result.Dialog)
+	d.Hidden = false
+}
+
 func (d *DialogBox) SetString(str string) {
 	result := str
 	hasBreak := false
