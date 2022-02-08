@@ -108,6 +108,7 @@ func (o *OverworldState) tryInteract(g *Game) {
 	}
 
 	x, y := g.Player.Char.X, g.Player.Char.Y
+	z := g.Player.Char.Z
 
 	switch g.Player.Char.dir {
 		case Up:
@@ -150,8 +151,7 @@ func (o *OverworldState) tryInteract(g *Game) {
 	}
 
 	// check rocks to smash
-	rockIndex := o.tileMap.GetUnsmashedRockIndexAt(x, y, g.Player.Char.Z)
-	if rockIndex != -1 {
+	if o.tileMap.HasUnsmashedRockAt(x, y, z) {
 		o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
 			&dialog.DialogNode{
 				Dialog: "Bidoof used Rock Smash!",
@@ -169,10 +169,28 @@ func (o *OverworldState) tryInteract(g *Game) {
 	}
 
 	// check trees to cut
+	if o.tileMap.HasUncutTreeAt(x, y, z) {
+		o.collector = dialog.MakeDialogTreeCollector(&dialog.DialogTree{
+			&dialog.DialogNode{
+				Dialog: "Bidoof used Cut!",
+				Next: dialog.Link(1),
+			},
+			&dialog.EffectDialogNode{
+				Effect: "cut",
+				Next: nil,
+			},
+		})
+
+		result := o.collector.Peek()
+		g.Dialog.SetString(result.Dialog)
+		g.Dialog.Hidden = false
+	}
+	/*
 	treeIndex := o.tileMap.GetUncutTreeIndexAt(x, y, g.Player.Char.Z)
 	if treeIndex != -1 {
 		o.tileMap.CuttableTrees[treeIndex].cut = true
 	}
+	*/
 }
 
 func (o *OverworldState) talkWith(g *Game, npcIndex int) {
@@ -275,6 +293,8 @@ func (o *OverworldState) CheckDialogInputs(g *Game) {
 					beginSurf(g)
 				} else if result.Opt == "rocksmash" {
 					beginRockSmash(g)
+				} else if result.Opt == "cut" {
+					beginCut(g)
 				}
 				_ = o.collector.CollectOnce();
 				goto COLLECT_AGAIN
@@ -326,10 +346,37 @@ func beginRockSmash(g *Game) {
 
 	rockIndex := g.Ows.tileMap.GetUnsmashedRockIndexAt(x, y, z)
 	if rockIndex == -1 {
+		//TODO: Assert
 		return
 	}
 
 	g.Ows.tileMap.Rocks[rockIndex].smashed = true
+}
+
+func beginCut(g *Game) {
+	x, y := g.Player.Char.X, g.Player.Char.Y
+
+	switch g.Player.Char.dir {
+		case Down:
+			y++
+		case Right:
+			x++
+		case Left:
+			x--
+		case Up:
+			y--
+	}
+
+	z := g.Player.Char.Z
+
+	treeIndex := g.Ows.tileMap.GetUncutTreeIndexAt(x, y, z)
+	
+	if treeIndex == -1 {
+		//TODO: Assert
+		return
+	}
+
+	g.Ows.tileMap.CuttableTrees[treeIndex].cut = true
 }
 
 func (o *OverworldState) Update(g *Game) error {
