@@ -185,12 +185,6 @@ func (o *OverworldState) tryInteract(g *Game) {
 		g.Dialog.SetString(result.Dialog)
 		g.Dialog.Hidden = false
 	}
-	/*
-	treeIndex := o.tileMap.GetUncutTreeIndexAt(x, y, g.Player.Char.Z)
-	if treeIndex != -1 {
-		o.tileMap.CuttableTrees[treeIndex].cut = true
-	}
-	*/
 }
 
 func (o *OverworldState) talkWith(g *Game, npcIndex int) {
