@@ -39,6 +39,74 @@ type Boulder struct {
 	X int
 	Y int
 	Z int
+
+	gX float64
+	gY float64
+	frames int
+	velocity float64
+	dir Direction
+}
+
+func (b *Boulder) Update(g *Game) {
+	if b.dir == Static {
+		return
+	}
+
+	if b.frames == 0 && b.dir != Static {
+		b.tryStep(g)
+	} else {
+		b.step()
+	}
+
+	if b.frames * int(b.velocity) >= constants.TileSize {
+		b.frames = 0
+		b.dir = Static
+	}
+}
+
+func (b *Boulder) updatePosition() {
+	switch b.dir {
+		case Up:
+			b.Y--
+		case Down:
+			b.Y++
+		case Left:
+			b.X--
+		case Right:
+			b.X++
+	}
+}
+
+func (b *Boulder) tryStep(g *Game) {
+	ox, oy := b.X, b.Y
+	b.updatePosition()
+	nx, ny := b.X, b.Y
+	b.X, b.Y = ox, oy
+
+	if g.TileIsOccupied(nx, ny, b.Z - 1) {
+		b.dir = Static
+		return
+	}
+
+	b.X, b.Y = nx, ny
+
+	b.velocity = WalkVelocity
+	b.step()
+}
+
+func (b *Boulder) step() {
+	b.frames++
+
+	switch b.dir {
+		case Up:
+			b.gY += -b.velocity
+		case Down:
+			b.gY += b.velocity
+		case Left:
+			b.gX += -b.velocity
+		case Right:
+			b.gX += b.velocity
+	}
 }
 
 type CuttableTree struct {
@@ -143,9 +211,20 @@ func (t *TileMap) Draw(rend *Renderer, drawOnlyCurrentLayer bool, currentLayer i
 	t.DrawWithOffset(rend, 0, 0, drawOnlyCurrentLayer, currentLayer)
 }
 
+func (t *TileMap) Update(g *Game) {
+	t.UpdateNpcs(g)
+	t.UpdateBoulders(g)
+}
+
 func (t *TileMap) UpdateNpcs(g *Game) {
 	for i := range t.Npcs {
 		t.Npcs[i].Update(g)
+	}
+}
+
+func (t *TileMap) UpdateBoulders(g *Game) {
+	for i := range t.Boulders {
+		t.Boulders[i].Update(g)
 	}
 }
 
@@ -214,9 +293,12 @@ func (t *TileMap) drawCuttableTrees(rend *Renderer, offsetX, offsetY float64) {
 
 func (t *TileMap) drawBoulders(rend *Renderer, offsetX, offsetY float64) {
 	img := textures.GetBoulderImage()
-	for _, boulder := range t.Boulders {
-		tx := float64(boulder.X * constants.TileSize)
-		ty := float64(boulder.Y * constants.TileSize)
+	for i := range t.Boulders {
+		boulder := &t.Boulders[i]
+
+		tx := boulder.gX
+		ty := boulder.gY
+		z := boulder.Z
 
 		target := &RenderTarget{
 			Op: &ebiten.DrawImageOptions{},
@@ -224,7 +306,7 @@ func (t *TileMap) drawBoulders(rend *Renderer, offsetX, offsetY float64) {
 			SubImage: nil,
 			X: tx,
 			Y: ty,
-			Z: boulder.Z,
+			Z: z,
 		}
 
 		rend.Draw(target)
@@ -319,7 +401,17 @@ func (t *TileMap) OpenFile(path string) error {
 	t.Npcs = t.Npcs[:0]
 	err = t.createNpcs()
 
+	t.init()
+
 	return err
+}
+
+func (t *TileMap) init() {
+	for i := range t.Boulders {
+		boulder := &t.Boulders[i]
+		boulder.gX = float64(boulder.X * constants.TileSize)
+		boulder.gY = float64(boulder.Y * constants.TileSize)
+	}
 }
 
 func (t *TileMap) Index(x, y int) int {
@@ -672,7 +764,8 @@ func (t *TileMap) HasBoulderAt(x, y, z int) bool {
 
 func (t *TileMap) GetBoulderIndexAt(x, y, z int) int {
 	z += 1
-	for i, boulder := range t.Boulders {
+	for i := range t.Boulders {
+		boulder := &t.Boulders[i]
 		if boulder.X == x && boulder.Y == y && boulder.Z == z {
 			return i
 		}

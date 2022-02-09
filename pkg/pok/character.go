@@ -243,6 +243,9 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 			nx, ny := c.X, c.Y
 			// Restore old position
 			c.X, c.Y = ox, oy
+			
+			c.handleBoulder(nx, ny, c.Z, c.dir, g)
+
 			if g.TileIsOccupied(nx, ny, c.Z) {
 				// Thud noise
 				if c.animationState == characterMaxCycle -1 {
@@ -254,7 +257,6 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 			} else {
 
 				containsWater := c.CoordinateContainsWater(nx, ny, g)
-
 				// Accept new position
 				if res := c.TryJumpLedge(nx, ny, g); res == DoJump {
 					g.Audio.PlayPlayerJump()
@@ -279,12 +281,7 @@ func (c *Character) TryStep(dir Direction, g *Game) {
 					return
 				}
 
-				//if c.isStairCase(nx, ny, c.Z, g) || c.isStairCase(c.X, c.Y, c.Z, g) {
-					c.handleStairCase(g, nx, ny)
-					//} else {
-					//c.isTraversingStaircaseDown = false
-					//c.isTraversingStaircaseUp = false
-					//}
+				c.handleStairCase(g, nx, ny)
 
 				c.X, c.Y = nx, ny
 
@@ -468,3 +465,12 @@ func (c *Character) handleStairCaseWithOffset(g *Game, indiciesToCheck []int, zO
 	}
 }
 
+func (c *Character) handleBoulder(x, y, z int, dir Direction, g *Game) {
+	boulderIndex := g.Ows.tileMap.GetBoulderIndexAt(x, y, z)
+	if boulderIndex == -1 {
+		return
+	}
+
+	boulder := &g.Ows.tileMap.Boulders[boulderIndex]
+	boulder.dir = dir
+}

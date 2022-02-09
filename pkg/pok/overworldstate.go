@@ -414,7 +414,7 @@ func beginStrength(g *Game) {
 func (o *OverworldState) Update(g *Game) error {
 	g.Player.Update(g)
 	jobs.TickAllOneFrame()
-	o.tileMap.UpdateNpcs(g)
+	o.tileMap.Update(g)
 	if o.weather != nil {
 		o.weather.Update()
 	}
