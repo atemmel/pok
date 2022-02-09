@@ -168,6 +168,7 @@ func (g *Game) Load(str string, entrypoint int) {
 		constants.DisplaySizeY,
 		2,
 	)
+	g.Player.Char.hasUsedStrength = false
 
 	g.Rend.SetEffect(GetActiveEffect())
 	switch g.Ows.tileMap.WeatherKind {

@@ -466,6 +466,10 @@ func (c *Character) handleStairCaseWithOffset(g *Game, indiciesToCheck []int, zO
 }
 
 func (c *Character) handleBoulder(x, y, z int, dir Direction, g *Game) {
+	if !c.hasUsedStrength {
+		return
+	}
+
 	boulderIndex := g.Ows.tileMap.GetBoulderIndexAt(x, y, z)
 	if boulderIndex == -1 {
 		return
