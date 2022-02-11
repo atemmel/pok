@@ -974,6 +974,10 @@ func (e *Editor) TryOpeningContextMenu(cx, cy int) {
 		return
 	}
 
+	if e.TryOpeningRockContextMenu(cx, cy, col, row) {
+		return
+	}
+
 	ContextMenu.Close();
 }
 
@@ -1058,6 +1062,34 @@ func (e *Editor) TryOpeningLinkContextMenu(cx, cy, col, row int) bool {
 	}
 
 	ContextMenu.Open(cx, cy, items)
+	return true
+}
+
+func (e *Editor) TryOpeningRockContextMenu(cx, cy, col, row int) bool {
+	rockIndex := e.activeTileMap.GetRockAt(col, row, currentLayer)
+	if rockIndex == -1 {
+		return false
+	}
+
+	x := col
+	y := row
+	z := currentLayer
+	tileMapIndex := e.activeTileMapIndex
+
+	// Open a context menu in which one can remove rocks
+	ContextMenu.Open(cx, cy, []ContextMenuItem{
+		{
+			String: "REMOVE ROCK",
+			OnClick: func() {
+				lockEditor()
+			},
+			OnRelease: func() {
+				e.doRemoveRockWithInfo(x, y, z, tileMapIndex)
+				e.postDoRemoveRock()
+				unlockEditor()
+			},
+		},
+	});
 	return true
 }
 
@@ -1905,6 +1937,26 @@ func (e *Editor) doRemoveNpc() {
 	e.activeTileMap.RemoveNpc(nd.npcIndex)
 
 	CurrentRemoveNpcDelta.npcDelta = nd
+}
+
+func (e *Editor) doRemoveRockWithInfo(x, y, z, tileMapIndex int) {
+	delta := &RemoveRockDelta{
+		x: x,
+		y: y,
+		z: z,
+		tileMapIndex: tileMapIndex,
+	}
+
+	// remove rock
+	t := e.tileMaps[tileMapIndex]
+	t.RemoveRockAt(x, y, z)
+
+	CurrentRemoveRockDelta = delta
+}
+
+func (e *Editor) postDoRemoveRock() {
+	UndoStack = append(UndoStack, CurrentRemoveRockDelta)
+	CurrentRemoveObjectDelta = &RemoveObjectDelta{}
 }
 
 func listPngs(dir string) []string {

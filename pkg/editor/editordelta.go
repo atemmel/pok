@@ -25,6 +25,7 @@ var CurrentRemoveLinkDelta *RemoveLinkDelta = &RemoveLinkDelta{}
 var CurrentAutotileDelta *AutotileDelta = &AutotileDelta{}
 var CurrentNpcDelta *NpcDelta = &NpcDelta{}
 var CurrentRemoveNpcDelta *RemoveNpcDelta = &RemoveNpcDelta{}
+var CurrentRemoveRockDelta *RemoveRockDelta = &RemoveRockDelta{}
 
 var CurrentResizeDelta *ResizeDelta = &ResizeDelta{}
 
@@ -457,4 +458,32 @@ func (drn *RemoveNpcDelta) Redo(ed *Editor) {
 
 func (drn *RemoveNpcDelta) Name() string {
 	return "RemoveNpc"
+}
+
+type RemoveRockDelta struct {
+	x, y, z int
+	tileMapIndex int
+}
+
+// add rock
+func (rrd *RemoveRockDelta) Undo(ed *Editor) {
+	t := ed.tileMaps[rrd.tileMapIndex]
+
+	rock := pok.Rock{
+		X: rrd.x,
+		Y: rrd.y,
+		Z: rrd.z + 1,
+	}
+
+	t.Rocks = append(t.Rocks, rock)
+}
+
+// remove rock
+func (rrd *RemoveRockDelta) Redo(ed *Editor) {
+	t := ed.tileMaps[rrd.tileMapIndex]
+	t.RemoveRockAt(rrd.x, rrd.y, rrd.z)
+}
+
+func (rrd *RemoveRockDelta) Name() string {
+	return "RemoveRockDelta"
 }

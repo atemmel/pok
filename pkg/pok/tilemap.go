@@ -721,20 +721,27 @@ func (t *TileMap) createNpcs() error {
 	return nil
 }
 
-func (t *TileMap) HasUnsmashedRockAt(x, y, z int) bool {
-	return t.GetUnsmashedRockIndexAt(x, y, z) != - 1
-}
-
-func (t *TileMap) GetUnsmashedRockIndexAt(x, y, z int) int {
+func (t *TileMap) GetRockAt(x, y, z int) int {
 	z += 1
 	for i, rock := range t.Rocks {
-		if rock.smashed {
-			continue
-		}
-
 		if rock.X == x && rock.Y == y && rock.Z == z {
 			return i
 		}
+	}
+	return -1
+}
+
+func (t *TileMap) HasUnsmashedRockAt(x, y, z int) bool {
+	return t.GetUnsmashedRockIndexAt(x, y, z) != -1
+}
+
+func (t *TileMap) GetUnsmashedRockIndexAt(x, y, z int) int {
+	index := t.GetUnsmashedRockIndexAt(x, y, z)
+	if index == -1 {
+		return -1
+	}
+	if t.Rocks[index].smashed {
+		return index
 	}
 	return -1
 }
@@ -772,4 +779,18 @@ func (t *TileMap) GetBoulderIndexAt(x, y, z int) int {
 	}
 
 	return -1
+}
+
+func (t *TileMap) RemoveRockAt(x, y, z int) {
+	rockIndex := t.GetRockAt(x, y, z)
+	if rockIndex == -1 {
+		return
+	}
+
+	// get last index
+	lastIndex := len(t.Rocks) - 1
+	// overwrite erased element with last element
+	t.Rocks[rockIndex] = t.Rocks[lastIndex]
+	// 'pop' slice
+	t.Rocks = t.Rocks[:lastIndex]
 }
