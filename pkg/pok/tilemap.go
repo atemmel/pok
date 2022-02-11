@@ -249,8 +249,8 @@ func (t *TileMap) drawRocks(rend *Renderer, offsetX, offsetY float64) {
 			continue
 		}
 
-		tx := float64(r.X * constants.TileSize)
-		ty := float64(r.Y * constants.TileSize)
+		tx := float64(r.X * constants.TileSize) + offsetX
+		ty := float64(r.Y * constants.TileSize) + offsetY
 
 		target := &RenderTarget{
 			Op: &ebiten.DrawImageOptions{},
@@ -272,8 +272,8 @@ func (t *TileMap) drawCuttableTrees(rend *Renderer, offsetX, offsetY float64) {
 			continue
 		}
 
-		tx := float64(tree.X * constants.TileSize)
-		ty := float64(tree.Y * constants.TileSize)
+		tx := float64(tree.X * constants.TileSize) + offsetX
+		ty := float64(tree.Y * constants.TileSize) + offsetY
 
 		tx += NpcOffsetX
 		ty += NpcOffsetY
@@ -296,8 +296,8 @@ func (t *TileMap) drawBoulders(rend *Renderer, offsetX, offsetY float64) {
 	for i := range t.Boulders {
 		boulder := &t.Boulders[i]
 
-		tx := boulder.gX
-		ty := boulder.gY
+		tx := boulder.gX + offsetX
+		ty := boulder.gY + offsetY
 		z := boulder.Z
 
 		target := &RenderTarget{
