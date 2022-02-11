@@ -667,7 +667,7 @@ func (e *Editor) handleInputs() error {
 		}
 	}
 
-	if justDidSomethingOfInterest {
+	if isLocked() {
 		return nil
 	}
 
@@ -995,8 +995,7 @@ func (e *Editor) TryOpeningObjectContextMenu(cx, cy, col, row int) bool {
 		{
 			String: "REMOVE OBJECT",
 			OnClick: func() {
-				justDidSomethingOfInterest = true
-				justDidSomethingOfInterestLock = true
+				lockEditor()
 			},
 			OnRelease: func() {
 				e.doRemoveObjectWithInfo(
@@ -1006,9 +1005,9 @@ func (e *Editor) TryOpeningObjectContextMenu(cx, cy, col, row int) bool {
 					tile,
 					layer,
 				)
-				fmt.Println(CurrentRemoveObjectDelta.objectDelta)
 				e.postDoRemoveObject()
-				justDidSomethingOfInterest = false
+
+				unlockEditor()
 			},
 		},
 	});
@@ -1031,13 +1030,12 @@ func (e *Editor) TryOpeningLinkContextMenu(cx, cy, col, row int) bool {
 		items = append(items, ContextMenuItem{
 			String: "REMOVE LINK TO " + exit.Target,
 			OnClick: func() {
-				justDidSomethingOfInterest = true
-				justDidSomethingOfInterestLock = true
+				lockEditor()
 			},
 			OnRelease: func() {
 				e.doRemoveLinkWithData(entryTileMapIndex, tileMapIndex, exit.Id)
 				e.postDoRemoveLink()
-				justDidSomethingOfInterest = false
+				unlockEditor()
 			},
 		})
 	}
@@ -1049,13 +1047,12 @@ func (e *Editor) TryOpeningLinkContextMenu(cx, cy, col, row int) bool {
 		items = append(items, ContextMenuItem{
 			String: "REMOVE LINK FROM " + entry.Source,
 			OnClick: func() {
-				justDidSomethingOfInterest = true
-				justDidSomethingOfInterestLock = true
+				lockEditor()
 			},
 			OnRelease: func() {
 				e.doRemoveLinkWithData(tileMapIndex, exitTileMapIndex, entry.Id)
 				e.postDoRemoveLink()
-				justDidSomethingOfInterest = false
+				unlockEditor()
 			},
 		})
 	}
@@ -1587,23 +1584,6 @@ func (e *Editor) doRemoveObject() {
 	}
 
 	e.doRemoveObjectWithInfo(i, placedObjects[e.activeTileMapIndex][i].Index, e.activeTileMapIndex, selectedTile, currentLayer)
-
-	/*
-	od := &ObjectDelta{
-		i,
-		placedObjects[e.activeTileMapIndex][i].Index,
-		e.activeTileMapIndex,
-		selectedTile,
-		currentLayer,
-	}
-
-	//e.activeTileMap.EraseObject(placedObjects[e.activeTileMapIndex][i], &e.objectGrid.objs[placedObjects[e.activeTileMapIndex][i].Index])
-	e.objectGrid.objs[placedObjects[e.activeTileMapIndex][i].Index].EraseObject(e.activeTileMap, placedObjects[e.activeTileMapIndex][i])
-	placedObjects[e.activeTileMapIndex][i] = placedObjects[e.activeTileMapIndex][len(placedObjects[e.activeTileMapIndex]) - 1]
-	placedObjects[e.activeTileMapIndex] = placedObjects[e.activeTileMapIndex][:len(placedObjects[e.activeTileMapIndex]) - 1]
-
-	CurrentRemoveObjectDelta.objectDelta = od
-	*/
 }
 
 func (e *Editor) doRemoveObjectWithInfo(objectInstanceIndex, objectTypeIndex, activeTileMapIndex, tile, layer int) {
@@ -1977,4 +1957,17 @@ func loadImages(images []string, base string) []*ebiten.Image {
 	}
 
 	return imgs
+}
+
+func lockEditor() {
+	justDidSomethingOfInterest = true
+	justDidSomethingOfInterestLock = true
+}
+
+func unlockEditor() {
+	justDidSomethingOfInterest = false
+}
+
+func isLocked() bool {
+	return justDidSomethingOfInterest
 }
