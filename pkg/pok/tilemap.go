@@ -736,7 +736,7 @@ func (t *TileMap) HasUnsmashedRockAt(x, y, z int) bool {
 }
 
 func (t *TileMap) GetUnsmashedRockIndexAt(x, y, z int) int {
-	index := t.GetUnsmashedRockIndexAt(x, y, z)
+	index := t.GetRockAt(x, y, z)
 	if index == -1 {
 		return -1
 	}

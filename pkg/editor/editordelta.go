@@ -180,6 +180,7 @@ func (do *ObjectDelta) Redo(ed *Editor) {
 		TileMap: tm,
 		ObjectInstances: &placedObjects[do.tileMapIndex],
 		ObjectTypes: ed.objectGrid.objs,
+		ObjectTypeIndex: do.objectIndex,
 		xyIndex: do.origin,
 		zIndex: do.z,
 	})

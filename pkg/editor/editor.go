@@ -1660,11 +1660,18 @@ func (e *Editor) doBucket() {
 }
 
 func (e *Editor) doObject() {
-	obj := &e.objectGrid.objs[activeObjsIndex]
-	// What the actual fuck 
-	obj.InsertObject(e.activeTileMap, activeObjsIndex, selectedTile, currentLayer, &placedObjects[e.activeTileMapIndex], e.objectGrid.objs)
+	params := &ObjectInsertionParameters{
+		TileMap: e.activeTileMap,
+		ObjectInstances: &placedObjects[e.activeTileMapIndex],
+		ObjectTypes: e.objectGrid.objs,
+		ObjectTypeIndex: activeObjsIndex,
+		xyIndex: selectedTile,
+		zIndex: currentLayer,
+	}
 
-	//CurrentObjectDelta.placedObjectIndex = len(placedObjects[e.activeTileMapIndex]) - 1
+
+	InsertObjectIntoTileMap(params)
+
 	CurrentObjectDelta.objectIndex = activeObjsIndex
 	CurrentObjectDelta.tileMapIndex = e.activeTileMapIndex
 	CurrentObjectDelta.origin = selectedTile
