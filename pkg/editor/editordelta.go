@@ -27,6 +27,7 @@ var CurrentNpcDelta *NpcDelta = &NpcDelta{}
 var CurrentRemoveNpcDelta *RemoveNpcDelta = &RemoveNpcDelta{}
 var CurrentRemoveRockDelta *RemoveRockDelta = &RemoveRockDelta{}
 var CurrentRemoveCuttableTreeDelta *RemoveCuttableTreeDelta = &RemoveCuttableTreeDelta{}
+var CurrentRemoveBoulderDelta *RemoveBoulderDelta = &RemoveBoulderDelta{}
 
 var CurrentResizeDelta *ResizeDelta = &ResizeDelta{}
 
@@ -513,4 +514,23 @@ func (rctd *RemoveCuttableTreeDelta) Redo(ed *Editor) {
 
 func (rctd *RemoveCuttableTreeDelta) Name() string {
 	return "RemoveCuttableTreeDelta"
+}
+
+type RemoveBoulderDelta struct {
+	x, y, z int
+	tileMapIndex int
+}
+
+func (rbd *RemoveBoulderDelta) Undo(ed *Editor) {
+	t := ed.tileMaps[rbd.tileMapIndex]
+	t.AddBoulderAt(rbd.x, rbd.y, rbd.z + 1)
+}
+
+func (rbd *RemoveBoulderDelta) Redo(ed *Editor) {
+	t := ed.tileMaps[rbd.tileMapIndex]
+	t.RemoveBoulderAt(rbd.x, rbd.y, rbd.z)
+}
+
+func (rbd *RemoveBoulderDelta) Name() string {
+	return "RemoveBoulderDelta"
 }

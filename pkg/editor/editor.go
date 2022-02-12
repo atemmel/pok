@@ -982,6 +982,10 @@ func (e *Editor) TryOpeningContextMenu(cx, cy int) {
 		return
 	}
 
+	if e.TryOpeningBoulderMenu(cx, cy, col, row) {
+		return
+	}
+
 	ContextMenu.Close();
 }
 
@@ -1118,6 +1122,34 @@ func (e *Editor) TryOpeningCuttableTreeMenu(cx, cy, col, row int) bool {
 			OnRelease: func() {
 				e.doRemoveCuttableTreeWithInfo(x, y, z, tileMapIndex)
 				e.postDoRemoveCuttableTree()
+				unlockEditor()
+			},
+		},
+	});
+	return true
+}
+
+func (e *Editor) TryOpeningBoulderMenu(cx, cy, col, row int) bool {
+	boulderIndex := e.activeTileMap.GetBoulderIndexAt(col, row, currentLayer)
+	if boulderIndex == -1 {
+		return false
+	}
+
+	x := col
+	y := row
+	z := currentLayer
+	tileMapIndex := e.activeTileMapIndex
+
+	// Open a context menu in which one can remove cuttable trees
+	ContextMenu.Open(cx, cy, []ContextMenuItem{
+		{
+			String: "REMOVE BOULDER",
+			OnClick: func() {
+				lockEditor()
+			},
+			OnRelease: func() {
+				e.doRemoveBoulderWithInfo(x, y, z, tileMapIndex)
+				e.postDoRemoveBoulder()
 				unlockEditor()
 			},
 		},
@@ -2008,6 +2040,25 @@ func (e *Editor) doRemoveCuttableTreeWithInfo(x, y, z, tileMapIndex int) {
 func (e *Editor) postDoRemoveCuttableTree() {
 	UndoStack = append(UndoStack, CurrentRemoveCuttableTreeDelta)
 	CurrentRemoveCuttableTreeDelta = nil
+}
+
+func (e *Editor) doRemoveBoulderWithInfo(x, y, z, tileMapIndex int) {
+	delta := &RemoveBoulderDelta{
+		x: x,
+		y: y,
+		z: z,
+		tileMapIndex: tileMapIndex,
+	}
+
+	t := e.tileMaps[tileMapIndex]
+	t.RemoveBoulderAt(x, y, z)
+
+	CurrentRemoveBoulderDelta = delta
+}
+
+func (e *Editor) postDoRemoveBoulder() {
+	UndoStack = append(UndoStack, CurrentRemoveBoulderDelta)
+	CurrentRemoveBoulderDelta = nil
 }
 
 func listPngs(dir string) []string {

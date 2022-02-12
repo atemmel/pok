@@ -812,3 +812,26 @@ func (t *TileMap) RemoveCuttableTreeAt(x, y, z int) {
 	t.CuttableTrees[cuttableTreeIndex] = t.CuttableTrees[lastIndex]
 	t.CuttableTrees = t.CuttableTrees[:lastIndex]
 }
+
+func (t *TileMap) RemoveBoulderAt(x, y, z int) {
+	boulderIndex := t.GetBoulderIndexAt(x, y, z)
+	if boulderIndex == -1 {
+		return
+	}
+
+	lastIndex := len(t.Boulders) - 1
+	t.Boulders[boulderIndex] = t.Boulders[lastIndex]
+	t.Boulders = t.Boulders[:lastIndex]
+}
+
+func (t *TileMap) AddBoulderAt(x, y, z int) {
+	boulder := Boulder{
+		X: x,
+		Y: y,
+		Z: z,
+		gX: float64(x * constants.TileSize),
+		gY: float64(y * constants.TileSize),
+	}
+	
+	t.Boulders = append(t.Boulders, boulder)
+}
