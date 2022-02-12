@@ -156,10 +156,19 @@ func InsertObjectIntoTileMap(params *ObjectInsertionParameters) {
 			t.Tiles[depth][index] = tile
 			t.TextureIndicies[depth][index] = texIndex
 
-			if (y > 0 || edobj.H == 1) && (x > 0 || edobj.W == 1) {
-				t.Collision[params.zIndex][index] = true
+			if !edobj.CollidesWithTop && y == 0 {
+				goto SKIP
+			} else if !edobj.CollidesWithBottom && y == edobj.H - 1 {
+				goto SKIP
+			} else if !edobj.CollidesWithLeft && x == 0 {
+				goto SKIP
+			} else if !edobj.CollidesWithRight && x == edobj.W - 1 {
+				goto SKIP
 			}
 
+			t.Collision[params.zIndex][index] = true
+
+SKIP:
 			zIndex++
 		}
 	}
@@ -192,9 +201,25 @@ func (edobj *EditorObject) EraseObject(t *pok.TileMap, pob PlacedEditorObject) {
 			t.Tiles[depth][index] = -1
 			t.TextureIndicies[depth][index] = 0
 
+			/*
 			if (y > 0 || edobj.H == 1) && (x > 0 || edobj.W == 1) {
 				t.Collision[pob.Z][index] = false
 			}
+			*/
+
+			if !edobj.CollidesWithTop && y == 0 {
+				goto SKIP
+			} else if !edobj.CollidesWithBottom && y == edobj.H - 1 {
+				goto SKIP
+			} else if !edobj.CollidesWithLeft && x == 0 {
+				goto SKIP
+			} else if !edobj.CollidesWithRight && x == edobj.W - 1 {
+				goto SKIP
+			}
+
+			t.Collision[pob.Z][index] = false
+
+SKIP:
 
 			zIndex++
 		}
