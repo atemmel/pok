@@ -91,7 +91,7 @@ func (c *Character) Draw(img *ebiten.Image, rend *Renderer, offsetX, offsetY flo
 		&playerRect,
 		x,
 		y,
-		2,
+		c.Z + 2,
 	})
 }
 

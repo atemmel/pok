@@ -986,6 +986,10 @@ func (e *Editor) TryOpeningContextMenu(cx, cy int) {
 		return
 	}
 
+	if e.TryOpeningNpcContextMenu(cx, cy, col, row) {
+		return
+	}
+
 	ContextMenu.Close();
 }
 
@@ -1071,6 +1075,32 @@ func (e *Editor) TryOpeningLinkContextMenu(cx, cy, col, row int) bool {
 
 	ContextMenu.Open(cx, cy, items)
 	return true
+}
+
+func (e *Editor) TryOpeningNpcContextMenu(cx, cy, col, row int) bool {
+	npcIndex := e.activeTileMap.GetNpcInfoIndexAt(col, row, currentLayer)
+	if npcIndex == -1 {
+		return false
+	}
+
+	tileMapIndex := e.activeTileMapIndex
+	npcInfo := e.activeTileMap.NpcInfo[npcIndex]
+
+	// Open a context menu in which one can remove objects
+	ContextMenu.Open(cx, cy, []ContextMenuItem{
+		{
+			String: "REMOVE NPC",
+			OnClick: func() {
+				lockEditor()
+			},
+			OnRelease: func() {
+				e.doRemoveNpcWithInfo(&npcInfo, tileMapIndex)
+				e.postDoRemoveNpc()
+				unlockEditor()
+			},
+		},
+	});
+	return true;
 }
 
 func (e *Editor) TryOpeningRockContextMenu(cx, cy, col, row int) bool {
@@ -1977,11 +2007,12 @@ func (e *Editor) doPlaceNpc() {
 		e.activeTileMap.PlaceNpc(ni)
 
 		CurrentNpcDelta.npcInfo = ni
-		CurrentNpcDelta.npcIndex = len(e.activeTileMap.Npcs) -1
+		//CurrentNpcDelta.npcIndex = len(e.activeTileMap.Npcs) -1
 		CurrentNpcDelta.tileMapIndex = e.activeTileMapIndex
 	}
 }
 
+/*
 func (e *Editor) doRemoveNpc() {
 	x := selectedTile % e.activeTileMap.Width
 	y := selectedTile / e.activeTileMap.Width
@@ -1999,6 +2030,7 @@ func (e *Editor) doRemoveNpc() {
 
 	ni := e.activeTileMap.NpcInfo[index]
 
+
 	nd := &NpcDelta{
 		&ni,
 		len(e.activeTileMap.Npcs) - 1,
@@ -2008,6 +2040,19 @@ func (e *Editor) doRemoveNpc() {
 	e.activeTileMap.RemoveNpc(nd.npcIndex)
 
 	CurrentRemoveNpcDelta.npcDelta = nd
+}
+*/
+
+func (e *Editor) doRemoveNpcWithInfo(npc *pok.NpcInfo, tileMapIndex int) {
+	delta := &NpcDelta{
+		npcInfo: npc,
+		tileMapIndex: tileMapIndex,
+	}
+
+	t := e.tileMaps[tileMapIndex]
+	t.RemoveNpcInfoAt(npc.X, npc.Y, npc.Z)
+
+	CurrentRemoveNpcDelta.npcDelta = delta
 }
 
 func (e *Editor) doRemoveRockWithInfo(x, y, z, tileMapIndex int) {

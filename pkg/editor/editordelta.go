@@ -429,17 +429,16 @@ func (dr *ResizeDelta) Name() string {
 type NpcDelta struct {
 	npcInfo *pok.NpcInfo
 	tileMapIndex int
-	npcIndex int
+	//npcIndex int
 }
 
 func (dn *NpcDelta) Undo(ed *Editor) {
 	tm := ed.tileMaps[dn.tileMapIndex]
-	tm.RemoveNpc(dn.npcIndex)
+	tm.RemoveNpcInfoAt(dn.npcInfo.X, dn.npcInfo.Y, dn.npcInfo.Z)
 }
 
 func (dn *NpcDelta) Redo(ed *Editor) {
 	tm := ed.tileMaps[dn.tileMapIndex]
-	dn.npcIndex = len(tm.Npcs)
 	tm.PlaceNpc(dn.npcInfo)
 }
 

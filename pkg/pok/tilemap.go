@@ -835,3 +835,29 @@ func (t *TileMap) AddBoulderAt(x, y, z int) {
 	
 	t.Boulders = append(t.Boulders, boulder)
 }
+
+func (t *TileMap) GetNpcInfoIndexAt(x, y, z int) int {
+	for i := range t.NpcInfo {
+		npc := &t.NpcInfo[i]
+		if npc.X == x && npc.Y == y && npc.Z == z {
+			return i
+		}
+	}
+	return -1
+}
+
+func (t *TileMap) RemoveNpcInfoAt(x, y, z int) {
+	npcInfoIndex := t.GetNpcInfoIndexAt(x, y, z)
+	if npcInfoIndex == -1 {
+		return
+	}
+
+	// first npcinfo slice
+	lastIndex := len(t.NpcInfo) - 1
+	t.NpcInfo[npcInfoIndex] = t.NpcInfo[lastIndex]
+	t.NpcInfo = t.NpcInfo[:lastIndex]
+
+	// then npc slice
+	t.Npcs[npcInfoIndex] = t.Npcs[lastIndex]
+	t.Npcs = t.Npcs[:lastIndex]
+}

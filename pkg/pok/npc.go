@@ -74,6 +74,7 @@ func BuildNpcFromNpcInfo(t *TileMap, info *NpcInfo) Npc {
 
 	npc.Char.X = info.X
 	npc.Char.Y = info.Y
+	npc.Char.Z = info.Z
 
 	_, npc.NpcTextureIndex = textures.Load(constants.CharacterImagesDir + info.Texture)
 
