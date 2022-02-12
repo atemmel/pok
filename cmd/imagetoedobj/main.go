@@ -61,7 +61,7 @@ func processFile(path string) error {
 	fileName := getFilename(path)
 	extension := getExtension(path)
 
-	texture := fileName + extension
+	texture := fileName + "." + extension
 
 	edobj := editor.EditorObject{
 		Texture: texture,
@@ -113,7 +113,7 @@ func getExtension(path string) string {
 	lastDot := len(path) - 1
 	for ; lastDot >= 0; lastDot-- {
 		if path[lastDot] == '.' {
-			lastDot -= 1
+			lastDot += 1
 			break
 		}
 	}
