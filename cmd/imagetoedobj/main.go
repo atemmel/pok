@@ -9,6 +9,7 @@ import(
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/editor"
 	"image"
+	"image/color"
 	"os"
 )
 
@@ -54,10 +55,6 @@ func processFile(path string) error {
 		depths[i] = baseDepth
 	}
 
-	for i := 0; i < width; i++ {
-		depths[i] = baseDepth + 1
-	}
-
 	fileName := getFilename(path)
 	extension := getExtension(path)
 
@@ -70,6 +67,43 @@ func processFile(path string) error {
 		W: width,
 		H: height,
 		Z: depths,
+		CollidesWithTop: true,
+		CollidesWithBottom: true,
+		CollidesWithLeft: true,
+		CollidesWithRight: true,
+	}
+
+	if !shouldHaveCollisionTop(img) {
+		edobj.CollidesWithTop = false
+
+		// heighten the top row
+		for i := 0; i < width; i++ {
+			depths[i] = baseDepth + 1
+		}
+	}
+
+	if !shouldHaveCollisionBottom(img) {
+		edobj.CollidesWithBottom = false
+	}
+
+	if !shouldHaveCollisionLeft(img) {
+		edobj.CollidesWithLeft = false
+
+		// heighten the left column
+		for y := 0; y < height; y++ {
+			i := y * width
+			depths[i] = baseDepth + 1
+		}
+	}
+
+	if !shouldHaveCollisionRight(img) {
+		edobj.CollidesWithRight = false
+
+		// heighten the right column
+		for y := 0; y < height; y++ {
+			i := y * width + width - 1
+			depths[i] = baseDepth + 1
+		}
 	}
 
 	bytes, err := json.MarshalIndent(&edobj, "", "\t")
@@ -119,6 +153,102 @@ func getExtension(path string) string {
 	}
 
 	return path[lastDot:]
+}
+
+func isTransparent(c color.RGBA) bool {
+	return c.A == 0
+}
+
+func shouldHaveCollisionTop(img image.Image) bool {
+	const ht = constants.TileSize / 8
+	r := img.Bounds()
+	w := r.Max.X
+	h := r.Max.Y
+
+	if h <= constants.TileSize {
+		return true
+	}
+
+	for x := 0; x < w; x++ {
+		for y := 0; y < h && y < ht; y++ {
+			r, g, b, a := img.At(x, y).RGBA() 
+			clr := color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
+			if !isTransparent(clr) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func shouldHaveCollisionBottom(img image.Image) bool {
+	const bt = constants.TileSize / 8
+	r := img.Bounds()
+	w := r.Max.X
+	h := r.Max.Y
+
+	if h <= constants.TileSize {
+		return true
+	}
+
+	for x := 0; x < w; x++ {
+		for y := h - bt; y < h; y++ {
+			r, g, b, a := img.At(x, y).RGBA() 
+			clr := color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
+			if !isTransparent(clr) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func shouldHaveCollisionLeft(img image.Image) bool {
+	const lt = constants.TileSize / 2
+	r := img.Bounds()
+	w := r.Max.X
+	h := r.Max.Y
+
+	if w <= constants.TileSize {
+		return true
+	}
+
+	for x := 0; x < w && x < lt; x++ {
+		for y := 0; y < h; y++ {
+			r, g, b, a := img.At(x, y).RGBA() 
+			clr := color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
+			if !isTransparent(clr) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func shouldHaveCollisionRight(img image.Image) bool {
+	const rt = constants.TileSize / 2
+	r := img.Bounds()
+	w := r.Max.X
+	h := r.Max.Y
+
+	if w <= constants.TileSize {
+		return true
+	}
+
+	for x := w - rt; x < w; x++ {
+		for y := 0; y < h; y++ {
+			r, g, b, a := img.At(x, y).RGBA() 
+			clr := color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
+			if !isTransparent(clr) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func openImage(path string) image.Image {
