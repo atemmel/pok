@@ -429,7 +429,6 @@ func (dr *ResizeDelta) Name() string {
 type NpcDelta struct {
 	npcInfo *pok.NpcInfo
 	tileMapIndex int
-	//npcIndex int
 }
 
 func (dn *NpcDelta) Undo(ed *Editor) {

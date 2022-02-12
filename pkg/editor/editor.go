@@ -875,23 +875,6 @@ func (e *Editor) handleMapMouseInputs() {
 		e.TryOpeningContextMenu(cx, cy)
 	}
 
-	/* OLD STUFF
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(1)) {
-		cx, cy := ebiten.CursorPosition();
-		e.SelectTileFromMouse(cx, cy)
-		if e.selectedTileIsValid() {
-			switch activeTool {
-				case Object:
-					e.doRemoveObject()
-				case Link:
-					e.doRemoveLink()
-				case PlaceNpc:
-					e.doRemoveNpc()
-			}
-		}
-	}
-	*/
-
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButton(2)) || (ebiten.IsMouseButtonPressed(ebiten.MouseButton(0)) && ebiten.IsKeyPressed(ebiten.KeyControl)) {
 		cx, cy := ebiten.CursorPosition();
 		if !e.isAlreadyClicking() {
@@ -945,18 +928,6 @@ func (e *Editor) handleMapMouseInputs() {
 		offset.Y = math.Round(offset.Y / constants.TileSize) * constants.TileSize
 	}
 
-	/* EQUALLY OLD STUFF
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButton(1)) {
-		switch activeTool {
-			case Object:
-				e.postDoRemoveObject()
-			case Link:
-				e.postDoRemoveLink()
-			case PlaceNpc:
-				e.postDoRemoveNpc()
-		}
-	}
-	*/
 }
 
 func (e *Editor) TryOpeningContextMenu(cx, cy int) {
@@ -2011,37 +1982,6 @@ func (e *Editor) doPlaceNpc() {
 		CurrentNpcDelta.tileMapIndex = e.activeTileMapIndex
 	}
 }
-
-/*
-func (e *Editor) doRemoveNpc() {
-	x := selectedTile % e.activeTileMap.Width
-	y := selectedTile / e.activeTileMap.Width
-	index := -1
-	for i := range e.activeTileMap.NpcInfo {
-		if e.activeTileMap.NpcInfo[i].X == x && e.activeTileMap.NpcInfo[i].Y == y {
-			index = i
-			break
-		}
-	}
-
-	if index == -1 {
-		return
-	}
-
-	ni := e.activeTileMap.NpcInfo[index]
-
-
-	nd := &NpcDelta{
-		&ni,
-		len(e.activeTileMap.Npcs) - 1,
-		e.activeTileMapIndex,
-	}
-
-	e.activeTileMap.RemoveNpc(nd.npcIndex)
-
-	CurrentRemoveNpcDelta.npcDelta = nd
-}
-*/
 
 func (e *Editor) doRemoveNpcWithInfo(npc *pok.NpcInfo, tileMapIndex int) {
 	delta := &NpcDelta{
