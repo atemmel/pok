@@ -26,6 +26,7 @@ var CurrentAutotileDelta *AutotileDelta = &AutotileDelta{}
 var CurrentNpcDelta *NpcDelta = &NpcDelta{}
 var CurrentRemoveNpcDelta *RemoveNpcDelta = &RemoveNpcDelta{}
 var CurrentRemoveRockDelta *RemoveRockDelta = &RemoveRockDelta{}
+var CurrentRemoveCuttableTreeDelta *RemoveCuttableTreeDelta = &RemoveCuttableTreeDelta{}
 
 var CurrentResizeDelta *ResizeDelta = &ResizeDelta{}
 
@@ -486,4 +487,30 @@ func (rrd *RemoveRockDelta) Redo(ed *Editor) {
 
 func (rrd *RemoveRockDelta) Name() string {
 	return "RemoveRockDelta"
+}
+
+type RemoveCuttableTreeDelta struct {
+	x, y, z int
+	tileMapIndex int
+}
+
+func (rctd *RemoveCuttableTreeDelta) Undo(ed *Editor) {
+	t := ed.tileMaps[rctd.tileMapIndex]
+
+	cuttableTree := pok.CuttableTree{
+		X: rctd.x,
+		Y: rctd.y,
+		Z: rctd.z + 1,
+	}
+
+	t.CuttableTrees = append(t.CuttableTrees, cuttableTree)
+}
+
+func (rctd *RemoveCuttableTreeDelta) Redo(ed *Editor) {
+	t := ed.tileMaps[rctd.tileMapIndex]
+	t.RemoveCuttableTreeAt(rctd.x, rctd.y, rctd.z)
+}
+
+func (rctd *RemoveCuttableTreeDelta) Name() string {
+	return "RemoveCuttableTreeDelta"
 }

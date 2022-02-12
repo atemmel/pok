@@ -741,8 +741,19 @@ func (t *TileMap) GetUnsmashedRockIndexAt(x, y, z int) int {
 		return -1
 	}
 	if t.Rocks[index].smashed {
-		return index
+		return -1
 	}
+	return index
+}
+
+func (t *TileMap) GetCuttableTreeAt(x, y, z int) int {
+	z += 1
+	for i, tree := range t.CuttableTrees {
+		if tree.X == x && tree.Y == y && tree.Z == z {
+			return i
+		}
+	}
+
 	return -1
 }
 
@@ -751,18 +762,14 @@ func (t *TileMap) HasUncutTreeAt(x, y, z int) bool {
 }
 
 func (t *TileMap) GetUncutTreeIndexAt(x, y, z int) int {
-	z += 1
-	for i, tree := range t.CuttableTrees {
-		if tree.cut {
-			continue
-		}
-
-		if tree.X == x && tree.Y == y && tree.Z == z {
-			return i
-		}
+	index := t.GetCuttableTreeAt(x, y, z)
+	if index == -1 {
+		return -1
 	}
-
-	return -1
+	if t.CuttableTrees[index].cut {
+		return -1
+	}
+	return index
 }
 
 func (t *TileMap) HasBoulderAt(x, y, z int) bool {
@@ -793,4 +800,15 @@ func (t *TileMap) RemoveRockAt(x, y, z int) {
 	t.Rocks[rockIndex] = t.Rocks[lastIndex]
 	// 'pop' slice
 	t.Rocks = t.Rocks[:lastIndex]
+}
+
+func (t *TileMap) RemoveCuttableTreeAt(x, y, z int) {
+	cuttableTreeIndex := t.GetCuttableTreeAt(x, y, z)
+	if cuttableTreeIndex == -1 {
+		return
+	}
+
+	lastIndex := len(t.CuttableTrees) - 1
+	t.CuttableTrees[cuttableTreeIndex] = t.CuttableTrees[lastIndex]
+	t.CuttableTrees = t.CuttableTrees[:lastIndex]
 }
