@@ -201,12 +201,6 @@ func (edobj *EditorObject) EraseObject(t *pok.TileMap, pob PlacedEditorObject) {
 			t.Tiles[depth][index] = -1
 			t.TextureIndicies[depth][index] = 0
 
-			/*
-			if (y > 0 || edobj.H == 1) && (x > 0 || edobj.W == 1) {
-				t.Collision[pob.Z][index] = false
-			}
-			*/
-
 			if !edobj.CollidesWithTop && y == 0 {
 				goto SKIP
 			} else if !edobj.CollidesWithBottom && y == edobj.H - 1 {
