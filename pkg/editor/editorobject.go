@@ -24,6 +24,7 @@ func (e *EditorObject) FindAndSetCorrectTexture(textures []string) {
 	for i := range textures {
 		if textures[i] == e.Texture {
 			e.textureIndex = i
+			return
 		}
 	}
 }
