@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"image"
 	"image/color"
+	"math"
 )
 
 type ScrollDirection int
@@ -48,6 +49,7 @@ type Scrollbar struct {
 	y int
 	min int
 	max int
+	rows int
 	holdOffsetY int
 	isHolding bool
 }
@@ -74,6 +76,7 @@ func NewScrollBar(x, y, rows int) *Scrollbar {
 		y,
 		y,
 		y + maxGridHeight - scrollBarHeight,
+		rows,
 		0,
 		false,
 	}
@@ -156,9 +159,15 @@ func (g *Grid) Scroll(dir ScrollDirection) {
 	if dir == ScrollUp && g.currentRow < g.maxRow - columnLen + 1 {
 		g.currentRow++
 		g.selectionY -= float64(g.innerWidth)
+		if g.bar != nil {
+			g.bar.ScrollOne(ScrollDown)
+		}
 	} else if dir == ScrollDown && g.currentRow > 0 {
 		g.currentRow--
 		g.selectionY += float64(g.innerWidth)
+		if g.bar != nil {
+			g.bar.ScrollOne(ScrollUp)
+		}
 	}
 }
 
@@ -184,7 +193,6 @@ func (g *Grid) PollScrollBar(cx, cy int) bool {
 
 	holdResult := g.bar.handleHold(cx, cy)
 	scale := g.bar.GetAmountScrolled()
-
 	g.currentRow = int(scale * float64(g.maxRow))
 	
 	return holdResult
@@ -240,6 +248,27 @@ func (b *Scrollbar) GetAmountScrolled() float64 {
 		scale = 1
 	}
 	return scale
+}
+
+func (b *Scrollbar) ScrollOne(dir ScrollDirection) {
+	y0 := float64(b.y - b.min)
+	yMax := float64(b.max - b.min)
+
+	scale := y0 / yMax
+	currentRow := int(scale * float64(b.rows))
+	var newY int
+	if dir == ScrollUp {
+		currentRow--
+		newScale := float64(currentRow) / float64(b.rows)
+		newY = int(math.Floor(newScale * yMax)) + b.min
+	} else if dir == ScrollDown {
+		currentRow++
+		newScale := float64(currentRow) / float64(b.rows)
+		newY = int(math.Ceil(newScale * yMax)) + b.min
+	} else {
+		return
+	}
+	b.y = newY
 }
 
 func (g *Grid) GetIndex() int {
