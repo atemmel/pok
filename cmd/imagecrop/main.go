@@ -276,6 +276,8 @@ func (c *Cropper) indexOfCornerClicked(cx, cy int) int {
 
 func (c *Cropper) drawMarks(screen *ebiten.Image) {
 
+	white := color.RGBA{255, 255, 255, 255}
+
 	offsets := [4]image.Point{
 		image.Pt(0, 0),
 		image.Pt(8, 0),
@@ -301,39 +303,55 @@ func (c *Cropper) drawMarks(screen *ebiten.Image) {
 	}
 
 	// top left to top right
+	l0 := MarkColor
+	if c.clickedIndex == 0 || c.clickedIndex == 1 {
+		l0 = white
+	}
 	c.renderer.DrawLine(pok.DebugLine{
 		X1: c.marks[0].X,
 		Y1: c.marks[0].Y,
 		X2: c.marks[1].X,
 		Y2: c.marks[1].Y,
-		Clr: MarkColor,
+		Clr: l0,
 	})
 
 	// bottom left to bottom right
+	l1 := MarkColor
+	if c.clickedIndex == 3 || c.clickedIndex == 2{
+		l1 = white
+	}
 	c.renderer.DrawLine(pok.DebugLine{
 		X1: c.marks[2].X,
 		Y1: c.marks[2].Y,
 		X2: c.marks[3].X,
 		Y2: c.marks[3].Y,
-		Clr: MarkColor,
+		Clr: l1,
 	})
 
 	// top left to bottom left
+	l2 := MarkColor
+	if c.clickedIndex == 2 || c.clickedIndex == 0 {
+		l2 = white
+	}
 	c.renderer.DrawLine(pok.DebugLine{
 		X1: c.marks[0].X,
 		Y1: c.marks[0].Y,
 		X2: c.marks[2].X,
 		Y2: c.marks[2].Y,
-		Clr: MarkColor,
+		Clr: l2,
 	})
 
 	// top right to bottom right
+	l3 := MarkColor
+	if c.clickedIndex == 3 || c.clickedIndex == 1 {
+		l3 = white
+	}
 	c.renderer.DrawLine(pok.DebugLine{
 		X1: c.marks[1].X,
 		Y1: c.marks[1].Y,
 		X2: c.marks[3].X,
 		Y2: c.marks[3].Y,
-		Clr: MarkColor,
+		Clr: l3,
 	})
 }
 
