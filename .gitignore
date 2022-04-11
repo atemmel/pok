@@ -3,8 +3,11 @@
 *.log
 pok
 poked
-!pok/
-!poked/
 imagetoedobj
 sub-image
 imagecrop
+!pok/
+!poked/
+!imagetoedobj/
+!sub-image/
+!imagecrop/

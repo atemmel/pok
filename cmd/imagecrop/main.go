@@ -134,7 +134,6 @@ func (c *Cropper) Update() error {
 			c.marks[i].Y -= float64(oy)
 		}
 
-		//TODO: debug grid alignment issue
 		if ox != 0 {
 			c.sx -= int(math.Round(ox))
 		}
