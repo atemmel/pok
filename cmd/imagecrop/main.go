@@ -115,13 +115,32 @@ func (c *Cropper) Update() error {
 	if c.isMovingMarks {
 		dx, dy := tx - c.sx, ty - c.sy
 
-		for i := range c.marks {
-			c.marks[i].X += float64(dx)
-			c.marks[i].Y += float64(dy)
+		ox := 0.0
+		oy := 0.0
+
+		if dx >= constants.TileSize {
+			ox = -constants.TileSize * (float64(dx) / constants.TileSize)
+		} else if dx <= -constants.TileSize{
+			ox = constants.TileSize * (float64(-dx) / constants.TileSize)
+		}
+		if dy >= constants.TileSize {
+			oy = -constants.TileSize * (float64(dy) / constants.TileSize)
+		} else if dy <= -constants.TileSize{
+			oy = constants.TileSize * (float64(-dy) / constants.TileSize)
 		}
 
-		c.sx = tx
-		c.sy = ty
+		for i := range c.marks {
+			c.marks[i].X -= float64(ox)
+			c.marks[i].Y -= float64(oy)
+		}
+
+		//TODO: debug grid aligment issue
+		if ox != 0 {
+			c.sx -= int(ox)
+		}
+		if oy != 0 {
+			c.sy -= int(oy)
+		}
 		return nil
 	}
 
@@ -136,24 +155,66 @@ func (c *Cropper) Update() error {
 	}
 
 	if c.isHolding {
-		c.marks[c.clickedIndex].X = float64(tx)
-		c.marks[c.clickedIndex].Y = float64(ty)
+
+		dx := c.marks[c.clickedIndex].X - float64(tx)
+		dy := c.marks[c.clickedIndex].Y - float64(ty)
+
+		ox := 0.0
+		oy := 0.0
+
+		if dx >= constants.TileSize {
+			ox = -constants.TileSize
+		} else if dx <= -constants.TileSize{
+			ox = constants.TileSize
+		}
+		if dy >= constants.TileSize {
+			oy = -constants.TileSize
+		} else if dy <= -constants.TileSize{
+			oy = constants.TileSize
+		}
+
+		nx := c.marks[c.clickedIndex].X + ox
+		ny := c.marks[c.clickedIndex].Y + oy
+
+		switch c.clickedIndex {
+		case 0:
+			if nx > c.marks[1].X - constants.TileSize || ny > c.marks[2].Y - constants.TileSize {
+				goto NO_MARK_MOVE
+			}
+		case 1:
+			if nx < c.marks[0].X + constants.TileSize || ny > c.marks[3].Y - constants.TileSize {
+				goto NO_MARK_MOVE
+			}
+		case 2:
+			if nx > c.marks[3].X - constants.TileSize || ny < c.marks[0].Y + constants.TileSize {
+				goto NO_MARK_MOVE
+			}
+		case 3:
+			if nx < c.marks[2].X + constants.TileSize || ny < c.marks[1].Y + constants.TileSize{
+				goto NO_MARK_MOVE
+			}
+		}
+
+		c.marks[c.clickedIndex].X = nx
+		c.marks[c.clickedIndex].Y = ny
 
 		switch c.clickedIndex {
 		case 0:	// top left
-			c.marks[2].X = float64(tx)
-			c.marks[1].Y = float64(ty)
+			c.marks[2].X += ox
+			c.marks[1].Y += oy
 		case 1:	// top right
-			c.marks[3].X = float64(tx)
-			c.marks[0].Y = float64(ty)
+			c.marks[3].X += ox
+			c.marks[0].Y += oy
 		case 2: // bottom left
-			c.marks[0].X = float64(tx)
-			c.marks[3].Y = float64(ty)
+			c.marks[0].X += ox
+			c.marks[3].Y += oy
 		case 3: // bottom right
-			c.marks[1].X = float64(tx)
-			c.marks[2].Y = float64(ty)
+			c.marks[1].X += ox
+			c.marks[2].Y += oy
 		}
 	}
+
+NO_MARK_MOVE:
 
 	_, dy := ebiten.Wheel()
 	if dy != 0. {
