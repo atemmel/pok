@@ -119,14 +119,14 @@ func (c *Cropper) Update() error {
 		oy := 0.0
 
 		if dx >= constants.TileSize {
-			ox = -constants.TileSize * (float64(dx) / constants.TileSize)
-		} else if dx <= -constants.TileSize{
-			ox = constants.TileSize * (float64(-dx) / constants.TileSize)
+			ox = -constants.TileSize
+		} else if dx <= -constants.TileSize {
+			ox = constants.TileSize
 		}
 		if dy >= constants.TileSize {
-			oy = -constants.TileSize * (float64(dy) / constants.TileSize)
-		} else if dy <= -constants.TileSize{
-			oy = constants.TileSize * (float64(-dy) / constants.TileSize)
+			oy = -constants.TileSize
+		} else if dy <= -constants.TileSize {
+			oy = constants.TileSize
 		}
 
 		for i := range c.marks {
@@ -134,12 +134,12 @@ func (c *Cropper) Update() error {
 			c.marks[i].Y -= float64(oy)
 		}
 
-		//TODO: debug grid aligment issue
+		//TODO: debug grid alignment issue
 		if ox != 0 {
-			c.sx -= int(ox)
+			c.sx -= int(math.Round(ox))
 		}
 		if oy != 0 {
-			c.sy -= int(oy)
+			c.sy -= int(math.Round(oy))
 		}
 		return nil
 	}
