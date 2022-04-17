@@ -9,36 +9,73 @@ import(
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/atemmel/pok/pkg/constants"
+	"github.com/atemmel/pok/pkg/debug"
+	"github.com/atemmel/pok/pkg/fonts"
 	"github.com/atemmel/pok/pkg/pok"
 	"math"
 )
 
-var( 
+var(
 	MarkColor = color.RGBA{255, 0, 255, 255}
 )
 
 type Cropper struct {
+	// renderer
 	renderer pok.Renderer
+
+	// image to crop
 	image *ebiten.Image
+
+	// image used to display mark corner
 	markImg *ebiten.Image
+
+	// corners of mark
 	marks []Mark
+
+	// is panning camera
 	isMovingCamera bool
+
+	// is holding a mark
 	isHolding bool
+
+	// is moving marks
 	isMovingMarks bool
+
+	// index of corner clicked
 	clickedIndex int
+
+	// previous mouse click location
 	cx, cy int
+
+	// previous mouse click location (scaled)
 	sx, sy int
+
+	// saved subimages
+	subImages map [int]SubImage
 }
 
 type Mark struct {
 	X, Y float64
 }
 
+type SubImage struct {
+	TopLeft Mark
+	TopRight Mark
+	BottomLeft Mark
+	BottomRight Mark
+}
+
 func NewCropper() *Cropper {
 	image, _, err := ebitenutil.NewImageFromFile("resources/images/overworld/buildings.png")
-	if err != nil {
-		panic(err)
-	}
+	debug.Assert(err)
+
+	AddButton(&Button{
+		X: 10, Y: 10,
+		OnClick: func() {
+			println("Gaming!")
+		},
+		Title: "Gaming",
+	})
 
 	const markDim = 8
 	mark := ebiten.NewImage(markDim, markDim)
@@ -72,6 +109,7 @@ func NewCropper() *Cropper {
 		sx: 0,
 		sy: 0,
 		clickedIndex: -1,
+		subImages: make(map[int]SubImage, 0),
 	}
 }
 
@@ -97,7 +135,7 @@ func (c *Cropper) Update() error {
 		c.cx = x
 		c.cy = y
 		return nil
-	} 
+	}
 
 	cx, cy := ebiten.CursorPosition()
 	tx := int(float64(cx) / c.renderer.Cam.Scale)
@@ -287,7 +325,6 @@ func (c *Cropper) drawMarks(screen *ebiten.Image) {
 	for i, mark := range c.marks {
 		opt := &ebiten.DrawImageOptions{}
 		if c.clickedIndex == i {
-			//opt.ColorM.Scale(2, 2, 2, 2)
 			opt.ColorM.Translate(2, 2, 2, 2)
 		}
 		offset := offsets[i]
@@ -365,18 +402,28 @@ func (c *Cropper) Draw(screen *ebiten.Image) {
 	})
 
 	c.drawMarks(screen)
-
 	c.renderer.Display(screen)
+	DrawButtons(screen)
 }
 
 func (c *Cropper) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return constants.WindowSizeX, constants.WindowSizeY
+	return constants.DisplaySizeX, constants.DisplaySizeY
+}
+
+func setFont(path string) error {
+	font, err := fonts.LoadFont(path, 16)
+	InitButtons(font)
+	return err
 }
 
 func main() {
+	logPath := "imagecrop.log"
+	debug.InitAssert(&logPath, true)
+	err := setFont(constants.FontsDir + "pokemon_pixel_font.ttf")
+	debug.Assert(err)
 
 	ebiten.SetWindowSize(constants.WindowSizeX, constants.WindowSizeY)
-	ebiten.SetWindowTitle("replace this")
+	ebiten.SetWindowTitle("imagecrop")
 	cropper := NewCropper()
 
 	if err := ebiten.RunGame(cropper); err != nil {
