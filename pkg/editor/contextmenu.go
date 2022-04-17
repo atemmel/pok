@@ -21,7 +21,7 @@ type ContextMenuInfo struct {
 	selectedItem int
 }
 
-var( 
+var(
 	ContextMenu ContextMenuInfo
 )
 
@@ -63,7 +63,7 @@ func (menu *ContextMenuInfo) build(cx, cy int, items []ContextMenuItem) {
 
 	// build image in regular ram first
 	img := image.NewRGBA(image.Rect(0, 0, cWidth, cHeight))
-	
+
 		// fill
 	for x := 0; x < cWidth; x++ {
 		for y := 0; y < cHeight; y++ {
@@ -162,7 +162,7 @@ func (menu *ContextMenuInfo) rebuildFromPrior() {
 func (menu *ContextMenuInfo) rebuild(cWidth, cHeight int) {
 	// build image in regular ram first
 	img := image.NewRGBA(image.Rect(0, 0, cWidth, cHeight))
-	
+
 	// fill
 	for x := 0; x < cWidth; x++ {
 		for y := 0; y < cHeight; y++ {

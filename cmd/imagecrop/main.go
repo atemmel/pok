@@ -13,6 +13,7 @@ import(
 	"github.com/atemmel/pok/pkg/fonts"
 	"github.com/atemmel/pok/pkg/pok"
 	"math"
+	"strconv"
 )
 
 var(
@@ -52,6 +53,9 @@ type Cropper struct {
 
 	// saved subimages
 	subImages map [int]SubImage
+
+	// gui list of saved subimages
+	guiList List
 }
 
 type Mark struct {
@@ -69,13 +73,7 @@ func NewCropper() *Cropper {
 	image, _, err := ebitenutil.NewImageFromFile("resources/images/overworld/buildings.png")
 	debug.Assert(err)
 
-	AddButton(&Button{
-		X: 10, Y: 10,
-		OnClick: func() {
-			println("Gaming!")
-		},
-		Title: "Gaming",
-	})
+	list := NewList(6, 32, 4)
 
 	const markDim = 8
 	mark := ebiten.NewImage(markDim, markDim)
@@ -110,6 +108,7 @@ func NewCropper() *Cropper {
 		sy: 0,
 		clickedIndex: -1,
 		subImages: make(map[int]SubImage, 0),
+		guiList: list,
 	}
 }
 
@@ -138,6 +137,11 @@ func (c *Cropper) Update() error {
 	}
 
 	cx, cy := ebiten.CursorPosition()
+
+	if PollButtons(cx, cy) {
+		return nil
+	}
+
 	tx := int(float64(cx) / c.renderer.Cam.Scale)
 	ty := int(float64(cy) / c.renderer.Cam.Scale)
 	tx += int(math.Round(c.renderer.Cam.X))
@@ -404,6 +408,7 @@ func (c *Cropper) Draw(screen *ebiten.Image) {
 	c.drawMarks(screen)
 	c.renderer.Display(screen)
 	DrawButtons(screen)
+	c.guiList.Draw(screen)
 }
 
 func (c *Cropper) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -416,6 +421,21 @@ func setFont(path string) error {
 	return err
 }
 
+func setButton(c *Cropper) {
+	i := 0;
+	AddButton(&Button{
+		X: 10, Y: 10,
+		OnClick: func() {
+			c.guiList.Append(ListItem{
+				Id: i,
+				Name: "Gamer no: " + strconv.Itoa(i),
+			});
+			i++
+		},
+		Title: "Add Image",
+	})
+}
+
 func main() {
 	logPath := "imagecrop.log"
 	debug.InitAssert(&logPath, true)
@@ -425,6 +445,8 @@ func main() {
 	ebiten.SetWindowSize(constants.WindowSizeX, constants.WindowSizeY)
 	ebiten.SetWindowTitle("imagecrop")
 	cropper := NewCropper()
+
+	setButton(cropper)
 
 	if err := ebiten.RunGame(cropper); err != nil {
 		panic(err)

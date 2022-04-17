@@ -1,8 +1,10 @@
 package main
 
 import(
+	"image"
 	"github.com/atemmel/pok/pkg/editor"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 )
@@ -38,6 +40,22 @@ func DrawButtons(target *ebiten.Image) {
 		opt.GeoM.Translate(buttons[i].x, buttons[i].y)
 		target.DrawImage(buttons[i].img, opt)
 	}
+}
+
+func PollButtons(cx, cy int) bool {
+	pt := image.Pt(cx, cy)
+	for i, b := range buttons {
+		bounds := b.img.Bounds()
+		bounds = bounds.Add(image.Pt(int(b.x), int(b.y)))
+		if pt.In(bounds) {
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton(0)) {
+				buttons[i].onClick()
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func makeButtonTitle(title string) *ebiten.Image {
