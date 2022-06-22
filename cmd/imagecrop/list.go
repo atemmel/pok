@@ -6,6 +6,7 @@ import(
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/sqweek/dialog"
 )
 
 const (
@@ -19,6 +20,7 @@ type List struct {
 	x, y float64
 	h int
 	selectedItemIndex int
+	OnRemove func(id int)
 }
 
 type ListItem struct {
@@ -41,6 +43,7 @@ func NewList(x, y, n int) List {
 		y: float64(y),
 		h: n,
 		selectedItemIndex: 0,
+		OnRemove: nil,
 	}
 }
 
@@ -74,7 +77,23 @@ func (l *List) MaybeDelete(id int) {
 		return
 	}
 
+	if l.OnRemove != nil {
+		l.OnRemove(id)
+	}
+
 	l.items = append(l.items[:index], l.items[index+1:]...)
+	if l.selectedItemIndex >= len(l.items) {
+		l.selectedItemIndex--
+	}
+	l.last--
+	if l.first > 0 {
+		l.first--
+	}
+	l.update()
+}
+
+func (l *List) HasSelectedId() bool {
+	return len(l.items) > 0
 }
 
 func (l *List) GetSelectedId() int {
@@ -96,6 +115,20 @@ func (l *List) PollInputs() bool {
 			if c.In(r) {
 				l.selectedItemIndex = i
 				return true
+			}
+		}
+	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+		for i := l.first; i < l.last; i++ {
+			delta := image.Pt(int(l.x), int(l.y))
+			r := l.items[i].rect.Add(delta)
+			if c.In(r) {
+				name := l.items[i].item.Name
+				id := l.items[i].item.Id
+				doRemove := dialog.Message("Remove %v?", name).YesNo()
+				if doRemove {
+					l.MaybeDelete(id)
+				}
+				return true;
 			}
 		}
 	}

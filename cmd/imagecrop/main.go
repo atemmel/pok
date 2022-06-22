@@ -81,6 +81,7 @@ type SubImage struct {
 }
 
 func NewCropper() *Cropper {
+	subImages := make(map[int]SubImage, 0)
 	list := NewList(6, 32, 16)
 
 	const markDim = 8
@@ -90,7 +91,7 @@ func NewCropper() *Cropper {
 	marks := make([]Mark, 10)
 	resetMarks(marks)
 
-	return &Cropper{
+	cropper := &Cropper{
 		renderer: pok.NewRenderer(
 			constants.WindowSizeX,
 			constants.WindowSizeY,
@@ -104,11 +105,18 @@ func NewCropper() *Cropper {
 		sx: 0,
 		sy: 0,
 		clickedIndex: -1,
-		subImages: make(map[int]SubImage, 0),
+		subImages: subImages,
 		guiList: list,
 		activeMarkId: 0,
 		file: "",
 	}
+
+	cropper.guiList.OnRemove = func(id int) {
+		delete(cropper.subImages, id)
+		cropper.SaveFile()
+	}
+
+	return cropper
 }
 
 func (c *Cropper) LoadFile(str string) {
@@ -216,6 +224,9 @@ func (c *Cropper) Update() error {
 	}
 
 	if c.guiList.PollInputs() {
+		if !c.guiList.HasSelectedId() {
+			return nil
+		}
 		c.activeMarkId = c.guiList.GetSelectedId()
 		c.marks = subImageToMarks(c.subImages[c.activeMarkId])
 		return nil
