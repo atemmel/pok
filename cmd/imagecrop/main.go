@@ -17,7 +17,7 @@ import(
 )
 
 var(
-	MarkColor = color.RGBA{255, 0, 255, 255}
+	MarkColor = color.RGBA{255, 255, 255, 255}
 )
 
 type Cropper struct {
@@ -56,6 +56,9 @@ type Cropper struct {
 
 	// gui list of saved subimages
 	guiList List
+
+	// active mark id
+	activeMarkId int
 }
 
 type Mark struct {
@@ -73,25 +76,14 @@ func NewCropper() *Cropper {
 	image, _, err := ebitenutil.NewImageFromFile("resources/images/overworld/buildings.png")
 	debug.Assert(err)
 
-	list := NewList(6, 32, 4)
+	list := NewList(6, 32, 16)
 
 	const markDim = 8
 	mark := ebiten.NewImage(markDim, markDim)
 	mark.Fill(MarkColor)
 
-	marks := make([]Mark, 4)
-
-	marks[0].X = 0
-	marks[0].Y = 0
-
-	marks[1].X = 64
-	marks[1].Y = 0
-
-	marks[2].X = 0
-	marks[2].Y = 64
-
-	marks[3].X = 64
-	marks[3].Y = 64
+	marks := make([]Mark, 10)
+	resetMarks(marks)
 
 	return &Cropper{
 		renderer: pok.NewRenderer(
@@ -112,9 +104,33 @@ func NewCropper() *Cropper {
 	}
 }
 
+func resetMarks(marks []Mark) {
+	marks[0].X = 0
+	marks[0].Y = 0
+
+	marks[1].X = 64
+	marks[1].Y = 0
+
+	marks[2].X = 0
+	marks[2].Y = 64
+
+	marks[3].X = 64
+	marks[3].Y = 64
+}
+
+func (c *Cropper) MarkActive() bool {
+	return len(c.guiList.items) > 0
+}
+
 func (c *Cropper) Update() error {
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
 		return errors.New("Clean exit")
+	}
+
+	if c.guiList.PollInputs() {
+		c.activeMarkId = c.guiList.GetSelectedId()
+		c.marks = subImageToMarks(c.subImages[c.activeMarkId])
+		return nil
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonMiddle) {
@@ -182,17 +198,20 @@ func (c *Cropper) Update() error {
 		if oy != 0 {
 			c.sy -= int(math.Round(oy))
 		}
+		c.UpdateActiveMark()
 		return nil
 	}
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		c.clickedIndex = c.indexOfCornerClicked(tx, ty)
-		if c.clickedIndex != -1 {
-			c.isHolding = true
+	if c.MarkActive() {
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+			c.clickedIndex = c.indexOfCornerClicked(tx, ty)
+			if c.clickedIndex != -1 {
+				c.isHolding = true
+			}
+		} else if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+			c.isHolding = false
+			c.clickedIndex = -1
 		}
-	} else if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		c.isHolding = false
-		c.clickedIndex = -1
 	}
 
 	if c.isHolding {
@@ -253,6 +272,8 @@ func (c *Cropper) Update() error {
 			c.marks[1].X += ox
 			c.marks[2].Y += oy
 		}
+
+		c.UpdateActiveMark()
 	}
 
 NO_MARK_MOVE:
@@ -315,9 +336,13 @@ func (c *Cropper) indexOfCornerClicked(cx, cy int) int {
 	return -1
 }
 
-func (c *Cropper) drawMarks(screen *ebiten.Image) {
+func (c *Cropper) drawSubImage(subImage SubImage, id int, screen *ebiten.Image) {
 
-	white := color.RGBA{255, 255, 255, 255}
+	marks := subImageToMarks(subImage)
+	magenta := color.RGBA{255, 0, 255, 255}
+	gray := color.RGBA{128, 0, 128, 255}
+
+	active := id == c.activeMarkId
 
 	offsets := [4]image.Point{
 		image.Pt(0, 0),
@@ -326,10 +351,15 @@ func (c *Cropper) drawMarks(screen *ebiten.Image) {
 		image.Pt(8, 8),
 	}
 
-	for i, mark := range c.marks {
+	for i, mark := range marks {
 		opt := &ebiten.DrawImageOptions{}
-		if c.clickedIndex == i {
-			opt.ColorM.Translate(2, 2, 2, 2)
+
+		if active && c.clickedIndex == i { // keep the mark white
+			opt.ColorM.Translate(1, 1, 1, 1)
+		} else if !active { // make it gray
+			opt.ColorM.Translate(-0.75, -1, -0.75, 1)
+		} else { // make it magenta
+			opt.ColorM.Translate(1, -1, 1, 1)
 		}
 		offset := offsets[i]
 		c.renderer.Draw(&pok.RenderTarget{
@@ -344,55 +374,77 @@ func (c *Cropper) drawMarks(screen *ebiten.Image) {
 
 	// top left to top right
 	l0 := MarkColor
-	if c.clickedIndex == 0 || c.clickedIndex == 1 {
-		l0 = white
+	if active && (c.clickedIndex == 0 || c.clickedIndex == 1) {
+		//l0 = white
+	} else if !active {
+		l0 = gray
+	} else {
+		l0 = magenta
 	}
 	c.renderer.DrawLine(pok.DebugLine{
-		X1: c.marks[0].X,
-		Y1: c.marks[0].Y,
-		X2: c.marks[1].X,
-		Y2: c.marks[1].Y,
+		X1: marks[0].X,
+		Y1: marks[0].Y,
+		X2: marks[1].X,
+		Y2: marks[1].Y,
 		Clr: l0,
 	})
 
 	// bottom left to bottom right
 	l1 := MarkColor
-	if c.clickedIndex == 3 || c.clickedIndex == 2{
-		l1 = white
+	if active && (c.clickedIndex == 3 || c.clickedIndex == 2) {
+		//l1 = white
+	} else if !active {
+		l1 = gray
+	} else {
+		l1 = magenta
 	}
 	c.renderer.DrawLine(pok.DebugLine{
-		X1: c.marks[2].X,
-		Y1: c.marks[2].Y,
-		X2: c.marks[3].X,
-		Y2: c.marks[3].Y,
+		X1: marks[2].X,
+		Y1: marks[2].Y,
+		X2: marks[3].X,
+		Y2: marks[3].Y,
 		Clr: l1,
 	})
 
 	// top left to bottom left
 	l2 := MarkColor
-	if c.clickedIndex == 2 || c.clickedIndex == 0 {
-		l2 = white
+	if active && (c.clickedIndex == 2 || c.clickedIndex == 0) {
+		//l2 = white
+	} else if !active {
+		l2 = gray
+	} else {
+		l2 = magenta
 	}
 	c.renderer.DrawLine(pok.DebugLine{
-		X1: c.marks[0].X,
-		Y1: c.marks[0].Y,
-		X2: c.marks[2].X,
-		Y2: c.marks[2].Y,
+		X1: marks[0].X,
+		Y1: marks[0].Y,
+		X2: marks[2].X,
+		Y2: marks[2].Y,
 		Clr: l2,
 	})
 
 	// top right to bottom right
 	l3 := MarkColor
-	if c.clickedIndex == 3 || c.clickedIndex == 1 {
-		l3 = white
+	if active && (c.clickedIndex == 3 || c.clickedIndex == 1) {
+		//l3 = white
+	} else if !active {
+		l3 = gray
+	} else {
+		l3 = magenta
 	}
 	c.renderer.DrawLine(pok.DebugLine{
-		X1: c.marks[1].X,
-		Y1: c.marks[1].Y,
-		X2: c.marks[3].X,
-		Y2: c.marks[3].Y,
+		X1: marks[1].X,
+		Y1: marks[1].Y,
+		X2: marks[3].X,
+		Y2: marks[3].Y,
 		Clr: l3,
 	})
+}
+
+func (c *Cropper) drawSubImages(screen *ebiten.Image) {
+	for id, subImage := range c.subImages {
+		c.drawSubImage(subImage, id, screen)
+	}
 }
 
 func (c *Cropper) Draw(screen *ebiten.Image) {
@@ -405,7 +457,10 @@ func (c *Cropper) Draw(screen *ebiten.Image) {
 		Z: 0,
 	})
 
-	c.drawMarks(screen)
+	if c.MarkActive() {
+		c.drawSubImages(screen)
+	}
+
 	c.renderer.Display(screen)
 	DrawButtons(screen)
 	c.guiList.Draw(screen)
@@ -415,6 +470,57 @@ func (c *Cropper) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return constants.DisplaySizeX, constants.DisplaySizeY
 }
 
+func (c *Cropper) UpdateActiveMark() {
+	id := c.activeMarkId
+	c.subImages[id] = marksToSubImage(c.marks)
+}
+
+func marksToSubImage(marks []Mark) SubImage {
+	return SubImage{
+		TopLeft: Mark{
+			marks[0].X,
+			marks[0].Y,
+		},
+		TopRight: Mark{
+			marks[1].X,
+			marks[1].Y,
+		},
+		BottomLeft: Mark{
+			marks[2].X,
+			marks[2].Y,
+
+		},
+		BottomRight: Mark{
+			marks[3].X,
+			marks[3].Y,
+		},
+	}
+}
+
+func subImageToMarks(subImage SubImage) []Mark{
+	return []Mark{
+		subImage.TopLeft,
+		subImage.TopRight,
+		subImage.BottomLeft,
+		subImage.BottomRight,
+	}
+}
+
+func (c *Cropper) NewMark() {
+	i := len(c.guiList.items) + 1
+	name := "Mark no: " + strconv.Itoa(i)
+
+	c.activeMarkId = i
+
+	c.guiList.Append(ListItem{
+		Id: i,
+		Name: name,
+	})
+
+	resetMarks(c.marks)
+	c.UpdateActiveMark()
+}
+
 func setFont(path string) error {
 	font, err := fonts.LoadFont(path, 16)
 	InitButtons(font)
@@ -422,15 +528,10 @@ func setFont(path string) error {
 }
 
 func setButton(c *Cropper) {
-	i := 0;
 	AddButton(&Button{
-		X: 10, Y: 10,
+		X: 6, Y: 10,
 		OnClick: func() {
-			c.guiList.Append(ListItem{
-				Id: i,
-				Name: "Gamer no: " + strconv.Itoa(i),
-			});
-			i++
+			c.NewMark()
 		},
 		Title: "Add Image",
 	})

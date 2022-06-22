@@ -4,6 +4,7 @@ import(
 	"image"
 	"github.com/atemmel/pok/pkg/editor"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 )
 
@@ -12,11 +13,12 @@ const (
 )
 
 type List struct {
-	items []ListItem
+	items []listItem
 	first, last int
 	cachedImg *ebiten.Image
 	x, y float64
 	h int
+	selectedItemIndex int
 }
 
 type ListItem struct {
@@ -24,33 +26,45 @@ type ListItem struct {
 	Name string
 }
 
+type listItem struct {
+	item ListItem
+	rect image.Rectangle
+}
+
 func NewList(x, y, n int) List {
 	return List{
-		items: make([]ListItem, 0),
+		items: make([]listItem, 0),
 		first: 0,
 		last: 0,
 		cachedImg: nil,
 		x: float64(x),
 		y: float64(y),
 		h: n,
+		selectedItemIndex: 0,
 	}
 }
 
 func (l *List) Append(item ListItem) {
-	l.items = append(l.items, item)
+	i := listItem{
+		item: item,
+		rect: image.Rectangle{},
+	}
+
+	l.items = append(l.items, i)
 	if len(l.items) >= l.last {
 		l.last = len(l.items)
 		if l.last - l.first >= l.h {
 			l.first = len(l.items) - l.h
 		}
 	}
+	l.selectedItemIndex = len(l.items) - 1
 	l.update()
 }
 
 func (l *List) MaybeDelete(id int) {
 	index := -1
 	for i := range l.items {
-		if l.items[i].Id == id {
+		if l.items[i].item.Id == id {
 			index = i
 			break
 		}
@@ -61,6 +75,55 @@ func (l *List) MaybeDelete(id int) {
 	}
 
 	l.items = append(l.items[:index], l.items[index+1:]...)
+}
+
+func (l *List) GetSelectedId() int {
+	return l.items[l.selectedItemIndex].item.Id
+}
+
+func (l *List) PollInputs() bool {
+	cx, cy := ebiten.CursorPosition()
+	c := image.Pt(cx, cy)
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		for i := l.first; i < l.last; i++ {
+			delta := image.Pt(int(l.x), int(l.y))
+			r := l.items[i].rect.Add(delta)
+			if c.In(r) {
+				l.selectedItemIndex = i
+				return true
+			}
+		}
+	}
+
+	if l.cachedImg == nil {
+		return false
+	}
+
+	_, dy := ebiten.Wheel()
+	r := l.cachedImg.Bounds().Add(image.Pt(
+		int(l.x), int(l.y),
+	))
+	if c.In(r) {
+		if dy > 0 {
+			shown := l.last - l.first - 1
+			if l.first > 0 && shown < l.h {
+				l.first--
+				l.last--
+				l.update()
+			}
+			return true
+		} else if dy < 0 {
+			shown := l.last - l.first - 1
+			if l.last < len(l.items) && shown < l.h {
+				l.first++
+				l.last++
+				l.update()
+			}
+			return true
+		}
+	}
+
+	return false
 }
 
 func (l *List) Draw(target *ebiten.Image) {
@@ -75,7 +138,7 @@ func (l *List) update() {
 	maxLenIndex := -1
 	maxLen := 0
 	for i := range l.items {
-		length := len(l.items[i].Name)
+		length := len(l.items[i].item.Name)
 		if length > maxLen {
 			maxLenIndex = i
 			maxLen = length
@@ -89,7 +152,7 @@ func (l *List) update() {
 	const paddingX = 4
 	const paddingY = 4
 
-	wBounds := text.BoundString(buttonFont, l.items[maxLenIndex].Name)
+	wBounds := text.BoundString(buttonFont, l.items[maxLenIndex].item.Name)
 	w := wBounds.Dx() + (paddingX * 2)
 	h := (l.last - l.first) * ListItemHeight
 
@@ -103,7 +166,7 @@ func (l *List) update() {
 		base := editor.CreateNeatImageWithBorder(w, ListItemHeight)
 		src := ebiten.NewImageFromImage(base)
 
-		name := l.items[i].Name
+		name := l.items[i].item.Name
 
 		const extraOffset = 9
 		text.Draw(src, name, buttonFont, paddingX + 1, paddingY + extraOffset + 1, editor.FgShadow)
@@ -112,6 +175,11 @@ func (l *List) update() {
 		opt := &ebiten.DrawImageOptions{}
 		opt.GeoM.Translate(0, yB)
 		eimg.DrawImage(src, opt)
+
+		iw, ih := src.Size()
+		l.items[i].rect = image.Rect(
+			0, int(yB), iw, int(yB) + ih,
+		)
 	}
 
 	l.cachedImg = eimg
