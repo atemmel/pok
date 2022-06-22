@@ -1,10 +1,12 @@
 package main
 
 import(
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"image"
 	"image/color"
-	_ "image/png"
+	"image/png"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -12,8 +14,11 @@ import(
 	"github.com/atemmel/pok/pkg/debug"
 	"github.com/atemmel/pok/pkg/fonts"
 	"github.com/atemmel/pok/pkg/pok"
+	"github.com/sqweek/dialog"
 	"math"
+	"os"
 	"strconv"
+	"strings"
 )
 
 var(
@@ -59,6 +64,9 @@ type Cropper struct {
 
 	// active mark id
 	activeMarkId int
+
+	// active file name
+	file string
 }
 
 type Mark struct {
@@ -73,9 +81,6 @@ type SubImage struct {
 }
 
 func NewCropper() *Cropper {
-	image, _, err := ebitenutil.NewImageFromFile("resources/images/overworld/buildings.png")
-	debug.Assert(err)
-
 	list := NewList(6, 32, 16)
 
 	const markDim = 8
@@ -90,7 +95,7 @@ func NewCropper() *Cropper {
 			constants.WindowSizeX,
 			constants.WindowSizeY,
 			1.0),
-		image: image,
+		image: nil,
 		markImg: mark,
 		marks: marks,
 		isMovingCamera: false,
@@ -101,7 +106,86 @@ func NewCropper() *Cropper {
 		clickedIndex: -1,
 		subImages: make(map[int]SubImage, 0),
 		guiList: list,
+		activeMarkId: 0,
+		file: "",
 	}
+}
+
+func (c *Cropper) LoadFile(str string) {
+	c.SaveFile()
+	image, _, err := ebitenutil.NewImageFromFile(str)
+	debug.Assert(err)
+	c.image = image
+	c.file = str
+
+	stateFile, _, _ := strings.Cut(c.file, ".")
+	stateFile += "_state.json"
+
+	bytes, err := ioutil.ReadFile(stateFile)
+
+	if err != nil {
+		return
+	}
+
+	c.guiList.Clear()
+	c.subImages = make(map[int]SubImage)
+	err = json.Unmarshal(bytes, &c.subImages)
+	debug.Assert(err)
+
+	for id := range c.subImages {
+		c.guiList.Append(ListItem{
+			Id: id,
+			Name: "Mark no: " + strconv.Itoa(id),
+		})
+		c.activeMarkId = id
+	}
+
+	id := c.activeMarkId
+	c.marks = subImageToMarks(c.subImages[id])
+}
+
+func (c *Cropper) SaveFile() {
+	if !c.HasImage() {
+		return
+	}
+
+	bytes, err := json.Marshal(c.subImages)
+	debug.Assert(err)
+
+	title, _, _ := strings.Cut(c.file, ".")
+	title += "_state.json"
+	debug.Assert(ioutil.WriteFile(title, bytes, 0o755))
+}
+
+func (c *Cropper) ExportFile() {
+	if !c.HasImage() {
+		return
+	}
+
+	base, _, _ := strings.Cut(c.file, ".")
+
+	exportedString := ""
+
+	for id, marks := range c.subImages {
+		exported := base + strconv.Itoa(id) + ".png"
+		r := image.Rect(
+			int(marks.TopLeft.X),
+			int(marks.TopLeft.Y),
+			int(marks.BottomRight.X),
+			int(marks.BottomRight.Y),
+		)
+
+		out, err := os.Create(exported)
+		debug.Assert(err)
+		subImage := c.image.SubImage(r)
+
+		err = png.Encode(out, subImage)
+		debug.Assert(err)
+
+		exportedString += exported + " "
+	}
+
+	dialog.Message("Exported to files: %v", exportedString).Title("Successful export").Info()
 }
 
 func resetMarks(marks []Mark) {
@@ -122,14 +206,28 @@ func (c *Cropper) MarkActive() bool {
 	return len(c.guiList.items) > 0
 }
 
+func (c *Cropper) HasImage() bool {
+	return c.image != nil
+}
+
 func (c *Cropper) Update() error {
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-		return errors.New("Clean exit")
+		return errors.New("")
 	}
 
 	if c.guiList.PollInputs() {
 		c.activeMarkId = c.guiList.GetSelectedId()
 		c.marks = subImageToMarks(c.subImages[c.activeMarkId])
+		return nil
+	}
+
+	cx, cy := ebiten.CursorPosition()
+
+	if PollButtons(cx, cy) {
+		return nil
+	}
+
+	if !c.HasImage() {
 		return nil
 	}
 
@@ -149,12 +247,6 @@ func (c *Cropper) Update() error {
 		c.renderer.Cam.Y -= float64(dy)
 		c.cx = x
 		c.cy = y
-		return nil
-	}
-
-	cx, cy := ebiten.CursorPosition()
-
-	if PollButtons(cx, cy) {
 		return nil
 	}
 
@@ -448,14 +540,16 @@ func (c *Cropper) drawSubImages(screen *ebiten.Image) {
 }
 
 func (c *Cropper) Draw(screen *ebiten.Image) {
-	c.renderer.Draw(&pok.RenderTarget{
-		Op: &ebiten.DrawImageOptions{},
-		Src: c.image,
-		SubImage: nil,
-		X: 0,
-		Y: 0,
-		Z: 0,
-	})
+	if c.HasImage() {
+		c.renderer.Draw(&pok.RenderTarget{
+			Op: &ebiten.DrawImageOptions{},
+			Src: c.image,
+			SubImage: nil,
+			X: 0,
+			Y: 0,
+			Z: 0,
+		})
+	}
 
 	if c.MarkActive() {
 		c.drawSubImages(screen)
@@ -473,6 +567,7 @@ func (c *Cropper) Layout(outsideWidth, outsideHeight int) (int, int) {
 func (c *Cropper) UpdateActiveMark() {
 	id := c.activeMarkId
 	c.subImages[id] = marksToSubImage(c.marks)
+	c.SaveFile()
 }
 
 func marksToSubImage(marks []Mark) SubImage {
@@ -507,6 +602,10 @@ func subImageToMarks(subImage SubImage) []Mark{
 }
 
 func (c *Cropper) NewMark() {
+	if !c.HasImage() {
+		return
+	}
+
 	i := len(c.guiList.items) + 1
 	name := "Mark no: " + strconv.Itoa(i)
 
@@ -533,7 +632,29 @@ func setButton(c *Cropper) {
 		OnClick: func() {
 			c.NewMark()
 		},
-		Title: "Add Image",
+		Title: "Add Mark",
+	})
+	AddButton(&Button{
+		X: 58, Y: 10,
+		OnClick: func() {
+			file, err := dialog.File().Title("Select image to open").Filter(".png").Load()
+			if err != nil && file == "" {
+				return
+			} else if err != nil {
+				dialog.Message("Could not open file: %s", file).Title("Error").Error()
+				return
+			}
+
+			c.LoadFile(file)
+		},
+		Title: "Load Tileset",
+	})
+	AddButton(&Button{
+		X: 128, Y: 10,
+		OnClick: func() {
+			c.ExportFile()
+		},
+		Title: "Export",
 	})
 }
 
@@ -549,7 +670,22 @@ func main() {
 
 	setButton(cropper)
 
+	defer func() {
+		if err := recover(); err != nil {
+			s, ok := err.(string)
+			if ok {
+				debug.Assert(errors.New(s))
+			}
+			e, ok := err.(error)
+			if ok {
+				debug.Assert(e)
+			}
+		}
+	}()
+
 	if err := ebiten.RunGame(cropper); err != nil {
-		panic(err)
+		if err.Error() != "" {
+			panic(err)
+		}
 	}
 }

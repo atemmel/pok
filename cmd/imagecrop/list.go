@@ -81,6 +81,11 @@ func (l *List) GetSelectedId() int {
 	return l.items[l.selectedItemIndex].item.Id
 }
 
+func (l *List) Clear() {
+	l.cachedImg = nil
+	l.items = l.items[:0]
+}
+
 func (l *List) PollInputs() bool {
 	cx, cy := ebiten.CursorPosition()
 	c := image.Pt(cx, cy)
