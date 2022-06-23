@@ -12,19 +12,21 @@ import (
 
 var LogFileName string = "error.log"
 
-var onlineEnabled = false
 var isServing = false
 var disableAudio = false
+var disableOnline = false
 var fileToOpen string
 
 func init() {
 	debug.InitAssert(&LogFileName, false)
 	flag.BoolVar(&isServing, "serve", false, "Run as game server")
 	flag.BoolVar(&disableAudio, "disable-audio", false, "Toggle audio")
+	flag.BoolVar(&disableOnline, "disable-online", false, "Toggle online mode")
 	flag.BoolVar(&pok.DrawDebugInfo, "draw-debug-info", false, "Draw debug info")
+
 	flag.Parse()
 
-	if onlineEnabled {
+	if !disableOnline {
 		if isServing {
 			server := pok.NewServer()
 			server.Serve()
@@ -57,7 +59,7 @@ func main() {
 		game.PlayAudio()
 	}
 
-	if onlineEnabled {
+	if !disableOnline {
 		game.Client = pok.CreateClient()
 		connect := func() {
 			game.Player.Id = game.Client.Connect()
