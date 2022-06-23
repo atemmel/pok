@@ -22,7 +22,7 @@ jobs:
         if: success()
         uses: actions/setup-go@v2
         with:
-          go-version: 1.15.x
+          go-version: 1.18.x
       - name: Install other dependencies
         run: |
           sudo apt-get update
