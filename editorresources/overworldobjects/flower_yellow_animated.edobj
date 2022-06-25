@@ -1,0 +1,15 @@
+{
+	"Texture": "flower_yellow_animated.png",
+	"X": 0,
+	"Y": 0,
+	"W": 1,
+	"H": 1,
+	"Z": [
+		1
+	],
+	"HasCollision": false,
+	"CollidesWithTop": true,
+	"CollidesWithBottom": true,
+	"CollidesWithLeft": true,
+	"CollidesWithRight": true
+}

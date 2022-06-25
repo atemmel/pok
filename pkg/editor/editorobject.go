@@ -16,6 +16,7 @@ type EditorObject struct {
 	W, H int
 	Z []int
 
+	HasCollision bool
 	CollidesWithTop bool
 	CollidesWithBottom bool
 	CollidesWithLeft bool
@@ -156,7 +157,9 @@ func InsertObjectIntoTileMap(params *ObjectInsertionParameters) {
 			t.Tiles[depth][index] = tile
 			t.TextureIndicies[depth][index] = texIndex
 
-			if !edobj.CollidesWithTop && y == 0 {
+			if !edobj.HasCollision {
+				goto SKIP
+			} else if !edobj.CollidesWithTop && y == 0 {
 				goto SKIP
 			} else if !edobj.CollidesWithBottom && y == edobj.H - 1 {
 				goto SKIP
@@ -201,7 +204,9 @@ func (edobj *EditorObject) EraseObject(t *pok.TileMap, pob PlacedEditorObject) {
 			t.Tiles[depth][index] = -1
 			t.TextureIndicies[depth][index] = 0
 
-			if !edobj.CollidesWithTop && y == 0 {
+			if !edobj.HasCollision {
+				goto SKIP
+			} else if !edobj.CollidesWithTop && y == 0 {
 				goto SKIP
 			} else if !edobj.CollidesWithBottom && y == edobj.H - 1 {
 				goto SKIP
