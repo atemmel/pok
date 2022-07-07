@@ -2,6 +2,7 @@ package editor
 
 import(
 	"github.com/atemmel/pok/pkg/pok"
+	"github.com/atemmel/pok/pkg/textures"
 	"encoding/json"
 	"io/ioutil"
 	"image"
@@ -25,14 +26,15 @@ type EditorObject struct {
 	textureIndex int
 }
 
-func (e *EditorObject) FindAndSetCorrectTexture(textures []string) {
+func (e *EditorObject) FindAndSetCorrectTexture(allTextures []string) {
 	e.textureIndex = 0
-	for i := range textures {
-		if textures[i] == e.Texture {
+	for i := range allTextures {
+		if allTextures[i] == e.Texture {
 			e.textureIndex = i
 			return
 		}
 	}
+	_, e.textureIndex = textures.Load(e.Texture)
 }
 
 type PlacedEditorObject struct {

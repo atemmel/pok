@@ -1,0 +1,27 @@
+[
+	{
+		"texture": "water.png",
+		"frames": 11,
+		"tilesToSkip": 6
+	},
+	{
+		"texture": "flower_blue_animated.png",
+		"frames": 4,
+		"tilesToSkip": 1
+	},
+	{
+		"texture": "flower_red_animated.png",
+		"frames": 4,
+		"tilesToSkip": 1
+	},
+	{
+		"texture": "flower_purple_animated.png",
+		"frames": 4,
+		"tilesToSkip": 1
+	},
+	{
+		"texture": "flower_yellow_animated.png",
+		"frames": 4,
+		"tilesToSkip": 1
+	}
+]

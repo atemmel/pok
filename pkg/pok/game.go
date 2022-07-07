@@ -45,8 +45,16 @@ func CreateGame() *Game {
 	g.Dialog = NewDialogBox()
 
 	// animate water
+	/*
 	jobs.Add(jobs.Job{
 		Do: WaterAnim,
+		When: 11,
+	})
+	*/
+
+	// animate overworld textures
+	jobs.Add(jobs.Job{
+		Do: textures.Animate,
 		When: 11,
 	})
 
@@ -206,7 +214,8 @@ func (g *Game) DrawPlayer(player *Player) {
 
 	waterBobOffsetY := 0.0
 	if player.Char.isSurfing {
-		scale := float64(waterFrameStep) / float64(nWaterFrames)
+		//scale := float64(waterFrameStep) / float64(nWaterFrames)
+		scale := textures.GetWaterStepScale()
 		waterBobOffsetY = math.Sin(scale * math.Pi) * 4.0
 	}
 

@@ -141,6 +141,7 @@ type TileMap struct {
 	weather Weather
 }
 
+/*
 var waterFrameStep int = 0
 const nWaterFrames = 11
 
@@ -150,6 +151,7 @@ func WaterAnim() {
 		waterFrameStep = 0
 	}
 }
+*/
 
 func (t *TileMap) HasExitAt(x, y, z int) int {
 	for i := range t.Exits {
@@ -330,8 +332,9 @@ func (t *TileMap) DrawWithOffset(rend *Renderer, offsetX, offsetY float64, drawO
 
 			index := t.TextureMapping[t.TextureIndicies[j][i]]
 
-			if textures.IsWater(index) {
-				n += waterFrameStep * 6
+			if textures.IsAnimated(index) {
+				step, skip := textures.GetStepAndSkip(index)
+				n += step * skip
 			}
 
 			img := textures.Access(index)
