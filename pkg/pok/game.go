@@ -44,19 +44,13 @@ func CreateGame() *Game {
 	activePlayerImg = playerImg
 	g.Dialog = NewDialogBox()
 
-	// animate water
-	/*
-	jobs.Add(jobs.Job{
-		Do: WaterAnim,
-		When: 11,
-	})
-	*/
-
 	// animate overworld textures
+	/*
 	jobs.Add(jobs.Job{
 		Do: textures.Animate,
 		When: 11,
 	})
+	*/
 
 	// animate water splashes
 	jobs.Add(jobs.Job{

@@ -7,6 +7,7 @@ import(
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/atemmel/pok/pkg/constants"
 	"github.com/atemmel/pok/pkg/debug"
+	"github.com/atemmel/pok/pkg/jobs"
 
 	"io/ioutil"
 	_ "image/png"
@@ -29,6 +30,7 @@ var(
 type textureAnimationMeta struct {
 	Texture string
 	Frames int
+	FramesPerStep uint
 	TilesToSkip int
 
 	step int
@@ -77,8 +79,10 @@ func Init() {
 
 	err = json.Unmarshal(bytes, &animations)
 	debug.Assert(err)
+	setupAnimation()
 }
 
+/*
 func Animate() {
 	if animations == nil {
 		return
@@ -90,6 +94,30 @@ func Animate() {
 		if anim.step >= anim.Frames {
 			anim.step = 0
 		}
+	}
+}
+*/
+
+func setupAnimation() {
+	if animations == nil {
+		return
+	}
+
+	animate := func(anim *textureAnimationMeta) {
+		anim.step++
+		if anim.step >= anim.Frames {
+			anim.step = 0
+		}
+	}
+
+	for i := range animations {
+		anim := &animations[i]
+		jobs.Add(jobs.Job{
+			Do: func() {
+				animate(anim)
+			},
+			When: anim.FramesPerStep,
+		})
 	}
 }
 
