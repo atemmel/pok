@@ -141,18 +141,6 @@ type TileMap struct {
 	weather Weather
 }
 
-/*
-var waterFrameStep int = 0
-const nWaterFrames = 11
-
-func WaterAnim() {
-	waterFrameStep++
-	if waterFrameStep >= nWaterFrames {
-		waterFrameStep = 0
-	}
-}
-*/
-
 func (t *TileMap) HasExitAt(x, y, z int) int {
 	for i := range t.Exits {
 		if t.Exits[i].X == x && t.Exits[i].Y == y && t.Exits[i].Z == z {

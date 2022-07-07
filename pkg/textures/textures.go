@@ -82,22 +82,6 @@ func Init() {
 	setupAnimation()
 }
 
-/*
-func Animate() {
-	if animations == nil {
-		return
-	}
-
-	for i := range animations {
-		anim := &animations[i]
-		anim.step++
-		if anim.step >= anim.Frames {
-			anim.step = 0
-		}
-	}
-}
-*/
-
 func setupAnimation() {
 	if animations == nil {
 		return
