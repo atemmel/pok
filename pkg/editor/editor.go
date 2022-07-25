@@ -317,10 +317,12 @@ func NewEditor(paths []string) *Editor {
 		X: IconOffsetX + 16 * 16, Y: constants.DisplaySizeY - 20,
 	})
 
+	/*
 	jobs.Add(jobs.Job{
 		Do: pok.WaterAnim,
 		When: 11,
 	})
+	*/
 
 	jobs.Add(jobs.Job{
 		Do: pok.WaterSplashAnim,
