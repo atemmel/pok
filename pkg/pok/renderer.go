@@ -82,6 +82,10 @@ func (r *Renderer) LookAt(x float64, y float64) {
 }
 
 func (r *Renderer) Draw(target *RenderTarget) {
+	//camRect := r.Cam.AsRect()
+	//if target.SubImage != nil {
+		//targetRect = target.SubImage.Dx(), t
+	//}
 	r.targets = append(r.targets, *target)
 }
 

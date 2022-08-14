@@ -17,8 +17,10 @@ import(
 	"github.com/sqweek/dialog"
 	"math"
 	"os"
+	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var(
@@ -120,15 +122,22 @@ func NewCropper() *Cropper {
 }
 
 func (c *Cropper) LoadFile(str string) {
+	saveBeginTime := time.Now()
 	c.SaveFile()
+	saveTime := time.Since(saveBeginTime)
+	log.Println("Saved previous file in", saveTime)
+	loadImageBeginTime := time.Now()
 	image, _, err := ebitenutil.NewImageFromFile(str)
 	debug.Assert(err)
+	loadImageTime := time.Since(loadImageBeginTime)
+	log.Println("Loaded image in", loadImageTime)
 	c.image = image
 	c.file = str
 
 	stateFile, _, _ := strings.Cut(c.file, ".")
 	stateFile += "_state.json"
 
+	loadStateBeginTime := time.Now()
 	bytes, err := ioutil.ReadFile(stateFile)
 
 	if err != nil {
@@ -150,6 +159,8 @@ func (c *Cropper) LoadFile(str string) {
 
 	id := c.activeMarkId
 	c.marks = subImageToMarks(c.subImages[id])
+	loadStateTime := time.Since(loadStateBeginTime)
+	log.Println("Loaded state in", loadStateTime)
 }
 
 func (c *Cropper) SaveFile() {
@@ -235,6 +246,7 @@ func (c *Cropper) Update() error {
 	cx, cy := ebiten.CursorPosition()
 
 	if PollButtons(cx, cy) {
+		println("Buttonpress completed")
 		return nil
 	}
 
@@ -242,11 +254,40 @@ func (c *Cropper) Update() error {
 		return nil
 	}
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonMiddle) {
+	// up
+	if inpututil.IsKeyJustPressed(ebiten.KeyW) {
+		
+		return nil
+	}
+	// down
+	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
+		
+		return nil
+	}
+	// left
+	if inpututil.IsKeyJustPressed(ebiten.KeyA) {
+		
+		return nil
+	}
+	// right
+	if inpututil.IsKeyJustPressed(ebiten.KeyD) {
+		
+		return nil
+	}
+
+	cameraMoveBegin := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonMiddle)
+	cameraMoveBegin = cameraMoveBegin || inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && ebiten.IsKeyPressed(ebiten.KeyControl)
+
+	cameraMoveEnd := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonMiddle)
+	cameraMoveEnd = cameraMoveEnd || inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) && ebiten.IsKeyPressed(ebiten.KeyControl)
+
+	//if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonMiddle) {
+	if cameraMoveBegin {
 		// start hold
 		c.isMovingCamera = true
 		c.cx, c.cy = ebiten.CursorPosition()
-	} else if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonMiddle) {
+	//} else if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonMiddle) {
+	} else if cameraMoveEnd {
 		// stop hold
 		c.isMovingCamera = false
 	}
@@ -572,7 +613,8 @@ func (c *Cropper) Draw(screen *ebiten.Image) {
 }
 
 func (c *Cropper) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return constants.DisplaySizeX, constants.DisplaySizeY
+	//return constants.DisplaySizeX, constants.DisplaySizeY
+	return outsideWidth / 2, outsideHeight / 2
 }
 
 func (c *Cropper) UpdateActiveMark() {
@@ -675,6 +717,7 @@ func main() {
 	err := setFont(constants.FontsDir + "pokemon_pixel_font.ttf")
 	debug.Assert(err)
 
+	ebiten.SetWindowResizable(true);
 	ebiten.SetWindowSize(constants.WindowSizeX, constants.WindowSizeY)
 	ebiten.SetWindowTitle("imagecrop")
 	cropper := NewCropper()

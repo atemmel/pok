@@ -103,6 +103,8 @@ func (l *List) GetSelectedId() int {
 func (l *List) Clear() {
 	l.cachedImg = nil
 	l.items = l.items[:0]
+	l.first = 0
+	l.last = 0
 }
 
 func (l *List) PollInputs() bool {
